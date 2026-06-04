@@ -446,25 +446,25 @@ export function renderSystem(s) {
         <p class="clead">Progress is stored in this browser only. ${pct}% onboarded.</p>
         <ul class="cabout csettings">
           <li>
-            <span>Title screen</span>
+            <span id="splashToggleLabel">Title screen</span>
             <button type="button" class="ctoggle ${splashOn ? 'is-on' : ''}" id="splashToggle"
-              role="switch" aria-checked="${splashOn}">
+              role="switch" aria-checked="${splashOn}" aria-labelledby="splashToggleLabel">
               <span class="ctoggle__track"><span class="ctoggle__thumb"></span></span>
               <span class="ctoggle__state">${splashOn ? 'On every visit' : 'Off'}</span>
             </button>
           </li>
           <li>
-            <span>Keyboard controls</span>
+            <span id="keynavToggleLabel">Keyboard controls</span>
             <button type="button" class="ctoggle ${keyOn ? 'is-on' : ''}" id="keynavToggle"
-              role="switch" aria-checked="${keyOn}">
+              role="switch" aria-checked="${keyOn}" aria-labelledby="keynavToggleLabel">
               <span class="ctoggle__track"><span class="ctoggle__thumb"></span></span>
               <span class="ctoggle__state">${keyOn ? 'Arrows move' : 'Off'}</span>
             </button>
           </li>
           <li>
-            <span>Flow map</span>
+            <span id="fullMapToggleLabel">Flow map</span>
             <button type="button" class="ctoggle ${mapOn ? 'is-on' : ''}" id="fullMapToggle"
-              role="switch" aria-checked="${mapOn}">
+              role="switch" aria-checked="${mapOn}" aria-labelledby="fullMapToggleLabel">
               <span class="ctoggle__track"><span class="ctoggle__thumb"></span></span>
               <span class="ctoggle__state">${mapOn ? 'Show full map' : 'Reveal as you go'}</span>
             </button>

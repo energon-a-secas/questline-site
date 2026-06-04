@@ -76,7 +76,9 @@ export function bindEvents(s) {
     const keynavToggle = e.target.closest('#keynavToggle');
     if (keynavToggle) { onToggleKeynav(s); return; }
 
-    const fullMapToggle = e.target.closest('#fullMapToggle');
+    // Both the System switch and the inline Flow-banner button flip the same
+    // preference; the inline one re-renders Flow in place to reveal/hide nodes.
+    const fullMapToggle = e.target.closest('#fullMapToggle, #flowMapToggle');
     if (fullMapToggle) { setShowFullMap(s, !s.prefs.showFullMap); rerenderActive(s); return; }
 
     // Six key shifts: open the focused reading popup (also marks them read);

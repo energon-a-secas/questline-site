@@ -402,6 +402,17 @@
   margin-top: var(--space-6); text-align: center;
   font-size: var(--text-sm); color: var(--text-muted); line-height: 1.5;
 }
+/* Inline accent link-button inside the fog note (flips the full-map view). */
+.tree__fogbtn {
+  background: none; border: none; padding: 0; cursor: pointer;
+  font: inherit; color: var(--accent);
+  text-decoration: underline; text-underline-offset: 3px;
+  text-decoration-color: rgba(42, 168, 255, .4);
+  transition: color var(--dur), text-decoration-color var(--dur);
+}
+.tree__fogbtn:hover, .tree__fogbtn:focus-visible {
+  color: var(--accent-bright); text-decoration-color: var(--accent-bright);
+}
 
 /* ── Flow: focus map (local plan around one chapter) ────────── */
 .cflow__focus { display: flex; flex-direction: column; gap: var(--space-6); }

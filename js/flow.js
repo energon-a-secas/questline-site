@@ -96,11 +96,15 @@ function renderFullMap(s) {
      </div>`
   ).join('');
 
+  // Inline control to flip the full-map preference right where the need is
+  // felt, instead of only in System. Mirrors the System "Flow map" toggle.
+  const mapBtn = (label) =>
+    `<button type="button" class="tree__fogbtn" id="flowMapToggle">${escHtml(label)}</button>`;
   const hidden = BRANCHES.length - visible.length;
   const footnote = hidden > 0
-    ? `<p class="tree__fog">${hidden} chapter${hidden === 1 ? '' : 's'} still in the fog. Clear a chapter to reveal what it unlocks, or turn on the full map in System.</p>`
+    ? `<p class="tree__fog">${hidden} chapter${hidden === 1 ? '' : 's'} still in the fog. Clear a chapter to reveal what it unlocks, or ${mapBtn('show the full map')}.</p>`
     : (s.prefs.showFullMap
-        ? `<p class="tree__fog">Full map shown. Locked chapters are dimmed until their prerequisites clear.</p>`
+        ? `<p class="tree__fog">Full map shown, locked chapters dimmed until their prerequisites clear. ${mapBtn('Back to reveal-as-you-go')}.</p>`
         : '');
 
   const lead = s.prefs.showFullMap

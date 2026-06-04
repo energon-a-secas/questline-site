@@ -42,14 +42,13 @@ function nodeCard(s, branch, { cursored = false, ghost = false } = {}) {
   const meta = locked
     ? `<span class="tnode__lock">${icon('lock', 13)} ${escHtml(prereqNames.join(' + ') || 'Locked')}</span>`
     : `<span class="tnode__count">${done}/${total}</span>`;
-  // Every node opens its own focus view (its local map), so clicking a node
-  // on the full map reveals where it sits and what it leads to, rather than
-  // jumping straight into Chapters. Ghost (focus-map) nodes do the same, even
-  // when locked, so you can plan ahead. The one exception: a locked node on
-  // the full map can never appear (reveal-as-you-go hides it), so all full-map
-  // nodes are focusable links.
-  const tag = (ghost && locked) || !locked ? 'a' : 'div';
-  const href = tag === 'a' ? `href="#flow/${branch.id}"` : '';
+  // Every node opens its own focus view (its local map), so clicking any node
+  // reveals where it sits and what it leads to, rather than jumping straight
+  // into Chapters. Locked nodes are focusable too (on the focus map's ghost
+  // rows, and on the full map when the "show full map" preference reveals them)
+  // so you can plan ahead; the focus view explains the prerequisites.
+  const tag = 'a';
+  const href = `href="#flow/${branch.id}"`;
   const label = locked
     ? `${branch.title}, chapter ${chapterNo(branch)}: locked, requires ${prereqNames.join(' and ')}`
     : `${branch.title}, chapter ${chapterNo(branch)}: ${status}, ${done} of ${total} skills`;
@@ -99,12 +98,17 @@ function renderFullMap(s) {
 
   const hidden = BRANCHES.length - visible.length;
   const footnote = hidden > 0
-    ? `<p class="tree__fog">${hidden} chapter${hidden === 1 ? '' : 's'} still in the fog. Clear a chapter to reveal what it unlocks.</p>`
-    : '';
+    ? `<p class="tree__fog">${hidden} chapter${hidden === 1 ? '' : 's'} still in the fog. Clear a chapter to reveal what it unlocks, or turn on the full map in System.</p>`
+    : (s.prefs.showFullMap
+        ? `<p class="tree__fog">Full map shown. Locked chapters are dimmed until their prerequisites clear.</p>`
+        : '');
 
+  const lead = s.prefs.showFullMap
+    ? 'The whole path is shown; dimmed chapters unlock as you clear their prerequisites.'
+    : 'Clear a chapter to reveal the paths that branch from it.';
   const body = `
     ${screenTitle('Flow', 'Unlock Map')}
-    ${rankPanel(s, 'Clear a chapter to reveal the paths that branch from it.')}
+    ${rankPanel(s, lead)}
     <div class="tree" role="list">
       <svg class="tree__wires" aria-hidden="true" preserveAspectRatio="none"></svg>
       <div class="tree__rows">${rows}</div>

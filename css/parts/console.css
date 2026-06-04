@@ -467,7 +467,10 @@
 }
 .cband::before {
   content: ""; position: absolute; inset: 1px; z-index: 0;
-  background: var(--surface-1); clip-path: var(--cband-poly); pointer-events: none;
+  /* Opaque panel fill (not the near-transparent --surface-1) so the accent
+     rim stays a 1px edge instead of bleeding through as a solid block — keeps
+     the band text on dark navy and AA-legible, like every other faceted panel. */
+  background: var(--dbh-panel); clip-path: var(--cband-poly); pointer-events: none;
 }
 .cband > * { position: relative; z-index: 1; }
 .cband--active { --cband-rim: var(--accent); }

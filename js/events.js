@@ -7,7 +7,7 @@ import { showToast, showActionToast, debounce } from './utils.js';
 import {
   state, viewFromHash, intelFromHash, flowFocusFromHash, toggleNode, setBranchDone,
   resetProgress, restoreProgress, isBranchComplete, branchProgress,
-  overallPercent, rankFor, setKeyboardNav, setShiftsRead,
+  overallPercent, rankFor, setKeyboardNav, setShiftsRead, setShowFullMap,
 } from './state.js';
 import { BRANCHES, BRANCH_BY_ID, INTEL, INTEL_BY_ID } from './data.js';
 import { openConfirm } from './modal.js';
@@ -75,6 +75,9 @@ export function bindEvents(s) {
 
     const keynavToggle = e.target.closest('#keynavToggle');
     if (keynavToggle) { onToggleKeynav(s); return; }
+
+    const fullMapToggle = e.target.closest('#fullMapToggle');
+    if (fullMapToggle) { setShowFullMap(s, !s.prefs.showFullMap); rerenderActive(s); return; }
 
     // Six key shifts: open the focused reading popup (also marks them read);
     // the read-check toggles the read state on its own.

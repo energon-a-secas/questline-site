@@ -183,14 +183,16 @@ export const TOTAL_NODES = BRANCHES.reduce((n, b) => n + b.nodes.length, 0);
 
 // ── Console (NieR-style game interface) ────────────────────
 
-/** Top tab bar. `view` is the hash route; 'flow' jumps to the flowchart. */
+/** Top tab bar. `view` is the hash route; 'flow' jumps to the flowchart.
+ *  `hint` is a plain-language gloss for the game-styled label, surfaced as the
+ *  tab's tooltip and screen-reader name so "Intel" reads as "the glossary". */
 export const TABS = [
-  { id: 'brief',    label: 'Brief',    icon: 'book'        },
-  { id: 'chapters', label: 'Chapters', icon: 'layer-group' },
-  { id: 'priority', label: 'Priority', icon: 'chart-bar'   },
-  { id: 'intel',    label: 'Intel',    icon: 'atlas'       },
-  { id: 'flow',     label: 'Flow',     icon: 'code-branch' },
-  { id: 'system',   label: 'System',   icon: 'cog'         },
+  { id: 'brief',    label: 'Brief',    icon: 'book',        hint: 'Overview' },
+  { id: 'chapters', label: 'Chapters', icon: 'layer-group', hint: 'Onboarding path' },
+  { id: 'priority', label: 'Priority', icon: 'chart-bar',   hint: 'Ranked backlog' },
+  { id: 'intel',    label: 'Intel',    icon: 'atlas',       hint: 'Field glossary' },
+  { id: 'flow',     label: 'Flow',     icon: 'code-branch', hint: 'Chapter map' },
+  { id: 'system',   label: 'System',   icon: 'cog',         hint: 'Save and settings' },
 ];
 
 /** The six key shifts, shown on the Brief tab. */

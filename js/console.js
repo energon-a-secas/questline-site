@@ -48,8 +48,12 @@ function tabBar(active) {
   const items = TABS.map(t => {
     const href = t.id === 'flow' ? '#flow' : `#${t.id}`;
     const isActive = t.id === active;
+    // The tooltip + aria-label gloss the game label with plain language
+    // ("Intel — Field glossary") so the section's purpose is discoverable.
+    const aria = t.hint ? `${t.label}: ${t.hint}` : t.label;
     return `
       <a class="ctab ${isActive ? 'ctab--active' : ''}" href="${href}" data-tab="${t.id}"
+        title="${escHtml(aria)}" aria-label="${escHtml(aria)}"
         ${isActive ? 'aria-current="page"' : ''}>
         <span class="ctab__icon">${icon(t.icon, 18)}</span>
         <span class="ctab__label">${escHtml(t.label)}</span>
@@ -433,6 +437,7 @@ export function renderSystem(s) {
   const pct = overallPercent(s);
   const splashOn = splashPref() === 'always';
   const keyOn = s.prefs.keyboardNav;
+  const mapOn = s.prefs.showFullMap;
   const body = `
     ${screenTitle('System', 'Save & About')}
     <div class="csystem">
@@ -454,6 +459,14 @@ export function renderSystem(s) {
               role="switch" aria-checked="${keyOn}">
               <span class="ctoggle__track"><span class="ctoggle__thumb"></span></span>
               <span class="ctoggle__state">${keyOn ? 'Arrows move' : 'Off'}</span>
+            </button>
+          </li>
+          <li>
+            <span>Flow map</span>
+            <button type="button" class="ctoggle ${mapOn ? 'is-on' : ''}" id="fullMapToggle"
+              role="switch" aria-checked="${mapOn}">
+              <span class="ctoggle__track"><span class="ctoggle__thumb"></span></span>
+              <span class="ctoggle__state">${mapOn ? 'Show full map' : 'Reveal as you go'}</span>
             </button>
           </li>
         </ul>

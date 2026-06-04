@@ -43,7 +43,7 @@ Questline turns a roadmap and prioritization operating model into a video-game c
 - **Priority** -- priority bands, the ranked initiative list, and your rank ladder
 - **Intel** -- a searchable field glossary of every key term, master/detail
 - **Flow** -- a living chapter map that reveals as you clear work; click any node to focus its local plan
-- **System** -- save management, a title-screen toggle, a keyboard-controls toggle, an about panel, and a hidden friend
+- **System** -- save management, toggles for the title screen, keyboard controls, and the Flow map reveal, an about panel, and a hidden friend
 
 ---
 
@@ -70,7 +70,8 @@ Questline turns a roadmap and prioritization operating model into a video-game c
 - **Full keyboard control** -- arrow keys move a cursor through lists, skills, and the map; `Enter` opens or toggles; hold `Enter` clears a chapter; `Q`/`E` cycle the tabs. A System toggle turns keyboard movement off for mouse-only use, and the hint bar follows it
 - **Quick menu** -- hold `Esc`, point with the arrow keys or mouse, release to jump to Brief, Chapters, Priority, or Flow
 - **First-run coach** -- a one-time card teaches the keyboard model and quick menu, then never shows again
-- **Reveal-as-you-go map** -- the Flow map starts in fog and grows as you clear chapters; locked future chapters stay hidden until you unlock them, then ease into view
+- **Reveal-as-you-go map** -- the Flow map starts in fog and grows as you clear chapters; locked future chapters stay hidden until you unlock them, then ease into view. A System toggle switches to a full map that shows the whole path at once, with locked chapters dimmed, for learners who want the overview first
+- **Plain-language tab tooltips** -- each game-styled tab carries a tooltip and screen-reader gloss (Intel is the field glossary, Flow is the chapter map) so its purpose is discoverable
 - **Focus a chapter** -- click any node on the map to focus its local plan: what it requires above, what it unlocks below, and a preview of its skills
 - **Jargon tooltips** -- glossary terms in the copy are underlined; hover or focus one for a definition popover, click to open it in Intel
 - **Complete in one move** -- a master toggle in the chapter header marks every skill done and stamps a cleared seal; on hover it zooms slightly and a glow sweeps across it; clearing it again asks first

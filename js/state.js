@@ -20,6 +20,7 @@ export const state = {
   prefs: {
     keyboardNav: true,   // arrow/Q-E/Enter movement; users can switch it off
     shiftsRead: false,   // has the six-shifts reading popup been acknowledged
+    showFullMap: false,  // Flow: reveal all chapters (locked dimmed) vs fog-of-war
   },
   // Transient cursor/selection — never persisted. Survives the innerHTML
   // re-render because it lives here, not in the live DOM. Keyboard and mouse
@@ -94,6 +95,12 @@ export function setKeyboardNav(s, on) {
 /** Mark the six-shifts briefing read (or unread) and persist. */
 export function setShiftsRead(s, read) {
   s.prefs.shiftsRead = !!read;
+  savePrefs(s);
+}
+
+/** Toggle the Flow full-map reveal (vs fog-of-war) and persist. */
+export function setShowFullMap(s, on) {
+  s.prefs.showFullMap = !!on;
   savePrefs(s);
 }
 
@@ -247,8 +254,11 @@ export function isFlowVisible(s, branchId) {
   return isBranchUnlocked(s, branchId);
 }
 
-/** Branch ids currently revealed on the full map, in flow order. */
+/** Branch ids currently revealed on the full map, in flow order. With the
+ *  showFullMap preference on, every chapter is shown (locked ones dimmed);
+ *  otherwise it is fog-of-war: only unlocked chapters appear. */
 export function visibleFlowOrder(s) {
+  if (s.prefs.showFullMap) return flowOrder();
   return flowOrder().filter(id => isFlowVisible(s, id));
 }
 

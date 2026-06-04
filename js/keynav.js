@@ -11,7 +11,8 @@
 // hold-Esc quick menu owns the keyboard while open; this stands down.
 
 import { state, TAB_IDS, viewFromHash, wrapIndex, visibleFlowOrder, focusOrder, isBranchUnlocked, toggleNode, isBranchComplete } from './state.js';
-import { BRANCHES, BRANCH_BY_ID, INTEL } from './data.js';
+import { BRANCHES, BRANCH_BY_ID } from './data.js';
+import { intelMatches } from './console.js';
 import { rerenderActive } from './render.js';
 import { isModalOpen } from './modal.js';
 import { isQuickMenuOpen } from './quickmenu.js';
@@ -36,6 +37,13 @@ function active(el) {
 
 function onKeyDown(e) {
   if (isSplashOpen() || isModalOpen() || isQuickMenuOpen() || isCoachOpen() || active(document.activeElement)) return;
+  // "/" is a global search shortcut: jump to Intel and focus its search box.
+  // It works regardless of the keyboard-movement opt-out, since it is an
+  // explicit shortcut rather than passive cursor driving.
+  if (e.key === '/') { e.preventDefault(); focusGlossarySearch(); return; }
+  // Opt-out: with keyboard movement disabled, all arrow/Q-E/Enter driving is
+  // silent. Mouse and the deliberately-summoned hold-Esc quick menu still work.
+  if (!state.prefs.keyboardNav) return;
   const s = state;
 
   // Tab cycling works on every screen — never conflicts with a list.
@@ -44,7 +52,7 @@ function onKeyDown(e) {
 
   switch (s.view) {
     case 'chapters': return chaptersKey(s, e);
-    case 'intel':    return listKey(s, e, INTEL, openIntel);
+    case 'intel':    return intelKey(s, e);
     case 'flow':     return flowKey(s, e);
   }
 }
@@ -63,6 +71,24 @@ function onKeyUp(e) {
   holdFired = false;
 }
 
+/**
+ * Global "/" shortcut: go to Intel (if not already there) and focus the
+ * glossary search box. When a route change is needed the input only exists
+ * after the next render, so focus is deferred a frame.
+ */
+function focusGlossarySearch() {
+  const focusBox = () => {
+    const box = document.getElementById('intelSearch');
+    if (box) { box.focus(); box.select(); }
+  };
+  if (state.view !== 'intel') {
+    location.hash = '#intel';
+    requestAnimationFrame(() => requestAnimationFrame(focusBox));
+  } else {
+    focusBox();
+  }
+}
+
 // ── Tab cycling ────────────────────────────────────────────
 
 function cycleTab(s, dir) {
@@ -74,24 +100,24 @@ function cycleTab(s, dir) {
   location.hash = next === 'flow' ? '#flow' : `#${next}`;
 }
 
-// ── Generic master-list arrow nav (Intel) ──────────────────
+// ── Intel master-list arrow nav (over the filtered matches) ─
 
-function listKey(s, e, items, open) {
+function intelKey(s, e) {
+  // Arrow nav walks the currently-visible (filtered) terms, so it agrees with
+  // what the search box is showing. Selection deep-links via the hash, which
+  // the events layer patches in place (no scroll-to-top).
+  const items = intelMatches(s.ui.intelQuery);
+  if (!items.length) return;
+  const cur = Math.max(0, items.findIndex(t => t.id === s.ui.intelSel));
   if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
     e.preventDefault();
     const dir = e.key === 'ArrowDown' ? 1 : -1;
-    s.ui.rowCursor = wrapIndex(s.ui.rowCursor + dir, items.length);
-    open(s, items[s.ui.rowCursor].id);
+    location.hash = `#intel/${items[wrapIndex(cur + dir, items.length)].id}`;
   } else if (e.key === 'Home') {
-    e.preventDefault(); s.ui.rowCursor = 0; open(s, items[0].id);
+    e.preventDefault(); location.hash = `#intel/${items[0].id}`;
   } else if (e.key === 'End') {
-    e.preventDefault(); s.ui.rowCursor = items.length - 1; open(s, items[s.ui.rowCursor].id);
+    e.preventDefault(); location.hash = `#intel/${items[items.length - 1].id}`;
   }
-}
-
-function openIntel(s, id) {
-  // Deep-link so back/share work, like a click does.
-  location.hash = `#intel/${id}`;
 }
 
 // ── Chapters: list region + detail (skills) region ─────────

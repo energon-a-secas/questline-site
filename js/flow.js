@@ -154,10 +154,10 @@ function renderFocusMap(s, branchId) {
 
   const upstream = parents.length
     ? `<h4 class="cflow__relh">Requires</h4>${focusRow(s, parents, cursorId, 'parents')}
-       <div class="cflow__link" aria-hidden="true">${icon('cycle', 18)}</div>`
+       <div class="cflow__link" aria-hidden="true">${icon('arrow-circle-down', 18)}</div>`
     : '';
   const downstream = children.length
-    ? `<div class="cflow__link" aria-hidden="true">${icon('cycle', 18)}</div>
+    ? `<div class="cflow__link" aria-hidden="true">${icon('arrow-circle-down', 18)}</div>
        <h4 class="cflow__relh">Unlocks</h4>${focusRow(s, children, cursorId, 'children')}`
     : `<p class="cflow__terminal">No further chapters branch from here.</p>`;
 
@@ -165,7 +165,7 @@ function renderFocusMap(s, branchId) {
     ${screenTitle(branch.title, `Chapter ${chapterNo(branch)}`)}
     <div class="cflow__focus">
       <div class="toolbar cflow__focusbar">
-        <a class="btn btn--ghost btn--sm" href="#flow">${icon('layers', 14)} Full map</a>
+        <a class="btn btn--ghost btn--sm" href="#flow">${icon('th-large', 14)} Full map</a>
         ${unlocked
           ? `<a class="btn btn--primary btn--sm" href="#${branch.id}">Open in Chapters</a>`
           : ''}

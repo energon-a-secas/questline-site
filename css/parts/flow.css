@@ -1,0 +1,243 @@
+/* ════════════════════════════════════════════════════════════
+   Questline — Detroit: Become Human style chapter flowchart
+   ════════════════════════════════════════════════════════════ */
+
+:root {
+  /* One "active/lit" blue across the whole product (was a split of
+     #41c4ff and #2aa8ff for the same semantic). Aliased to --accent. */
+  --dbh-cyan: var(--accent);
+  --dbh-cyan-soft: var(--accent-soft);
+  --dbh-cyan-glow: var(--accent-glow);
+  --dbh-panel: rgba(11,22,40,.80);
+  --dbh-panel-2: rgba(16,30,54,.92);
+  --dbh-edge: rgba(130,180,225,.28);
+  --dbh-done: #58e0a8;
+  /* One progress-bar fill, used by every progress widget. */
+  --qprog-fill: linear-gradient(90deg, var(--accent), var(--accent-bright));
+}
+
+/* Faceted, slightly tilted background plates behind everything */
+body::before {
+  content: "";
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  /* Calmer two-layer wash: a faint corner glow each side, no hatching lines
+     behind text (the old 115deg/25deg stripes added noise under copy). */
+  background:
+    radial-gradient(120% 90% at 88% -10%, rgba(47,217,255,.045) 0%, transparent 46%),
+    radial-gradient(120% 90% at 8% 108%, rgba(176,21,176,.05) 0%, transparent 48%);
+  /* Promote to its own GPU layer so the fixed plate is not repainted on scroll. */
+  transform: translateZ(0);
+  will-change: transform;
+}
+main#main, .header-bar { position: relative; z-index: 1; }
+
+/* Widescreen console: fill the canvas instead of a centered 960px column. */
+#app { max-width: min(1400px, 92vw); width: 100%; margin: 0 auto; padding: var(--space-6); }
+
+/* ── Flowchart ─────────────────────────────────────────────── */
+.tree { position: relative; padding: var(--space-2) 0; }
+.tree__wires {
+  position: absolute; inset: 0; z-index: 0;
+  overflow: visible; pointer-events: none;
+}
+.wire { fill: none; stroke-width: 1.5; }
+.wire--dim { stroke: var(--dbh-edge); }
+.wire--lit { stroke: var(--dbh-cyan); filter: drop-shadow(0 0 4px var(--dbh-cyan-glow)); }
+.wire-node.wire--dim { fill: rgba(120,170,210,.5); }
+.wire-node.wire--lit { fill: var(--dbh-cyan); filter: drop-shadow(0 0 4px var(--dbh-cyan-glow)); }
+
+.tree__rows { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 52px; }
+.tree__row {
+  display: flex; flex-wrap: wrap; justify-content: center;
+  gap: var(--space-6); width: 100%;
+}
+
+/* Angular parallelogram chapter node */
+.tnode {
+  position: relative; display: block;
+  width: 246px;
+  text-decoration: none; color: var(--text-primary);
+  transition: transform var(--dur) var(--ease-out-quint), filter var(--dur);
+}
+.tnode__inner {
+  display: block; position: relative;
+  /* Closed bevel: the rim colour is the box background, an inset fill re-paints
+     the interior, so the sheared corners are fully stroked (not torn open). */
+  --tnode-poly: polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px);
+  --tnode-rim: var(--dbh-edge);
+  background: var(--tnode-rim);
+  clip-path: var(--tnode-poly);
+  transition: background var(--dur), box-shadow var(--dur);
+}
+.tnode__inner::before {
+  content: ""; position: absolute; inset: 1px; z-index: 0;
+  background: var(--dbh-panel-2); clip-path: var(--tnode-poly);
+  pointer-events: none;
+}
+.tnode__frame, .tnode__bar { position: relative; z-index: 1; }
+.tnode__frame {
+  position: relative; display: flex; align-items: center; justify-content: center;
+  height: 92px;
+  background:
+    radial-gradient(120% 140% at 80% 0%, rgba(47,217,255,.10), transparent 60%),
+    rgba(255,255,255,.02);
+  border-bottom: 1px solid var(--dbh-edge);
+  overflow: hidden;
+}
+.tnode__icon { color: var(--text-muted); transition: color var(--dur), filter var(--dur); }
+.tnode__no {
+  position: absolute; top: 8px; left: 12px;
+  font-size: var(--text-xs); font-weight: 600; letter-spacing: .18em;
+  color: rgba(255,255,255,.32);
+  font-variant-numeric: tabular-nums;
+}
+.tnode__seal {
+  position: absolute; top: 8px; right: 12px;
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 22px; height: 22px; color: #04210f; background: var(--dbh-done);
+  clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);
+  box-shadow: 0 0 10px rgba(52,211,153,.5);
+}
+.tnode__bar {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--space-3);
+  padding: 11px 14px;
+}
+.tnode__title {
+  font-size: var(--text-base); font-weight: 600;
+  letter-spacing: .01em; color: #fff;
+}
+.tnode__count {
+  font-size: var(--text-xs); font-weight: 600; font-variant-numeric: tabular-nums;
+  color: var(--dbh-cyan); letter-spacing: .08em;
+}
+.tnode__lock {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 10px; text-transform: uppercase; letter-spacing: .1em;
+  color: var(--text-muted); text-align: right;
+}
+.tnode__lock svg { flex-shrink: 0; opacity: .75; }
+
+/* Node states */
+.tnode--available:hover,
+.tnode--in-progress:hover,
+.tnode--complete:hover { transform: translateY(-3px); }
+.tnode--available:hover .tnode__inner,
+.tnode--in-progress:hover .tnode__inner,
+.tnode--complete:hover .tnode__inner {
+  --tnode-rim: var(--dbh-cyan);
+  box-shadow: 0 0 0 1px var(--dbh-cyan-soft), 0 14px 34px rgba(2,6,23,.6);
+}
+
+/* State now reads from the bevel rim colour, not a side stripe. */
+.tnode--available .tnode__inner,
+.tnode--in-progress .tnode__inner { --tnode-rim: var(--dbh-cyan); }
+.tnode--available .tnode__icon,
+.tnode--in-progress .tnode__icon {
+  color: var(--dbh-cyan); filter: drop-shadow(0 0 6px var(--dbh-cyan-glow));
+}
+
+.tnode--complete .tnode__inner { --tnode-rim: var(--dbh-done); }
+.tnode--complete .tnode__icon { color: var(--dbh-done); filter: drop-shadow(0 0 6px rgba(52,211,153,.5)); }
+.tnode--complete .tnode__title { color: rgba(255,255,255,.82); }
+.tnode--complete .tnode__count { color: var(--dbh-done); }
+
+.tnode--locked { filter: grayscale(.6) brightness(.7); cursor: not-allowed; }
+.tnode--locked .tnode__inner { --tnode-rim: rgba(120,170,210,.16); }
+.tnode--locked .tnode__icon { opacity: .55; }
+
+/* ── Chapter detail (inside the Chapters tab) ──────────────── */
+.branch-progress { display: flex; align-items: center; gap: var(--space-3); }
+.branch-progress__bar {
+  flex: 1; height: 6px; background: rgba(255,255,255,.07); overflow: hidden;
+  clip-path: polygon(0 0, 100% 0, calc(100% - 4px) 100%, 0 100%);
+}
+.branch-progress__bar div {
+  height: 100%; width: 100%;
+  background: var(--qprog-fill);
+  box-shadow: 0 0 10px var(--accent-glow);
+  /* Fill is full-width and scaled from the left, so the bar animates via
+     transform (compositor) rather than width (layout). */
+  transform-origin: left center;
+  transition: transform .4s var(--ease-out-quint);
+}
+.branch-progress__count {
+  font-size: var(--text-xs); color: var(--accent);
+  font-variant-numeric: tabular-nums; white-space: nowrap; letter-spacing: .08em;
+}
+
+.skills { display: flex; flex-direction: column; gap: var(--space-3); }
+.skill {
+  position: relative;
+  --skill-poly: polygon(10px 0, 100% 0, 100% 100%, 0 100%, 0 10px);
+  --skill-rim: var(--dbh-edge);
+  --skill-fill: var(--dbh-panel);
+  display: flex; gap: var(--space-4); padding: var(--space-4);
+  background: var(--skill-rim);
+  clip-path: var(--skill-poly);
+  transition: background var(--dur);
+}
+.skill::before {
+  content: ""; position: absolute; inset: 1px; z-index: 0;
+  background: var(--skill-fill); clip-path: var(--skill-poly);
+  pointer-events: none; transition: background var(--dur);
+}
+.skill > * { position: relative; z-index: 1; }
+.skill:hover { --skill-rim: var(--dbh-cyan); }
+.skill--done {
+  --skill-rim: var(--dbh-done);
+  --skill-fill: linear-gradient(160deg, rgba(52,211,153,.08), var(--dbh-panel));
+}
+/* Closed-bevel ring: bg is the rim, an inset ::before re-fills the interior,
+   so the faceted corners are fully stroked (a border + clip leaves the
+   diagonal torn). The interior fill matches the card behind it when empty. */
+.skill__check {
+  --check-poly: polygon(5px 0, 100% 0, 100% calc(100% - 5px), calc(100% - 5px) 100%, 0 100%, 0 5px);
+  flex-shrink: 0; width: 34px; height: 34px;
+  display: inline-flex; align-items: center; justify-content: center;
+  cursor: pointer; color: transparent; position: relative;
+  background: var(--border-strong);
+  clip-path: var(--check-poly);
+  transition: background var(--dur),
+    color var(--dur), box-shadow var(--dur), transform var(--dur-fast) var(--ease-out-quint);
+}
+.skill__check::before {
+  content: ""; position: absolute; inset: 1.5px; z-index: 0;
+  background: var(--dbh-panel); clip-path: var(--check-poly);
+  transition: background var(--dur);
+}
+.skill__check > svg { position: relative; z-index: 1; }
+/* Pad the hit area out to the 44px touch minimum without growing the glyph. */
+.skill__check::after { content: ""; position: absolute; inset: -5px; z-index: 2; }
+.skill__check:hover { background: var(--dbh-cyan); }
+.skill__check:active { transform: scale(.9); }
+.skill--done .skill__check {
+  background: var(--dbh-done); color: #04210f;
+  box-shadow: 0 0 12px rgba(52,211,153,.4);
+}
+.skill--done .skill__check::before { background: var(--dbh-done); }
+.skill__main { flex: 1; min-width: 0; }
+.skill__head { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; }
+.skill__title { font-weight: 600; font-size: var(--text-lg); letter-spacing: .01em; }
+.skill__tag {
+  font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .14em;
+  color: var(--dbh-cyan); padding: 3px 9px; background: var(--dbh-cyan-soft);
+  clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);
+}
+.skill__body { margin-top: 6px; color: var(--text-secondary); font-size: var(--text-base); line-height: 1.6; }
+.skill__list { margin: 8px 0 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 6px; }
+.skill__list li {
+  font-size: var(--text-sm); color: var(--text-secondary); padding: 4px 11px;
+  background: rgba(255,255,255,.05); border: 1px solid var(--dbh-edge);
+}
+
+.branch-actions { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+
+/* ── Responsive ────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  #app { padding: var(--space-4); }
+  .tnode { width: 100%; max-width: 320px; }
+  .tree__rows { gap: 40px; }
+  .tree__row { gap: var(--space-4); }
+  .tree__wires { display: none; }      /* stacked layout, wires would be noise */
+}
+

@@ -14,6 +14,7 @@ import {
 } from './console.js';
 import { renderFlow } from './flow.js';
 import { markGlossary } from './glossary.js';
+import { mountBanners } from './banners.js';
 
 const app = () => document.getElementById('app');
 const SVGNS = 'http://www.w3.org/2000/svg';
@@ -40,6 +41,8 @@ function viewHtml(s) {
 /** Post-write passes shared by every render path. */
 function afterWrite(s) {
   markGlossary(app());
+  // The Brief screen hosts the featured banner carousel; bind its controls.
+  if (s.view === 'brief') mountBanners(s);
   // Only the full map carries the SVG connector overlay; the focus map lays
   // out its own short links inline, so skip wires when a chapter is focused.
   if (s.view === 'flow' && !s.ui.flowFocus) {

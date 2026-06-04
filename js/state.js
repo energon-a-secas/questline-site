@@ -5,6 +5,9 @@
 import { BRANCHES, BRANCH_BY_ID, TOTAL_NODES, RANKS, TABS, INTEL, INTEL_BY_ID } from './data.js';
 
 const STORAGE_KEY = 'questline-v1';
+// Preferences live under their own key so toggling a setting never rewrites
+// (or risks corrupting) the progress save. Both are plain JSON in localStorage.
+const PREFS_KEY = 'questline-prefs';
 
 /** Console tab ids that render inside the game shell (in tab-bar order). */
 export const TAB_IDS = TABS.map(t => t.id);
@@ -12,12 +15,19 @@ export const TAB_IDS = TABS.map(t => t.id);
 export const state = {
   done: {},          // { [nodeId]: true } — completed skills
   view: 'brief',     // 'flow' (flowchart) | tab id | branchId
+  // Persisted preferences (questline-prefs). keyboardNav drives the System
+  // opt-out; shiftsRead marks the six-shifts briefing as read.
+  prefs: {
+    keyboardNav: true,   // arrow/Q-E/Enter movement; users can switch it off
+    shiftsRead: false,   // has the six-shifts reading popup been acknowledged
+  },
   // Transient cursor/selection — never persisted. Survives the innerHTML
   // re-render because it lives here, not in the live DOM. Keyboard and mouse
   // share one cursor per surface so the two input modes never disagree.
   ui: {
     chapterSel: null,  // chapter id open in the Chapters detail panel
     intelSel: null,    // term id open in the Intel detail panel
+    intelQuery: '',    // live glossary search filter (Intel tab)
     region: 'list',    // 'list' | 'detail' — which side owns the cursor
     rowCursor: 0,      // index into the active master list
     skillCursor: 0,    // index into the open chapter's nodes (detail region)
@@ -42,6 +52,7 @@ export function loadSaved(s) {
   } catch {
     loadError = true;   // corrupted data — start fresh, but tell the user
   }
+  loadPrefs(s);
   // View always derives from the URL hash, not storage.
   s.view = viewFromHash();
   s.ui.intelSel = intelFromHash();
@@ -54,6 +65,36 @@ export function save(s) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ done: s.done }));
   } catch { /* quota exceeded or private browsing */ }
+}
+
+/** Merge stored preferences over the defaults (missing keys keep defaults). */
+export function loadPrefs(s) {
+  try {
+    const raw = localStorage.getItem(PREFS_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object') Object.assign(s.prefs, parsed);
+    }
+  } catch { /* corrupted prefs — keep the defaults */ }
+}
+
+/** Persist preferences. */
+export function savePrefs(s) {
+  try {
+    localStorage.setItem(PREFS_KEY, JSON.stringify(s.prefs));
+  } catch { /* quota exceeded or private browsing */ }
+}
+
+/** Toggle keyboard movement on/off and persist. */
+export function setKeyboardNav(s, on) {
+  s.prefs.keyboardNav = !!on;
+  savePrefs(s);
+}
+
+/** Mark the six-shifts briefing read (or unread) and persist. */
+export function setShiftsRead(s, read) {
+  s.prefs.shiftsRead = !!read;
+  savePrefs(s);
 }
 
 /** Wipe all progress. */
@@ -179,16 +220,12 @@ export function rankFor(percent) {
 }
 
 /**
- * Is an Intel term unlocked? A term unlocks once the chapter that teaches
- * it (its `chapter` branch) is complete. Terms with no chapter are always
- * available. This makes the "Intel unlocked" reward real: the codex genuinely
- * fills in as you clear chapters, rather than being visible from the start.
+ * Is an Intel term available? The glossary is open: every term is readable
+ * from the start so people can navigate straight to a definition. (Earlier the
+ * codex was gated behind chapter completion; that gate is gone by request.)
  */
 export function isIntelUnlocked(s, termId) {
-  const term = INTEL_BY_ID[termId];
-  if (!term) return false;
-  if (!term.chapter) return true;
-  return isBranchComplete(s, term.chapter);
+  return !!INTEL_BY_ID[termId];
 }
 
 /** Intel terms a chapter teaches that just became unlocked by clearing it. */

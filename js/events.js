@@ -7,11 +7,14 @@ import { showToast, showActionToast, debounce } from './utils.js';
 import {
   state, viewFromHash, intelFromHash, flowFocusFromHash, toggleNode, setBranchDone,
   resetProgress, restoreProgress, isBranchComplete, branchProgress,
-  overallPercent, rankFor,
+  overallPercent, rankFor, setKeyboardNav, setShiftsRead,
 } from './state.js';
-import { BRANCHES, BRANCH_BY_ID } from './data.js';
+import { BRANCHES, BRANCH_BY_ID, INTEL, INTEL_BY_ID } from './data.js';
 import { openConfirm } from './modal.js';
 import { setSplashPref, splashPref } from './splash.js';
+import { openShiftsReader } from './banners.js';
+import { intelDetail, intelListItems, intelMatches } from './console.js';
+import { markGlossary } from './glossary.js';
 import { revealKiwi } from './kiwi.js';
 import { showGlossPopover, hideGlossPopover } from './glossary.js';
 import { celebrateRankUp, animateProgress, intelUnlockedToast } from './celebrate.js';
@@ -26,9 +29,18 @@ export function bindEvents(s) {
   window.addEventListener('hashchange', () => {
     const prev = s.view;
     const prevFocus = s.ui.flowFocus;
+    const prevIntel = s.ui.intelSel;
     s.view = viewFromHash();
     s.ui.intelSel = intelFromHash() || s.ui.intelSel;
     s.ui.flowFocus = s.view === 'flow' ? flowFocusFromHash() : null;
+    // Staying on the Intel tab and only changing the selected term: patch the
+    // detail panel in place rather than re-rendering the whole view (which
+    // would scroll the term list back to the top). patchIntel already did the
+    // DOM work for in-app clicks; this covers back/forward and external links.
+    if (s.view === 'intel' && prev === 'intel' && s.ui.intelSel !== prevIntel) {
+      patchIntel(s, s.ui.intelSel, true);
+      return;
+    }
     // A genuine tab change, or a Flow focus change, resets the in-tab cursor.
     if (s.view !== prev || s.ui.flowFocus !== prevFocus) {
       s.ui.region = 'list';
@@ -61,6 +73,15 @@ export function bindEvents(s) {
     const splashToggle = e.target.closest('#splashToggle');
     if (splashToggle) { onToggleSplash(s); return; }
 
+    const keynavToggle = e.target.closest('#keynavToggle');
+    if (keynavToggle) { onToggleKeynav(s); return; }
+
+    // Six key shifts: open the focused reading popup (also marks them read);
+    // the read-check toggles the read state on its own.
+    if (e.target.closest('#shiftsRead')) { openShiftsReader(); rerenderActive(s); return; }
+    const shiftsCheck = e.target.closest('#shiftsCheck');
+    if (shiftsCheck) { setShiftsRead(s, !s.prefs.shiftsRead); rerenderActive(s); return; }
+
     const egg = e.target.closest('#kiwiEgg');
     if (egg) { revealKiwi(); return; }
 
@@ -78,13 +99,24 @@ export function bindEvents(s) {
       return;
     }
 
-    // Intel master/related/chapter-tag: select a term, deep-linking the hash
-    // so the back button and sharing work.
+    // Intel term: select it. When already on the Intel tab, patch just the
+    // detail panel and the row highlight in place (no full re-render, so the
+    // list does not scroll back to the top). Still update the hash so the back
+    // button and sharing work, but suppress the hashchange re-render.
     const intelRow = e.target.closest('[data-intel]');
     if (intelRow) {
-      location.hash = `#intel/${intelRow.dataset.intel}`;
+      const id = intelRow.dataset.intel;
+      if (s.view === 'intel') patchIntel(s, id);
+      else location.hash = `#intel/${id}`;
       return;
     }
+  });
+
+  // Glossary search: filter the term list live, patching only the list (and,
+  // when the current selection drops out, the detail) without a full render.
+  app.addEventListener('input', (e) => {
+    const box = e.target.closest('#intelSearch');
+    if (box) onIntelSearch(s, box.value);
   });
 
   // Glossary term tooltips: hover and keyboard focus both reveal.
@@ -208,6 +240,54 @@ function onToggleSplash(s) {
   const next = splashPref() === 'always' ? 'off' : 'always';
   setSplashPref(next);
   rerenderActive(s);
+}
+
+/** Flip the keyboard-movement preference and re-render (hints follow it). */
+function onToggleKeynav(s) {
+  setKeyboardNav(s, !s.prefs.keyboardNav);
+  rerenderActive(s);
+}
+
+/**
+ * Select an Intel term by patching only the detail panel and the row
+ * highlight, so the term list keeps its scroll position. Updates the hash for
+ * deep-linking; `fromHash` skips that write when the hash drove the change.
+ */
+function patchIntel(s, id, fromHash) {
+  if (!INTEL_BY_ID[id]) return;
+  s.ui.intelSel = id;
+  s.ui.rowCursor = INTEL.findIndex(t => t.id === id);
+  const app = document.getElementById('app');
+  const panel = app?.querySelector('#intelDetail');
+  if (panel) {
+    panel.innerHTML = intelDetail(s, INTEL_BY_ID[id]);
+    markGlossary(app);
+  }
+  app?.querySelectorAll('.crow[data-intel]').forEach(row => {
+    const on = row.dataset.intel === id;
+    row.classList.toggle('crow--active', on);
+    row.setAttribute('aria-selected', String(on));
+  });
+  if (!fromHash) {
+    // Update the hash for share/back without triggering the re-render path.
+    history.replaceState(null, '', `#intel/${id}`);
+  }
+}
+
+/**
+ * Filter the glossary list live. Patches only the list rows; if the selected
+ * term filters out, selects the first remaining match (detail follows).
+ */
+function onIntelSearch(s, value) {
+  s.ui.intelQuery = value;
+  const app = document.getElementById('app');
+  const rows = app?.querySelector('#intelRows');
+  if (rows) rows.innerHTML = intelListItems(s, s.ui.intelSel);
+  // Keep the open term valid: if it no longer matches, jump to the first hit.
+  const matches = intelMatches(value);
+  if (matches.length && !matches.some(t => t.id === s.ui.intelSel)) {
+    patchIntel(s, matches[0].id);
+  }
 }
 
 /**

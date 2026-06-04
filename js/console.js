@@ -4,18 +4,33 @@
 // body. Tabs: Brief, Chapters, Priority, Intel, System.
 
 import {
-  TABS, BRANCHES, BRANCH_BY_ID, SHIFTS, BANDS, INITIATIVES,
+  TABS, BRANCHES, BRANCH_BY_ID, BANDS, INITIATIVES,
   CEREMONIES, INTEL, ICONS, RANKS,
 } from './data.js';
 import {
-  branchProgress, branchStatus, isBranchUnlocked,
-  overallPercent, rankFor, isIntelUnlocked,
+  state, branchProgress, branchStatus, isBranchUnlocked,
+  overallPercent, rankFor,
 } from './state.js';
 import { escHtml } from './utils.js';
 import { splashPref } from './splash.js';
+import { bannerStrip, shiftsControl } from './banners.js';
+import { FA } from './icons-fa.js';
 
 // Shared chrome helpers, also used by the Flow tab (flow.js).
+// Two icon families: the hand-drawn 24x24 stroke set (ICONS) and the supplied
+// FontAwesome-style filled set (FA). FA glyphs are solid single paths on their
+// own viewBox, so they render with fill="currentColor" and inherit the theme
+// color from whatever holds them. FA is checked first; a stroke icon of the
+// same name (or a missing name) falls through to the stroke renderer.
 export function icon(name, size = 22) {
+  const fa = FA[name];
+  if (fa) {
+    return `<svg viewBox="${fa.vb}" width="${size}" height="${size}"
+      fill="currentColor" aria-hidden="true">${fa.d
+        .split('|')
+        .map(d => `<path d="${d}"/>`)
+        .join('')}</svg>`;
+  }
   const path = ICONS[name] || '';
   return `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none"
     stroke="currentColor" stroke-width="1.7" stroke-linecap="round"
@@ -36,7 +51,6 @@ function tabBar(active) {
     return `
       <a class="ctab ${isActive ? 'ctab--active' : ''}" href="${href}" data-tab="${t.id}"
         ${isActive ? 'aria-current="page"' : ''}>
-        ${isActive ? '<span class="ctab__pointer" aria-hidden="true">◄:</span>' : ''}
         <span class="ctab__icon">${icon(t.icon, 18)}</span>
         <span class="ctab__label">${escHtml(t.label)}</span>
       </a>`;
@@ -51,7 +65,13 @@ function tabBar(active) {
 
 /** Bottom status / key-hint bar. */
 function hintBar(text, hints) {
-  const keys = hints.map(h =>
+  // With keyboard movement off, drop the hints that promise disabled keys
+  // (arrows, Q/E, Enter, Backspace) and keep only the hold-Esc quick menu,
+  // which is summoned deliberately and still works.
+  const shown = state.prefs.keyboardNav
+    ? hints
+    : hints.filter(h => /esc/i.test(h.k));
+  const keys = shown.map(h =>
     `<span class="chint"><kbd>${escHtml(h.k)}</kbd> ${escHtml(h.v)}</span>`
   ).join('');
   return `
@@ -104,21 +124,13 @@ function statBlock(s) {
 }
 
 export function renderBrief(s) {
-  const shifts = SHIFTS.map(sh => `
-    <div class="cshift">
-      <span class="cshift__no">${escHtml(sh.no)}</span>
-      <div>
-        <div class="cshift__title">${escHtml(sh.title)}</div>
-        <p class="cshift__body">${escHtml(sh.body)}</p>
-      </div>
-    </div>`).join('');
-
   const ceremonies = CEREMONIES.map(c => `
     <li class="cmini"><span class="cmini__t">${escHtml(c.title)}</span>
       <span class="cmini__b">${escHtml(c.body)}</span></li>`).join('');
 
   const body = `
     ${screenTitle('Brief', 'Operating Model')}
+    ${bannerStrip(s)}
     <div class="cbrief">
       <section class="cpanel cbrief__lead">
         <p class="clead">A shared way of working: specs for features, one ranked
@@ -132,7 +144,7 @@ export function renderBrief(s) {
       </section>
       <section class="cpanel">
         <h3 class="cpanel__h">Six key shifts</h3>
-        <div class="cshifts">${shifts}</div>
+        ${shiftsControl(s)}
       </section>
       <section class="cpanel">
         <h3 class="cpanel__h">Ceremonies</h3>
@@ -167,7 +179,6 @@ export function renderChapters(s, selectedId) {
       <button type="button" class="crow ${active ? 'crow--active' : ''} ${cursored ? 'is-cursor' : ''} crow--${status}"
         data-chapter="${b.id}" ${locked ? 'data-locked="1"' : ''}
         role="option" aria-selected="${active}">
-        ${active ? '<span class="crow__caret" aria-hidden="true">◄:</span>' : ''}
         <span class="crow__no">${chapterNo(b)}</span>
         <span class="crow__name">${escHtml(b.title)}</span>
         <span class="crow__meta">${meta}</span>
@@ -339,67 +350,61 @@ export function renderIntel(s, selectedId) {
   const sel = INTEL.find(t => t.id === selectedId) || INTEL[0];
   s.ui.intelSel = sel.id;
   s.ui.rowCursor = INTEL.findIndex(t => t.id === sel.id);
-  const unlockedCount = INTEL.filter(t => isIntelUnlocked(s, t.id)).length;
-
-  const list = INTEL.map((t, i) => {
-    const active = t.id === sel.id;
-    const cursored = s.ui.region === 'list' && i === s.ui.rowCursor;
-    const locked = !isIntelUnlocked(s, t.id);
-    const meta = locked
-      ? icon('lock', 12)
-      : `<span class="crow__kind">${escHtml(t.kind)}</span>`;
-    return `
-    <button type="button" class="crow ${active ? 'crow--active' : ''} ${cursored ? 'is-cursor' : ''} ${locked ? 'crow--locked-intel' : ''}"
-      data-intel="${t.id}" role="option" aria-selected="${active}">
-      ${active ? '<span class="crow__caret" aria-hidden="true">◄:</span>' : ''}
-      <span class="crow__name">${escHtml(t.term)}</span>
-      <span class="crow__meta">${meta}</span>
-    </button>`;
-  }).join('');
-
-  const detail = intelDetail(s, sel);
 
   const body = `
     ${screenTitle('Intel', 'Field Glossary')}
     <div class="cmaster">
       <div class="cpanel clist" role="listbox" aria-label="Intel terms">
-        <div class="clist__head">Decrypted · ${unlockedCount}/${INTEL.length}</div>
-        ${list}
+        <div class="cintel__search">
+          <span class="cintel__search-icon" aria-hidden="true">${icon('search', 16)}</span>
+          <input type="search" id="intelSearch" class="cintel__search-input"
+            placeholder="Search terms — press /" aria-label="Search glossary terms"
+            autocomplete="off" value="${escHtml(s.ui.intelQuery || '')}">
+        </div>
+        <div class="clist__rows" id="intelRows">${intelListItems(s, sel.id)}</div>
       </div>
-      <div class="cpanel cdetail cintel">${detail}</div>
+      <div class="cpanel cdetail cintel" id="intelDetail">${intelDetail(s, sel)}</div>
     </div>`;
-  return shell('intel', body, intelHint(s, unlockedCount),
-    [{ k: '↑↓', v: 'Select' }, { k: 'Q/E', v: 'Tabs' }, { k: 'Esc', v: 'Menu' }]);
+  return shell('intel', body, 'Search or select a term. Press / to search from anywhere.',
+    [{ k: '/', v: 'Search' }, { k: '↑↓', v: 'Select' }, { k: 'Q/E', v: 'Tabs' }, { k: 'Esc', v: 'Menu' }]);
 }
 
-function intelHint(s, unlockedCount) {
-  return unlockedCount < INTEL.length
-    ? 'Clear the chapter that teaches a term to decrypt it.'
-    : 'Full codex. Select a term, or jump to a related one.';
+/** Terms matching the active query (term, kind, or aliases). Empty → all. */
+export function intelMatches(query) {
+  const q = (query || '').trim().toLowerCase();
+  if (!q) return INTEL.slice();
+  return INTEL.filter(t =>
+    t.term.toLowerCase().includes(q) ||
+    t.kind.toLowerCase().includes(q) ||
+    (t.aliases || []).some(a => a.toLowerCase().includes(q)));
 }
 
-/** The Intel detail panel: a locked stub until its chapter is cleared. */
-function intelDetail(s, sel) {
-  const chapter = sel.chapter ? BRANCH_BY_ID[sel.chapter] : null;
-  if (!isIntelUnlocked(s, sel.id)) {
-    return `
-      <div class="cdetail__locked">
-        <span class="cdetail__lockicon">${icon('lock', 30)}</span>
-        <h3>${escHtml(sel.term)}</h3>
-        <p>Encrypted. Clear ${chapter
-          ? `<a class="ilink" href="#${chapter.id}">${escHtml(chapter.title)}</a>`
-          : 'the relevant chapter'} to decrypt this field note.</p>
-      </div>`;
+/** The Intel master-list rows (filtered by the live query), for surgical swaps. */
+export function intelListItems(s, selectedId) {
+  const matches = intelMatches(s.ui.intelQuery);
+  if (!matches.length) {
+    return `<p class="clist__empty">No term matches that.</p>`;
   }
+  return matches.map((t) => {
+    const active = t.id === selectedId;
+    const cursored = s.ui.region === 'list' && t.id === selectedId;
+    return `
+    <button type="button" class="crow ${active ? 'crow--active' : ''} ${cursored ? 'is-cursor' : ''}"
+      data-intel="${t.id}" role="option" aria-selected="${active}">
+      <span class="crow__name">${escHtml(t.term)}</span>
+      <span class="crow__meta"><span class="crow__kind">${escHtml(t.kind)}</span></span>
+    </button>`;
+  }).join('');
+}
 
-  // Related terms become in-place selectors; locked ones stay greyed.
+/** The Intel detail panel for one term (every term is readable). */
+export function intelDetail(s, sel) {
+  const chapter = sel.chapter ? BRANCH_BY_ID[sel.chapter] : null;
+  // Related terms become in-place selectors.
   const related = (sel.see || [])
     .map(id => INTEL.find(t => t.id === id))
     .filter(Boolean)
-    .map(t => {
-      const locked = !isIntelUnlocked(s, t.id);
-      return `<button type="button" class="ctag ${locked ? 'ctag--locked' : ''}" data-intel="${t.id}">${escHtml(t.term)}</button>`;
-    })
+    .map(t => `<button type="button" class="ctag" data-intel="${t.id}">${escHtml(t.term)}</button>`)
     .join('');
 
   return `
@@ -417,7 +422,7 @@ function intelDetail(s, sel) {
       ${chapter ? `
         <div class="cintel__rail">
           <h4 class="cintel__rail-h">Learned in</h4>
-          <a class="ctag ctag--chapter" href="#${chapter.id}">${icon('tree', 14)} ${escHtml(chapter.title)}</a>
+          <a class="ctag ctag--chapter" href="#${chapter.id}">${icon('code-branch', 14)} ${escHtml(chapter.title)}</a>
         </div>` : ''}
     </div>`;
 }
@@ -427,6 +432,7 @@ function intelDetail(s, sel) {
 export function renderSystem(s) {
   const pct = overallPercent(s);
   const splashOn = splashPref() === 'always';
+  const keyOn = s.prefs.keyboardNav;
   const body = `
     ${screenTitle('System', 'Save & About')}
     <div class="csystem">
@@ -440,6 +446,14 @@ export function renderSystem(s) {
               role="switch" aria-checked="${splashOn}">
               <span class="ctoggle__track"><span class="ctoggle__thumb"></span></span>
               <span class="ctoggle__state">${splashOn ? 'On every visit' : 'Off'}</span>
+            </button>
+          </li>
+          <li>
+            <span>Keyboard controls</span>
+            <button type="button" class="ctoggle ${keyOn ? 'is-on' : ''}" id="keynavToggle"
+              role="switch" aria-checked="${keyOn}">
+              <span class="ctoggle__track"><span class="ctoggle__thumb"></span></span>
+              <span class="ctoggle__state">${keyOn ? 'Arrows move' : 'Off'}</span>
             </button>
           </li>
         </ul>

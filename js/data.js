@@ -29,6 +29,7 @@ export const ICONS = {
   boxes: '<path d="M2.97 12.92A2 2 0 0 0 2 14.63v3.24a2 2 0 0 0 .97 1.71l3 1.8a2 2 0 0 0 2.06 0L12 19v-5.5l-5-3-4.03 2.42Z"/><path d="m7 16.5-4.74-2.85M7 16.5l5-3M7 16.5v5.17"/><path d="M12 13.5V19l3.97 2.38a2 2 0 0 0 2.06 0l3-1.8a2 2 0 0 0 .97-1.71v-3.24a2 2 0 0 0-.97-1.71L17 10.5l-5 3Z"/><path d="m17 16.5-5-3M17 16.5l4.74-2.85M17 16.5v5.17"/><path d="M7.97 4.42A2 2 0 0 0 7 6.13v4.37l5 3 5-3V6.13a2 2 0 0 0-.97-1.71l-3-1.8a2 2 0 0 0-2.06 0Z"/><path d="M12 8 7.26 5.15M12 8l4.74-2.85M12 13.5V8"/>',
   // Easter egg — a little kiwi bird tucked away in System.
   kiwi: '<path d="M13.5 6.5a6.5 6.5 0 1 0 2.4 12.54"/><path d="M13.5 6.5c2.5 0 4.5 1.7 4.5 4 0 1.9-1.4 3.2-3.2 3.7"/><path d="M7.2 11 2 8.8"/><circle cx="15" cy="10.2" r=".9" fill="currentColor" stroke="none"/><path d="M10.5 19.3V21M14.5 18.8v2.4"/>',
+  search: '<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>',
 };
 
 /** Rank ladder, mapped to overall completion percentage. */
@@ -48,7 +49,7 @@ export const BRANCHES = [
   {
     id: 'foundations',
     title: 'Foundations',
-    icon: 'compass',
+    icon: 'atlas',
     tier: 0,
     prereq: [],
     tagline: 'Why the model exists',
@@ -65,7 +66,7 @@ export const BRANCHES = [
   {
     id: 'define',
     title: 'Define the Work',
-    icon: 'doc',
+    icon: 'clipboard-check',
     tier: 1,
     prereq: ['foundations'],
     tagline: 'Specs, owners, inputs',
@@ -84,7 +85,7 @@ export const BRANCHES = [
   {
     id: 'prioritize',
     title: 'Prioritize',
-    icon: 'layers',
+    icon: 'layer-group',
     tier: 1,
     prereq: ['foundations'],
     tagline: 'One ranked backlog',
@@ -103,7 +104,7 @@ export const BRANCHES = [
   {
     id: 'deliver',
     title: 'Ship & Inspect',
-    icon: 'rocket',
+    icon: 'code-branch',
     tier: 2,
     prereq: ['define'],
     tagline: 'Continuous delivery',
@@ -120,7 +121,7 @@ export const BRANCHES = [
   {
     id: 'ceremonies',
     title: 'Ceremonies',
-    icon: 'cycle',
+    icon: 'clock',
     tier: 2,
     prereq: ['prioritize'],
     tagline: 'The recurring forums',
@@ -139,7 +140,7 @@ export const BRANCHES = [
   {
     id: 'execute',
     title: 'Track & Estimate',
-    icon: 'kanban',
+    icon: 'columns',
     tier: 3,
     prereq: ['deliver', 'ceremonies'],
     tagline: 'Tracker, points, traceability',
@@ -184,12 +185,12 @@ export const TOTAL_NODES = BRANCHES.reduce((n, b) => n + b.nodes.length, 0);
 
 /** Top tab bar. `view` is the hash route; 'flow' jumps to the flowchart. */
 export const TABS = [
-  { id: 'brief',    label: 'Brief',    icon: 'brief'  },
-  { id: 'chapters', label: 'Chapters', icon: 'tree'   },
-  { id: 'priority', label: 'Priority', icon: 'rank'   },
-  { id: 'intel',    label: 'Intel',    icon: 'intel'  },
-  { id: 'flow',     label: 'Flow',     icon: 'compass' },
-  { id: 'system',   label: 'System',   icon: 'gear'   },
+  { id: 'brief',    label: 'Brief',    icon: 'book'        },
+  { id: 'chapters', label: 'Chapters', icon: 'layer-group' },
+  { id: 'priority', label: 'Priority', icon: 'chart-bar'   },
+  { id: 'intel',    label: 'Intel',    icon: 'atlas'       },
+  { id: 'flow',     label: 'Flow',     icon: 'code-branch' },
+  { id: 'system',   label: 'System',   icon: 'cog'         },
 ];
 
 /** The six key shifts, shown on the Brief tab. */
@@ -263,6 +264,71 @@ export const INTEL = [
 
 /** Flat lookup by intel term id. */
 export const INTEL_BY_ID = Object.fromEntries(INTEL.map(t => [t.id, t]));
+
+/**
+ * Featured banners for the home (Brief) screen news board, in the spirit of a
+ * game's event banners. One large hero shows at a time and rotates slowly;
+ * clicking it opens the full detail in the focused reading popup. `accent`
+ * keys the frame and glow color (azure | gold | violet). `image` is an
+ * optional hero background (a path under assets/); when absent, a layered
+ * gradient stands in. `sections` are the reading-popup body blocks.
+ */
+export const BANNERS = [
+  {
+    id: 'q4-planning',
+    accent: 'azure',
+    icon: 'rss-square',
+    image: null,
+    kicker: 'Now live',
+    title: 'Q4 planning starts now',
+    blurb: 'Specs due, roadmap priorities next. Here is what to do this week.',
+    date: 'Specs due Jun 12',
+    cta: 'Read the brief',
+    sections: [
+      { heading: 'What is happening',
+        body: 'Quarterly planning is open. Surface candidate deliverables now and shape the specs that will carry feature work, so the top of the backlog reflects what matters most.' },
+      { heading: 'Two dates that anchor the cycle',
+        body: 'Specs ready by Jun 12: every spec is submitted and clears the quality bar, ready for leadership review. Roadmap priorities ready by Jun 26: the initiatives and deliverables your team commits to, with due dates, estimates, and a clear top-priorities view.' },
+      { heading: 'Your move this week',
+        body: 'Identify the deliverables that may move forward, name a directly responsible individual for each spec, and flag dependencies or resourcing needs early. Open the Chapters tab to onboard step by step.' },
+    ],
+  },
+  {
+    id: 'roadmap-review',
+    accent: 'gold',
+    icon: 'flag',
+    image: null,
+    kicker: 'Milestone',
+    title: 'Fleet roadmap review',
+    blurb: 'Commit your initiatives and deliverables, with dates and estimates.',
+    date: 'Ready Jun 26',
+    cta: 'See what is needed',
+    sections: [
+      { heading: 'The milestone',
+        body: 'By Jun 26 your fleet roadmap lists the initiatives and deliverables your team commits to for the cycle, each with due dates, estimates, milestones, and a clear view of the top priorities for the next eight to twelve weeks.' },
+      { heading: 'What reviewers look for',
+        body: 'A backlog that is honestly ranked, deliverables mapped one to one with specs, and conscious calls on what to stop, delay, or deprioritize. The org-wide rank is primary; fleet and squad ranks are secondary views of the same list.' },
+      { heading: 'Before the review',
+        body: 'Keep ranks current, trace dependencies across teams, and make sure every committed deliverable has an estimate and a clear owner. Then the review is a confirmation, not a scramble.' },
+    ],
+  },
+  {
+    id: 'whats-changing',
+    accent: 'violet',
+    icon: 'atlas',
+    image: null,
+    kicker: 'Orientation',
+    title: 'What is changing, in brief',
+    blurb: 'Six shifts move us to one ranked backlog and continuous delivery.',
+    date: 'Read in two minutes',
+    cta: 'Read the six shifts',
+    reader: 'shifts',
+    sections: [],
+  },
+];
+
+/** Flat lookup by banner id. */
+export const BANNERS_BY_ID = Object.fromEntries(BANNERS.map(b => [b.id, b]));
 
 /** Intel terms taught by a given chapter (branch) id. */
 export function intelForChapter(branchId) {

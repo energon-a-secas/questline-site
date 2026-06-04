@@ -64,10 +64,9 @@ export function animateProgress(from, to) {
 }
 
 /**
- * Codex toast: name the Intel terms a freshly-cleared chapter just decrypted.
- * Reads live state so it only claims an unlock that genuinely happened (the
- * glossary entries are gated behind chapter completion). Chapters that teach
- * no terms fall back to the path-unlock message.
+ * Chapter-cleared toast. Names the Intel terms this chapter covers as a quick
+ * pointer into the (now fully open) glossary; chapters that map to no terms
+ * fall back to the plain path-unlock message.
  */
 export function intelUnlockedToast(s, branchId) {
   const terms = intelUnlockedBy(s, branchId);
@@ -76,5 +75,5 @@ export function intelUnlockedToast(s, branchId) {
     return;
   }
   const names = terms.map(t => t.term).join(', ');
-  showToast(`Intel decrypted — ${names}`);
+  showToast(`Chapter cleared — see Intel: ${names}`);
 }

@@ -1,0 +1,853 @@
+/* ════════════════════════════════════════════════════════════
+   Questline — NieR-style game console (Disney-modern theme)
+   ════════════════════════════════════════════════════════════ */
+
+.console {
+  position: relative; z-index: 1;
+  display: flex; flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* ── Tab bar ────────────────────────────────────────────────── */
+.ctabs {
+  display: flex; align-items: stretch; gap: var(--space-1);
+  flex-wrap: wrap;
+  padding-left: var(--space-4); position: relative;
+}
+.ctabs__rail {
+  position: absolute; left: 0; top: 2px; bottom: 6px;
+  color: var(--accent); font-size: 1.1rem; line-height: 1;
+  letter-spacing: -2px; opacity: .9;
+}
+.ctab {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: var(--space-2) var(--space-4);
+  text-decoration: none; color: var(--text-secondary);
+  background: var(--surface-1);
+  border: 1px solid transparent;
+  text-transform: uppercase; letter-spacing: .14em;
+  font-size: var(--text-xs); font-weight: 600;
+  position: relative; z-index: 1;
+  transition: background var(--dur), color var(--dur);
+}
+.ctab:hover { color: #fff; background: var(--surface-2); }
+.ctab__icon { display: inline-flex; opacity: .85; }
+.ctab--active {
+  color: #06121f; background: var(--text-primary);
+  font-weight: 700; z-index: 2;
+}
+.ctab--active .ctab__icon { opacity: 1; }
+/* Dotted divider beneath the tabs, NieR signature */
+.cdots {
+  height: 12px;
+  background-image: radial-gradient(circle, var(--dbh-edge) 1.1px, transparent 1.3px);
+  background-size: 18px 12px; background-position: 0 4px;
+  opacity: .8;
+}
+
+/* ── View entrance (strategy-UI move) ───────────────────────── */
+/* Runs only on a genuine navigation (render() adds .qview-enter), never on
+   in-tab cursor moves, so arrowing through a list stays still. The screen
+   title leads, then the panels settle in with a short stagger, like a
+   strategy map sliding its pieces into place. Exponential ease, no bounce. */
+.qview-enter .cscreen-title { animation: viewLead .42s var(--ease-out-quint) both; }
+/* Panels are the staggered "pieces": each settles in a beat after the last. */
+.qview-enter .cpanel { animation: viewPanel .52s var(--ease-out-expo) both; }
+.qview-enter .cpanel:nth-child(2) { animation-delay: .06s; }
+.qview-enter .cpanel:nth-child(3) { animation-delay: .12s; }
+.qview-enter .cpanel:nth-child(4) { animation-delay: .18s; }
+/* Flow map + any non-panel stage body slides up as one piece. */
+.qview-enter .tree,
+.qview-enter .cflow__focus { animation: viewBody .5s .08s var(--ease-out-quint) both; }
+@keyframes viewLead {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes viewBody {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes viewPanel {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Stage ──────────────────────────────────────────────────── */
+/* Grows to push the hint bar down, but never forces a tall void: content
+   height drives it, with a gentle floor so short tabs still feel anchored. */
+.cstage { flex: 1; min-height: 40vh; padding: var(--space-2) 2px var(--space-4); }
+
+/* Ghosted screen title */
+.cscreen-title { position: relative; margin-bottom: var(--space-6); }
+.ctitle {
+  font-size: clamp(1.6rem, 4vw, 2.5rem); font-weight: 300;
+  text-transform: uppercase; letter-spacing: .22em; color: #fff;
+  position: relative; z-index: 1; display: inline-block;
+}
+.ctitle__sub {
+  margin-left: 10px; font-size: var(--text-sm); color: var(--accent);
+  letter-spacing: .14em; text-transform: uppercase; vertical-align: middle;
+}
+/* True offset shadow: identical metrics to .ctitle so it sits cleanly
+   behind it (was weight 700 + wider, which poked out and looked blurry). */
+.ctitle__ghost {
+  position: absolute; left: 0; top: 0; z-index: 0;
+  font-size: clamp(1.6rem, 4vw, 2.5rem); font-weight: 300;
+  text-transform: uppercase; letter-spacing: .22em;
+  color: rgba(255,255,255,.06); pointer-events: none; white-space: nowrap;
+  transform: translate(3px, 7px) scale(1.06); transform-origin: left center;
+}
+
+/* ── Panels ─────────────────────────────────────────────────── */
+/* Faceted top-left corner is the panel identity; the cyan accent is a
+   small notch at that corner, not a full-height side-stripe (which read
+   as decorative and diluted the "cyan = active" signal). */
+/* Closed-bevel panel: a single faceted top-left corner, fully stroked. The
+   cyan identity is a small corner tick (::after), not a side-stripe. The
+   bevel ring mechanism is folded in here so existing .cpanel markup needs
+   no class change. */
+.cpanel {
+  --poly: polygon(var(--bevel) 0, 100% 0, 100% 100%, 0 100%, 0 var(--bevel));
+  position: relative;
+  background: var(--dbh-edge);
+  clip-path: var(--poly);
+  padding: var(--space-5, 20px) var(--space-6);
+}
+.cpanel::before {
+  content: ""; position: absolute; inset: 1px; z-index: 0;
+  background: var(--dbh-panel); clip-path: var(--poly);
+  pointer-events: none;
+}
+.cpanel > * { position: relative; z-index: 1; }
+.cpanel::after {
+  content: ""; position: absolute; left: 0; top: 0; z-index: 2;
+  width: var(--bevel); height: var(--bevel);
+  background: linear-gradient(135deg, var(--accent) 0 1.5px, transparent 1.5px);
+  filter: drop-shadow(0 0 6px var(--accent-glow));
+  pointer-events: none;
+}
+.cpanel__h {
+  font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .14em;
+  color: var(--accent); margin-bottom: var(--space-4);
+}
+.clead { color: var(--text-secondary); font-size: var(--text-base); line-height: 1.65; }
+.clead a { color: var(--accent-bright); }
+
+/* ── Brief tab ──────────────────────────────────────────────── */
+/* Three balanced columns on wide screens (lead · shifts · ceremonies);
+   the lead no longer spans rows, which used to leave a half-empty cell. */
+.cbrief {
+  display: grid;
+  grid-template-columns: 1.1fr 1.3fr 0.9fr;
+  gap: var(--space-4); align-items: start;
+}
+.cbrief__cta { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-4); }
+
+@media (max-width: 1080px) {
+  .cbrief { grid-template-columns: 1fr 1fr; }
+  .cbrief__lead { grid-column: 1 / -1; }
+}
+
+.cstat { margin-top: var(--space-4); }
+.cstat__row { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3); }
+.cstat__label { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .2em; color: var(--dbh-cyan); }
+.cstat__value { font-size: var(--text-xl); font-weight: 700; color: #fff; letter-spacing: .01em; }
+.cstat__bar { height: 6px; margin: 8px 0; background: rgba(255,255,255,.08);
+  clip-path: polygon(0 0,100% 0,calc(100% - 4px) 100%,0 100%); overflow: hidden; }
+.cstat__bar div { height: 100%; width: 100%; background: var(--qprog-fill);
+  box-shadow: 0 0 10px var(--accent-glow);
+  transform-origin: left center; transition: transform .45s var(--ease-out-quint); }
+.cstat__pct { font-size: var(--text-xs); color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+.cstat__blurb { font-size: var(--text-xs); color: var(--text-muted); }
+
+/* Six key shifts collapse to one read-check + one "Read the shifts" button;
+   the text lives in the focused reading popup, not inline. */
+.cshiftbox { display: flex; align-items: flex-start; gap: var(--space-3); margin-top: var(--space-3); }
+.cshiftbox__check {
+  --sc-poly: polygon(5px 0, 100% 0, 100% calc(100% - 5px), calc(100% - 5px) 100%, 0 100%, 0 5px);
+  --sc-rim: var(--border-strong);
+  position: relative; flex-shrink: 0; width: 28px; height: 28px; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+  color: transparent; background: var(--sc-rim);
+  clip-path: var(--sc-poly);
+  transition: background var(--dur), color var(--dur), box-shadow var(--dur);
+}
+.cshiftbox__check::before {
+  content: ""; position: absolute; inset: 1.5px; z-index: 0;
+  background: var(--dbh-panel); clip-path: var(--sc-poly);
+  transition: background var(--dur);
+}
+.cshiftbox__check > svg { position: relative; z-index: 1; }
+.cshiftbox__check:hover { --sc-rim: var(--accent); }
+.cshiftbox__check.is-read {
+  --sc-rim: var(--dbh-done); background: var(--dbh-done); color: #04210f;
+  box-shadow: 0 0 12px rgba(52,211,153,.4);
+}
+.cshiftbox__check.is-read::before { background: var(--dbh-done); }
+.cshiftbox__main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--space-3); align-items: flex-start; }
+.cshiftbox__lead { font-size: var(--text-sm); color: var(--text-secondary); line-height: 1.6; }
+.cshiftbox__state {
+  flex-shrink: 0; font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .12em;
+  color: var(--text-muted); font-variant-numeric: tabular-nums;
+}
+
+/* ── Featured news hero (home banner) ───────────────────────── */
+/* One large hero shows at a time and slow-rotates; dots jump between items.
+   A big optional image sits behind the copy, with a gradient fallback. */
+.bannerstrip { position: relative; margin-bottom: var(--space-6); }
+.bannerstrip__stage {
+  position: relative;
+  height: clamp(220px, 30vw, 300px);
+}
+.banner {
+  position: absolute; inset: 0; width: 100%; cursor: pointer; text-align: left;
+  display: flex; flex-direction: column; justify-content: flex-end;
+  padding: var(--space-8) var(--space-8) var(--space-6);
+  font-family: inherit; color: var(--text-primary); overflow: hidden;
+  /* Closed-bevel ring frame. */
+  --poly: polygon(20px 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%, 0 20px);
+  --bevel-line: var(--banner-rim, var(--accent));
+  --bevel-fill: #0b1626; --bevel-w: 1px;
+  opacity: 0; pointer-events: none;
+  transition: opacity .55s var(--ease-out-quint);
+}
+.banner.is-active { opacity: 1; pointer-events: auto; }
+/* Gradient fallback backdrop: a wash plus an oversized ghosted glyph. */
+.banner__bg {
+  position: absolute; inset: 1px; z-index: 0; pointer-events: none;
+  clip-path: var(--poly);
+  display: flex; align-items: center; justify-content: flex-end;
+  padding-right: 4%;
+  color: var(--banner-rim, var(--accent));
+  background:
+    radial-gradient(130% 150% at 82% -20%, var(--banner-wash, var(--accent-soft)) 0%, transparent 58%),
+    radial-gradient(120% 140% at 0% 130%, rgba(7,14,26,.7) 0%, transparent 62%),
+    linear-gradient(180deg, #0d1a30 0%, #0b1626 100%);
+}
+.banner__bg svg {
+  opacity: .14; filter: drop-shadow(0 0 18px var(--banner-glow, var(--accent-glow)));
+  transform: translateY(-4%);
+}
+/* Real image backdrop. */
+.banner__img {
+  position: absolute; inset: 1px; z-index: 0; pointer-events: none;
+  clip-path: var(--poly);
+  background-size: cover; background-position: center;
+}
+/* Scrim lifts the copy off either backdrop for AA contrast. */
+.banner__scrim {
+  position: absolute; inset: 1px; z-index: 1; pointer-events: none;
+  clip-path: var(--poly);
+  background: linear-gradient(90deg, rgba(5,10,20,.9) 0%, rgba(5,10,20,.6) 45%, rgba(5,10,20,.15) 100%);
+}
+.banner__body { position: relative; z-index: 2; max-width: 60ch; display: flex; flex-direction: column; gap: 6px; }
+.banner__kicker {
+  font-size: var(--text-xs); font-weight: 700; text-transform: uppercase; letter-spacing: .24em;
+  color: var(--banner-rim, var(--accent));
+}
+.banner__title {
+  font-size: clamp(1.5rem, 3.4vw, 2.2rem); font-weight: 700; letter-spacing: .01em;
+  color: #fff; line-height: 1.1; text-shadow: 0 2px 18px rgba(2,6,23,.6);
+}
+.banner__blurb { font-size: var(--text-base); color: var(--text-secondary); line-height: 1.55; }
+.banner__foot { display: flex; align-items: center; gap: var(--space-4); margin-top: 6px; }
+.banner__date {
+  font-size: var(--text-xs); color: var(--text-muted); font-variant-numeric: tabular-nums;
+  text-transform: uppercase; letter-spacing: .1em;
+}
+.banner__cta {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: var(--text-sm); font-weight: 700; text-transform: uppercase; letter-spacing: .08em;
+  color: var(--banner-rim, var(--accent));
+}
+.banner:hover .banner__cta, .banner:focus-visible .banner__cta { color: #fff; }
+.banner:hover, .banner:focus-visible {
+  box-shadow: inset 0 0 0 1px var(--banner-rim, var(--accent)),
+    0 16px 38px rgba(2,6,23,.5), 0 0 32px -6px var(--banner-glow, var(--accent-glow));
+}
+.banner--azure  { --banner-rim: var(--accent); --banner-glow: var(--accent-glow); --banner-wash: var(--accent-soft); }
+.banner--gold   { --banner-rim: var(--gold);    --banner-glow: rgba(255,206,77,.4);  --banner-wash: rgba(255,206,77,.16); }
+.banner--violet { --banner-rim: #b08cff;        --banner-glow: rgba(176,140,255,.4); --banner-wash: rgba(176,140,255,.18); }
+.banner__dots {
+  display: flex; gap: 8px; justify-content: center; margin-top: var(--space-3);
+}
+.banner__dot {
+  width: 26px; height: 4px; cursor: pointer; padding: 0; border: none;
+  background: var(--border-strong); transition: background var(--dur);
+}
+.banner__dot.is-active { background: var(--accent); box-shadow: 0 0 8px var(--accent-glow); }
+.banner__dot:hover { background: var(--accent-bright); }
+@media (max-width: 640px) {
+  .bannerstrip__stage { height: auto; min-height: 240px; }
+  .banner { position: relative; }
+  .banner:not(.is-active) { display: none; }
+  .banner__scrim { background: linear-gradient(180deg, rgba(5,10,20,.5) 0%, rgba(5,10,20,.85) 100%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .banner { transition: opacity .01ms; }
+}
+
+.cminis { list-style: none; display: flex; flex-direction: column; }
+.cmini { display: flex; flex-direction: column; gap: 2px;
+  padding: var(--space-3) 0; border-bottom: 1px solid var(--border-subtle); }
+.cmini:last-child { border-bottom: none; padding-bottom: 0; }
+.cmini:first-child { padding-top: 0; }
+.cmini__t { font-weight: 600; font-size: var(--text-base); }
+.cmini__b { font-size: var(--text-sm); color: var(--text-secondary); line-height: 1.5; }
+
+/* ── Master / detail (Chapters, Intel) ──────────────────────── */
+.cmaster { display: grid; grid-template-columns: minmax(260px, 22%) 1fr; gap: var(--space-4); align-items: start; }
+.clist { padding: var(--space-3); display: flex; flex-direction: column; gap: 2px; }
+.clist__head {
+  font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .18em;
+  color: var(--text-muted); padding: 6px 10px 10px;
+}
+.crow {
+  display: flex; align-items: center; gap: 10px;
+  width: 100%; padding: 10px 12px;
+  background: transparent; border: none; cursor: pointer;
+  color: var(--text-secondary); text-align: left;
+  font-family: inherit; font-size: var(--text-sm);
+  position: relative; transition: background var(--dur), color var(--dur);
+}
+.crow:hover { background: var(--surface-2); color: #fff; }
+.crow--active { background: var(--text-primary); color: #06121f; font-weight: 700; }
+.crow__no { font-size: var(--text-xs); font-variant-numeric: tabular-nums; opacity: .7; min-width: 20px; }
+.crow__name { flex: 1; letter-spacing: .01em; }
+.crow__meta { font-size: var(--text-xs); font-variant-numeric: tabular-nums; display: inline-flex; align-items: center; opacity: .8; }
+.crow__kind { text-transform: uppercase; letter-spacing: .1em; font-size: 10px; }
+.crow--complete .crow__name { opacity: .7; }
+.crow--locked { opacity: .5; }
+.crow--locked:hover { background: transparent; cursor: default; }
+
+/* Glossary search box atop the Intel master list. */
+.cintel__search {
+  position: relative; display: flex; align-items: center;
+  margin-bottom: var(--space-2);
+}
+.cintel__search-icon {
+  position: absolute; left: 10px; display: inline-flex; color: var(--text-muted);
+  pointer-events: none;
+}
+.cintel__search-input {
+  width: 100%; font-family: inherit; font-size: var(--text-sm);
+  color: var(--text-primary); background: var(--surface-1);
+  border: 1px solid var(--dbh-edge); padding: 9px 12px 9px 34px;
+  clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
+  transition: border-color var(--dur), background var(--dur);
+}
+.cintel__search-input::placeholder { color: var(--text-muted); }
+.cintel__search-input:focus {
+  outline: none; border-color: var(--accent); background: var(--surface-2);
+}
+.cintel__search-input::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; }
+.clist__rows { display: flex; flex-direction: column; gap: 2px; overflow-y: auto; max-height: 60vh; }
+.clist__empty { padding: 12px 10px; font-size: var(--text-sm); color: var(--text-muted); }
+
+.cdetail { min-height: 320px; }
+.cdetail--fill, .cintel { display: flex; flex-direction: column; }
+.cdetail__head { display: flex; align-items: flex-start; gap: var(--space-4); margin-bottom: var(--space-4); }
+.cdetail__head--intel { align-items: center; gap: var(--space-3); }
+.cdetail__no {
+  font-size: var(--text-xl); font-weight: 700; color: var(--dbh-cyan);
+  font-variant-numeric: tabular-nums; line-height: 1;
+}
+.cdetail__title { font-size: var(--text-2xl); font-weight: 600; letter-spacing: 0; }
+.cdetail__summary { font-size: var(--text-base); color: var(--text-secondary); margin-top: 6px; line-height: 1.55; }
+.cintel__body { font-size: var(--text-lg); color: var(--text-secondary); line-height: 1.7; max-width: 66ch; }
+/* Related-terms + source-chapter rails fill the otherwise-empty detail panel. */
+.cintel__rails {
+  margin-top: auto; padding-top: var(--space-5, 20px);
+  display: flex; flex-wrap: wrap; gap: var(--space-8);
+  border-top: 1px solid var(--border-subtle);
+}
+.cintel__rail-h {
+  font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .18em;
+  color: var(--text-muted); margin-bottom: var(--space-3);
+}
+.ctags { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.ctag {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 12px; font-family: inherit; font-size: var(--text-xs);
+  font-weight: 600; text-transform: uppercase; letter-spacing: .08em;
+  color: var(--text-secondary); text-decoration: none; cursor: pointer;
+  background: var(--surface-1); border: 1px solid var(--dbh-edge);
+  clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
+  transition: background var(--dur), color var(--dur), border-color var(--dur);
+}
+.ctag:hover { background: var(--surface-2); color: #fff; border-color: var(--accent); }
+.ctag--chapter { color: var(--accent); }
+.ctag--locked { opacity: .5; }
+/* Inline link inside a locked detail stub (e.g. "Clear Define the Work"). */
+.cdetail__locked .ilink { color: var(--accent-bright); text-decoration: none; border-bottom: 1px solid currentColor; }
+.cdetail__locked .ilink:hover { color: #fff; }
+
+/* ── Flow tab rank panel ────────────────────────────────────── */
+.cflow__rank { margin-bottom: var(--space-6); }
+
+/* ── Flow: reveal-as-you-go full map ────────────────────────── */
+/* Newly revealed nodes ease in (a chapter you just unlocked rising out of
+   the fog). Applied to every visible node on a navigation render; in-tab
+   cursor moves strip .qview-enter so it does not replay on each arrow. */
+.qview-enter .tnode { animation: nodeReveal .5s var(--ease-out-expo) both; }
+.qview-enter .tree__row:nth-child(2) .tnode { animation-delay: .05s; }
+.qview-enter .tree__row:nth-child(3) .tnode { animation-delay: .1s; }
+.qview-enter .tree__row:nth-child(4) .tnode { animation-delay: .15s; }
+.qview-enter .tree__row:nth-child(5) .tnode { animation-delay: .2s; }
+@keyframes nodeReveal {
+  from { opacity: 0; transform: translateY(12px) scale(.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.tree__fog {
+  margin-top: var(--space-6); text-align: center;
+  font-size: var(--text-sm); color: var(--text-muted); line-height: 1.5;
+}
+
+/* ── Flow: focus map (local plan around one chapter) ────────── */
+.cflow__focus { display: flex; flex-direction: column; gap: var(--space-6); }
+.cflow__focusbar { align-items: center; }
+.cflow__focuscount {
+  margin-left: auto; font-size: var(--text-sm); color: var(--accent);
+  font-variant-numeric: tabular-nums; letter-spacing: .04em;
+}
+.cflow__plan {
+  display: flex; flex-direction: column; align-items: center; gap: var(--space-3);
+}
+.cflow__plan .tree__row { gap: var(--space-4); }
+/* The focused chapter is the largest piece; neighbours sit a touch smaller
+   and dimmer so the eye lands on the focus first. */
+.cflow__plan .tree__row--parents .tnode,
+.cflow__plan .tree__row--children .tnode { width: 210px; opacity: .9; }
+.cflow__plan .tree__row--focus .tnode { width: 280px; }
+.cflow__plan .tree__row--focus .tnode__frame { height: 104px; }
+.cflow__relh {
+  font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .16em;
+  color: var(--text-muted); text-align: center;
+}
+.cflow__link { color: var(--dbh-edge); display: flex; justify-content: center; }
+.cflow__link svg { transform: rotate(90deg); opacity: .6; }
+.cflow__terminal { font-size: var(--text-sm); color: var(--text-muted); text-align: center; }
+.cflow__detail { margin-top: var(--space-2); }
+.cflow__locked { text-align: center; padding: var(--space-6) var(--space-4); color: var(--text-muted); }
+.cflow__locked p { font-size: var(--text-base); max-width: 40ch; margin: var(--space-2) auto 0; line-height: 1.55; }
+
+/* Inline skills checklist in the focus detail panel (read-only preview; the
+   real toggles live in Chapters, reachable via the focus bar button). */
+.cflow__skills { list-style: none; margin-top: var(--space-4); display: flex; flex-direction: column; gap: var(--space-2); }
+.cflow__skill {
+  display: flex; align-items: center; gap: var(--space-3);
+  padding: var(--space-2) var(--space-3); background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+}
+.cflow__skill-check {
+  flex-shrink: 0; width: 20px; height: 20px; display: inline-flex;
+  align-items: center; justify-content: center; color: #04210f;
+  border: 1.5px solid var(--border-strong); background: transparent;
+}
+.cflow__skill.is-done .cflow__skill-check { background: var(--dbh-done); border-color: var(--dbh-done); }
+.cflow__skill-name { flex: 1; font-size: var(--text-base); color: var(--text-secondary); }
+.cflow__skill.is-done .cflow__skill-name { color: var(--text-primary); }
+.cflow__skill-tag {
+  flex-shrink: 0; font-size: 10px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: .1em; color: var(--accent);
+}
+.cdetail__locked { text-align: center; padding: var(--space-8) var(--space-4); color: var(--text-muted); }
+.cdetail__lockicon { color: var(--text-muted); display: inline-flex; margin-bottom: var(--space-3); }
+.cdetail__locked h3 { color: var(--text-secondary); letter-spacing: .01em; margin-bottom: 8px; font-size: var(--text-xl); }
+.cdetail__locked p { font-size: var(--text-base); max-width: 42ch; margin: 0 auto; line-height: 1.55; }
+
+/* ── Priority tab ───────────────────────────────────────────── */
+.cpriority { display: flex; flex-direction: column; gap: var(--space-4); }
+.cbands { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
+.cband {
+  position: relative; padding: var(--space-4);
+  --cband-poly: polygon(10px 0,100% 0,100% 100%,0 100%,0 10px);
+  --cband-rim: var(--dbh-edge);
+  background: var(--cband-rim); clip-path: var(--cband-poly);
+}
+.cband::before {
+  content: ""; position: absolute; inset: 1px; z-index: 0;
+  background: var(--surface-1); clip-path: var(--cband-poly); pointer-events: none;
+}
+.cband > * { position: relative; z-index: 1; }
+.cband--active { --cband-rim: var(--accent); }
+.cband--backlog { --cband-rim: var(--text-muted); opacity: .92; }
+.cband__range { font-size: var(--text-xs); font-weight: 700; letter-spacing: .1em; color: var(--dbh-cyan); }
+.cband__label { font-size: var(--text-lg); font-weight: 700; letter-spacing: .01em; margin: 2px 0 6px; }
+.cband__blurb { font-size: var(--text-sm); color: var(--text-secondary); line-height: 1.55; }
+
+.cinits { display: flex; flex-direction: column; }
+.cinit { display: flex; gap: var(--space-3); padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--border-subtle); }
+.cinit:last-child { border-bottom: none; padding-bottom: 0; }
+.cinit:first-child { padding-top: 0; }
+.cinit__rank { font-size: var(--text-lg); font-weight: 700; color: var(--accent); min-width: 24px;
+  font-variant-numeric: tabular-nums; }
+.cinit__title { font-weight: 600; letter-spacing: .01em; font-size: var(--text-base); }
+.cinit__note { font-size: var(--text-sm); color: var(--text-secondary); margin-top: 3px; line-height: 1.5; }
+
+.cladder { list-style: none; display: flex; flex-direction: column; }
+.cladder__row { display: grid; grid-template-columns: 56px 130px 1fr; align-items: baseline; gap: var(--space-3);
+  padding: 9px 10px; border-bottom: 1px solid var(--border-subtle); opacity: .5; }
+.cladder__row.is-reached { opacity: 1; }
+/* Current rank: a full hairline frame + tint and a leading marker, not a
+   side-stripe. The ◆ marker carries the "you are here" signal. */
+.cladder__row.is-current {
+  background: var(--accent-soft);
+  border: 1px solid var(--accent); border-bottom-color: var(--accent);
+}
+.cladder__row.is-current .cladder__at::before { content: "◆ "; color: var(--accent); }
+.cladder__at { font-size: var(--text-xs); color: var(--dbh-cyan); font-variant-numeric: tabular-nums; }
+.cladder__name { font-weight: 700; letter-spacing: .02em; font-size: var(--text-base); }
+.cladder__blurb { font-size: var(--text-sm); color: var(--text-secondary); line-height: 1.5; }
+
+/* ── System tab ─────────────────────────────────────────────── */
+.csystem { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); align-items: start; }
+.cabout { list-style: none; margin-top: var(--space-3); }
+.cabout li { display: flex; justify-content: space-between; gap: var(--space-4);
+  padding: 8px 0; border-bottom: 1px solid var(--border-subtle); font-size: var(--text-sm); }
+.cabout li span:first-child { color: var(--text-muted); text-transform: uppercase; letter-spacing: .1em; font-size: var(--text-xs); }
+.cabout li span:last-child { color: var(--text-secondary); }
+
+/* Settings rows (e.g. the title-screen toggle) reuse .cabout layout. */
+.csettings li { align-items: center; }
+
+/* Toggle switch (role=switch). No layout-property animation: the thumb
+   slides via transform. */
+.ctoggle {
+  display: inline-flex; align-items: center; gap: var(--space-3);
+  background: none; border: none; cursor: pointer; font-family: inherit; padding: 0;
+}
+.ctoggle__track {
+  position: relative; width: 40px; height: 22px; flex-shrink: 0;
+  background: var(--surface-2); border: 1px solid var(--border-strong);
+  border-radius: 999px; transition: background var(--dur), border-color var(--dur);
+}
+.ctoggle__thumb {
+  position: absolute; top: 2px; left: 2px; width: 16px; height: 16px;
+  background: var(--text-muted); border-radius: 50%;
+  transition: transform var(--dur) var(--ease-out-quint), background var(--dur);
+}
+.ctoggle.is-on .ctoggle__track { background: var(--accent-soft); border-color: var(--accent); }
+.ctoggle.is-on .ctoggle__thumb { transform: translateX(18px); background: var(--accent); }
+.ctoggle__state { font-size: var(--text-sm); color: var(--text-secondary); }
+
+/* Quiet, low-contrast destructive link — deliberately not a loud red button.
+   It only warms to danger on hover/focus, so a reset is a considered act. */
+.csys__danger { margin-top: var(--space-6); }
+.clink-danger {
+  background: none; border: none; padding: 2px 0; cursor: pointer;
+  font-family: inherit; font-size: var(--text-sm); color: var(--text-muted);
+  text-decoration: underline; text-underline-offset: 3px;
+  text-decoration-color: var(--border-strong);
+  transition: color var(--dur), text-decoration-color var(--dur);
+}
+.clink-danger:hover, .clink-danger:focus-visible {
+  color: var(--danger-hover); text-decoration-color: var(--danger-hover);
+}
+
+/* Red danger vignette: corner-anchored glow that creeps in behind the reset
+   confirm dialog, then fades out on close. Sits above content, below modal. */
+.danger-vignette {
+  position: fixed; inset: 0; z-index: 380; pointer-events: none;
+  opacity: 0; transition: opacity .42s var(--ease-out-quint);
+  background:
+    radial-gradient(60% 60% at 0% 0%, rgba(225,29,72,.42) 0%, transparent 60%),
+    radial-gradient(60% 60% at 100% 0%, rgba(225,29,72,.42) 0%, transparent 60%),
+    radial-gradient(60% 60% at 0% 100%, rgba(225,29,72,.42) 0%, transparent 60%),
+    radial-gradient(60% 60% at 100% 100%, rgba(225,29,72,.42) 0%, transparent 60%);
+}
+.danger-vignette.is-on { opacity: 1; }
+@media (prefers-reduced-motion: reduce) {
+  .danger-vignette { transition-duration: .01ms; }
+}
+
+/* ── Bottom hint bar ────────────────────────────────────────── */
+.cbar {
+  display: flex; align-items: center; gap: var(--space-4);
+  padding: 12px 16px 12px 22px; position: relative;
+  border-top: 1px solid var(--dbh-edge);
+}
+.cbar__rail { position: absolute; left: 4px; color: var(--dbh-cyan); font-size: 1.1rem; letter-spacing: -2px; }
+.cbar__msg { font-size: var(--text-sm); color: var(--text-secondary); }
+.cbar__hints { margin-left: auto; display: flex; gap: var(--space-4); flex-wrap: wrap; }
+.chint { font-size: var(--text-xs); color: var(--text-muted); display: inline-flex; align-items: center; gap: 6px; }
+.chint kbd, .info-footer kbd, .qm__hint kbd {
+  font-family: inherit; font-size: 11px; font-weight: 700; color: var(--text-primary);
+  background: var(--surface-2); border: 1px solid var(--border-strong);
+  border-radius: 3px; padding: 1px 6px; line-height: 1.4;
+}
+
+/* ── Easter egg: the kiwi ───────────────────────────────────── */
+/* A faint glyph tucked in the System panel; click it and a kiwi runs. */
+.cegg {
+  display: inline-flex; margin-top: var(--space-4); padding: 4px;
+  background: transparent; border: none; cursor: pointer;
+  color: var(--text-muted); opacity: .35;
+  transition: opacity var(--dur), color var(--dur), transform var(--dur) var(--ease-out-quint);
+}
+.cegg:hover { opacity: 1; color: var(--accent); transform: rotate(-8deg) scale(1.1); }
+
+.kiwi-run {
+  position: fixed; bottom: 18px; left: -60px; z-index: var(--z-toast);
+  color: var(--gold); pointer-events: none;
+  filter: drop-shadow(0 0 8px rgba(255,206,77,.5));
+  animation: kiwiRun 2.8s cubic-bezier(0.45, 0, 0.55, 1) forwards;
+}
+@keyframes kiwiRun {
+  0%   { transform: translateX(0) scaleX(1) rotate(0); }
+  10%  { transform: translateX(8vw) scaleX(1) rotate(-6deg); }
+  50%  { transform: translateX(50vw) translateY(-10px) rotate(4deg); }
+  90%  { transform: translateX(96vw) scaleX(1) rotate(-6deg); }
+  100% { transform: translateX(112vw) scaleX(1) rotate(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .kiwi-run { animation-duration: .8s; }
+}
+
+/* ── Quick menu ─────────────────────────────────────────────── */
+.qm[hidden] { display: none; }
+.qm {
+  position: fixed; inset: 0; z-index: 600;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; transition: opacity .16s ease-out;
+}
+.qm--open { opacity: 1; }
+.qm__scrim {
+  position: absolute; inset: 0;
+  background: rgba(6,14,26,.62); backdrop-filter: blur(3px) saturate(.6);
+}
+.qm__cross {
+  position: relative; z-index: 1;
+  width: min(520px, 86vw); height: min(360px, 60vh);
+  transform: scale(.92); transition: transform .18s var(--ease-out-quint);
+}
+.qm--open .qm__cross { transform: scale(1); }
+.qm__core {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%);
+  color: var(--dbh-cyan); font-size: 1.2rem; filter: drop-shadow(0 0 6px var(--dbh-cyan-glow));
+}
+.qm__wedge {
+  position: absolute; display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 14px 20px; min-width: 130px;
+  background: var(--dbh-panel-2); border: 1px solid var(--dbh-edge);
+  color: var(--text-secondary); cursor: pointer; font-family: inherit;
+  text-transform: uppercase; letter-spacing: .12em; font-weight: 600; font-size: var(--text-sm);
+  clip-path: polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px);
+  transition: background var(--dur), color var(--dur), border-color var(--dur), transform var(--dur);
+}
+.qm__wedge--up    { top: 0;    left: 50%; transform: translateX(-50%); }
+.qm__wedge--down  { bottom: 0; left: 50%; transform: translateX(-50%); }
+.qm__wedge--left  { left: 0;   top: 50%;  transform: translateY(-50%); }
+.qm__wedge--right { right: 0;  top: 50%;  transform: translateY(-50%); }
+.qm__glyph { color: var(--dbh-cyan); font-size: .8rem; }
+.qm__wedge.is-active {
+  background: var(--text-primary); color: #06121f; border-color: var(--text-primary);
+  box-shadow: 0 0 24px var(--dbh-cyan-glow);
+}
+.qm__wedge.is-active .qm__glyph { color: #06121f; }
+.qm__wedge--up.is-active    { transform: translateX(-50%) scale(1.06); }
+.qm__wedge--down.is-active  { transform: translateX(-50%) scale(1.06); }
+.qm__wedge--left.is-active  { transform: translateY(-50%) scale(1.06); }
+.qm__wedge--right.is-active { transform: translateY(-50%) scale(1.06); }
+.qm__hint {
+  position: absolute; z-index: 1; bottom: 6vh; left: 50%; transform: translateX(-50%);
+  font-size: var(--text-xs); color: var(--text-muted); white-space: nowrap;
+}
+
+/* ── Keyboard cursor rings ──────────────────────────────────── */
+/* A cursor (keyboard highlight) is distinct from --active (the row open in
+   the detail panel): an outline ring, never a fill, so wires/boxes don't
+   shift when it moves. */
+.crow.is-cursor { outline: 2px solid var(--accent-bright); outline-offset: -2px; }
+.crow.is-cursor::before {
+  content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 2px;
+  background: var(--accent-bright); box-shadow: 0 0 8px var(--accent-glow);
+}
+.skill.is-cursor { outline: 2px solid var(--accent-bright); outline-offset: 2px; }
+.tnode.is-cursor { z-index: 2; }
+.tnode.is-cursor .tnode__inner {
+  border-color: var(--accent-bright);
+  box-shadow: 0 0 0 2px var(--accent-soft), 0 14px 34px rgba(2,6,23,.6);
+}
+.crow__seal { color: var(--dbh-done); display: inline-flex; vertical-align: middle; margin-left: 4px; }
+
+/* ── Chapter-complete control (master toggle + seal) ────────── */
+/* Lives in the detail head next to the title, where the eye already is.
+   State IS the control: empty / partial(dash) / cleared(seal). */
+.cdetail__head { justify-content: flex-start; }
+.cdetail__heading { flex: 1; min-width: 0; }
+
+.cdone {
+  position: relative; flex-shrink: 0; display: inline-flex; align-items: center; gap: 8px;
+  padding: 6px 12px 6px 8px; cursor: pointer; font-family: inherit;
+  font-size: var(--text-xs); font-weight: 700; text-transform: uppercase;
+  letter-spacing: .1em; color: var(--text-secondary);
+  background: var(--surface-1); border: 1px solid var(--dbh-edge);
+  clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+  transition: border-color var(--dur), color var(--dur), background var(--dur),
+    transform var(--dur) var(--ease-out-quint), box-shadow var(--dur);
+}
+.cdone > * { position: relative; z-index: 1; }
+/* Moving glow: a sweeping azure gradient behind the label, clipped to the
+   faceted shape and revealed only on hover/focus. No layout animation. */
+.cdone::after {
+  content: ""; position: absolute; inset: 0; z-index: 0; opacity: 0;
+  clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+  background: linear-gradient(115deg,
+    transparent 20%, var(--accent-soft) 42%, var(--accent-glow) 50%, var(--accent-soft) 58%, transparent 80%);
+  background-size: 280% 100%; background-position: 100% 0;
+  transition: opacity var(--dur);
+}
+.cdone:hover, .cdone:focus-visible { border-color: var(--accent); color: #fff; transform: scale(1.03); }
+.cdone:hover::after, .cdone:focus-visible::after { opacity: 1; }
+@media (prefers-reduced-motion: no-preference) {
+  .cdone:hover::after, .cdone:focus-visible::after { animation: glowSweep 2.4s var(--ease-out-quint) infinite; }
+}
+@keyframes glowSweep { from { background-position: 100% 0; } to { background-position: -60% 0; } }
+/* Closed-bevel ring (rim bg + inset fill) so the faceted corner is stroked. */
+.cdone__box {
+  --dbox-poly: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);
+  --dbox-rim: var(--border-strong);
+  position: relative; flex-shrink: 0; width: 22px; height: 22px;
+  display: inline-flex; align-items: center; justify-content: center;
+  color: transparent; background: var(--dbox-rim);
+  clip-path: var(--dbox-poly);
+  transition: background var(--dur), color var(--dur);
+}
+.cdone__box::before {
+  content: ""; position: absolute; inset: 1.5px; z-index: 0;
+  background: var(--surface-1); clip-path: var(--dbox-poly);
+  transition: background var(--dur);
+}
+.cdone__box > * { position: relative; z-index: 1; }
+.cdone:hover .cdone__box { --dbox-rim: var(--accent); }
+.cdone__check { display: inline-flex; }
+.cdone__dash { width: 11px; height: 2px; background: var(--accent); display: none; }
+/* Empty: faint check outline. Partial: a dash (indeterminate). */
+.cdone .cdone__check { color: var(--border-strong); }
+.cdone.is-partial .cdone__box { --dbox-rim: var(--accent); }
+.cdone.is-partial .cdone__check { display: none; }
+.cdone.is-partial .cdone__dash { display: block; }
+
+.cseal {
+  position: relative; flex-shrink: 0; display: inline-flex; align-items: center; gap: 8px;
+  padding: 7px 14px 7px 10px; cursor: pointer; font-family: inherit;
+  font-size: var(--text-xs); font-weight: 700; text-transform: uppercase;
+  letter-spacing: .12em; color: #04210f; background: var(--dbh-done);
+  border: 1px solid var(--dbh-done);
+  clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+  box-shadow: 0 0 16px rgba(52,211,153,.35);
+  transition: filter var(--dur), box-shadow var(--dur),
+    transform var(--dur) var(--ease-out-quint);
+  animation: sealStamp .34s var(--ease-out-quint) both;
+}
+.cseal > * { position: relative; z-index: 1; }
+/* The cleared seal keeps its green family; the sweep is a brighter mint. */
+.cseal::after {
+  content: ""; position: absolute; inset: 0; z-index: 0; opacity: 0;
+  clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+  background: linear-gradient(115deg,
+    transparent 24%, rgba(255,255,255,.35) 48%, rgba(255,255,255,.5) 52%, transparent 78%);
+  background-size: 280% 100%; background-position: 100% 0;
+  transition: opacity var(--dur);
+}
+.cseal:hover, .cseal:focus-visible {
+  filter: brightness(1.08); transform: scale(1.03);
+  box-shadow: 0 0 24px rgba(52,211,153,.55);
+}
+.cseal:hover::after, .cseal:focus-visible::after { opacity: 1; }
+.cseal:active { transform: scale(.97); }
+@media (prefers-reduced-motion: no-preference) {
+  .cseal:hover::after, .cseal:focus-visible::after { animation: glowSweep 2.4s var(--ease-out-quint) infinite; }
+}
+.cseal__mark { display: inline-flex; }
+@keyframes sealStamp {
+  0% { transform: scale(1.4); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* ── XP bar gain pulse ──────────────────────────────────────── */
+.branch-progress__bar div.is-gaining,
+.cstat__bar div.is-gaining { animation: xpPulse .5s ease-out; }
+@keyframes xpPulse {
+  0% { box-shadow: 0 0 10px var(--accent-glow); }
+  40% { box-shadow: 0 0 22px var(--accent-bright), 0 0 8px #fff; }
+  100% { box-shadow: 0 0 10px var(--accent-glow); }
+}
+
+/* ── Rank-up plate ──────────────────────────────────────────── */
+.rankup {
+  position: fixed; inset: 0; z-index: var(--z-toast);
+  display: flex; align-items: center; justify-content: center;
+  pointer-events: none; opacity: 0; transition: opacity .26s ease-out;
+}
+.rankup.is-visible { opacity: 1; }
+.rankup__plate {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: var(--space-6) var(--space-8);
+  background: var(--dbh-panel-2); border: 1px solid var(--gold);
+  clip-path: polygon(16px 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%, 0 16px);
+  box-shadow: 0 0 40px rgba(255,206,77,.25), var(--shadow-modal);
+  transform: scale(.92); transition: transform .26s var(--ease-out-quint);
+}
+.rankup.is-visible .rankup__plate { transform: scale(1); }
+.rankup__kicker {
+  font-size: var(--text-xs); font-weight: 700; letter-spacing: .3em;
+  text-transform: uppercase; color: var(--gold);
+}
+.rankup__rule {
+  width: 180px; height: 2px; background: var(--gold); box-shadow: 0 0 8px rgba(255,206,77,.6);
+  transform: scaleX(0); transform-origin: center;
+  transition: transform .4s .12s var(--ease-out-quint);
+}
+.rankup.is-visible .rankup__rule { transform: scaleX(1); }
+.rankup__name {
+  font-size: clamp(1.8rem, 5vw, 2.8rem); font-weight: 300; color: #fff;
+  text-transform: uppercase; letter-spacing: .2em;
+}
+.rankup__blurb { font-size: var(--text-sm); color: var(--text-secondary); max-width: 36ch; text-align: center; }
+
+/* ── Glossary term + popover ────────────────────────────────── */
+.gloss {
+  font: inherit; color: var(--accent-bright); background: none; border: none;
+  padding: 0; cursor: help; text-decoration: underline dotted; text-underline-offset: 2px;
+  text-decoration-color: var(--accent);
+}
+.gloss:hover, .gloss:focus-visible { color: #fff; text-decoration-color: var(--accent-bright); }
+.gloss-pop {
+  position: fixed; z-index: var(--z-toast); width: min(280px, 86vw);
+  background: var(--dbh-panel-2); border: 1px solid var(--accent);
+  clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+  box-shadow: var(--shadow-modal); padding: var(--space-3) var(--space-4);
+  opacity: 0; transform: translateY(4px); transition: opacity .14s ease-out, transform .14s ease-out;
+  pointer-events: none;
+}
+.gloss-pop.is-visible { opacity: 1; transform: translateY(0); }
+.gloss-pop__head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3); margin-bottom: 4px; }
+.gloss-pop__term { font-weight: 700; letter-spacing: .01em; color: #fff; font-size: var(--text-base); }
+.gloss-pop__kind { font-size: 10px; text-transform: uppercase; letter-spacing: .12em; color: var(--accent); }
+.gloss-pop__body { font-size: var(--text-sm); color: var(--text-secondary); line-height: 1.55; }
+.gloss-pop__hint { display: block; margin-top: 6px; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); }
+
+/* Kiwi easter egg: a still fade-in-place under reduced motion. */
+.kiwi-run--still {
+  left: auto; right: 24px; animation: kiwiStill 1.6s ease-out forwards;
+}
+@keyframes kiwiStill {
+  0% { opacity: 0; transform: translateY(8px); }
+  15%, 80% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(8px); }
+}
+
+/* ── Responsive ─────────────────────────────────────────────── */
+@media (max-width: 760px) {
+  .cbrief, .cmaster, .csystem, .cbands { grid-template-columns: 1fr; }
+  .cbrief__lead { grid-row: auto; }
+  .ctab__label { display: none; }
+  .ctab { padding: 9px 12px; }
+  .cladder__row { grid-template-columns: 48px 1fr; }
+  .cladder__blurb { grid-column: 1 / -1; }
+  .qm__wedge { min-width: 104px; padding: 11px 14px; font-size: var(--text-xs); }
+  .cdetail__head { flex-wrap: wrap; }
+}

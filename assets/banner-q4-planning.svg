@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 480" preserveAspectRatio="xMidYMid slice" role="img" aria-label="">
+  <defs>
+    <!-- Azure: a deep-navy field with a bright azure dawn glow on the right. -->
+    <linearGradient id="q4-base" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#091222"/>
+      <stop offset="0.55" stop-color="#0b1a30"/>
+      <stop offset="1" stop-color="#0e2a4a"/>
+    </linearGradient>
+    <radialGradient id="q4-glow" cx="0.82" cy="0.12" r="0.85">
+      <stop offset="0" stop-color="#2aa8ff" stop-opacity="0.55"/>
+      <stop offset="0.4" stop-color="#2aa8ff" stop-opacity="0.16"/>
+      <stop offset="1" stop-color="#2aa8ff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="q4-glow2" cx="0.62" cy="1.05" r="0.7">
+      <stop offset="0" stop-color="#6fd0ff" stop-opacity="0.2"/>
+      <stop offset="1" stop-color="#6fd0ff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="q4-ray" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#6fd0ff" stop-opacity="0.0"/>
+      <stop offset="1" stop-color="#6fd0ff" stop-opacity="0.5"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="480" fill="#0a1424"/>
+  <rect width="1200" height="480" fill="url(#q4-base)"/>
+  <rect width="1200" height="480" fill="url(#q4-glow)"/>
+  <rect width="1200" height="480" fill="url(#q4-glow2)"/>
+  <!-- Faceted constellation lines, NieR data-grid flavour, weighted right. -->
+  <g stroke="url(#q4-ray)" stroke-width="1.4" fill="none" opacity="0.7">
+    <path d="M1200 70 L880 150 L1010 250 L760 300"/>
+    <path d="M980 40 L1040 180 L900 360"/>
+    <path d="M1200 300 L1020 250 L1100 420"/>
+  </g>
+  <g fill="#6fd0ff">
+    <circle cx="880" cy="150" r="3.5" opacity="0.9"/>
+    <circle cx="1010" cy="250" r="3" opacity="0.8"/>
+    <circle cx="1040" cy="180" r="2.5" opacity="0.7"/>
+    <circle cx="900" cy="360" r="2.5" opacity="0.6"/>
+    <circle cx="1100" cy="420" r="2" opacity="0.5"/>
+    <circle cx="760" cy="300" r="2" opacity="0.5"/>
+  </g>
+  <!-- Faint diagonal facet sweep. -->
+  <path d="M1200 0 L1200 480 L820 480 Z" fill="#2aa8ff" opacity="0.06"/>
+</svg>

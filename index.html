@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Questline — Operating Model Skill Tree</title>
+  <meta name="description" content="Turn a roadmap and prioritization operating model into a visual skill tree, with unlockable stages, ceremonies, and key dates">
+  <meta property="og:title" content="Questline — Operating Model Skill Tree">
+  <meta property="og:description" content="Learn a roadmap and prioritization operating model as a video-game skill tree you unlock stage by stage">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://questline.neorgon.com/">
+  <meta property="og:site_name" content="Neorgon">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Questline — Operating Model Skill Tree">
+  <meta name="twitter:description" content="Learn a roadmap and prioritization operating model as a skill tree you unlock stage by stage">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://questline.neorgon.com/">
+  <meta property="og:locale" content="en_US">
+  <meta name="theme-color" content="#0a1424">
+  <meta property="og:image" content="https://questline.neorgon.com/og-preview.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:image" content="https://questline.neorgon.com/og-preview.jpg">
+  <link rel="icon" type="image/x-icon" href="favicon.ico" />
+  <link rel="stylesheet" href="css/style.css">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Questline",
+    "description": "Turn a roadmap and prioritization operating model into a visual skill tree, with unlockable stages, ceremonies, and key dates",
+    "url": "https://questline.neorgon.com/",
+    "applicationCategory": "BusinessApplication",
+    "operatingSystem": "Any",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+    "author": { "@type": "Organization", "name": "Neorgon", "url": "https://neorgon.com/" }
+  }
+  </script>
+</head>
+<body>
+
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="header-bar">
+    <div class="header-logo">
+      <a href="https://neorgon.com/" target="_blank" rel="noopener noreferrer">
+        <img src="energon-classic-logo.png" class="header-logo-img" alt="Logo">
+      </a>
+      <a href="#brief" class="header-title-link">
+        <h1>Questline</h1>
+        <div class="header-subtitle">Operating model, as a game console</div>
+      </a>
+    </div>
+
+    <a class="header-home" href="https://neorgon.com/" title="neorgon.com" aria-label="Neorgon home">
+      <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+        <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+      </svg>
+    </a>
+  </header>
+
+  <main id="main">
+    <div id="app"></div>
+  </main>
+
+  <!-- Quick menu: hold Esc, point a direction, release to activate -->
+  <div id="quickmenu" class="qm" hidden aria-hidden="true" role="dialog" aria-label="Quick menu">
+    <div class="qm__scrim"></div>
+    <div class="qm__cross" id="quickmenuCross"></div>
+    <div class="qm__hint">Hold <kbd>Esc</kbd> · point with arrows or mouse · release to jump</div>
+  </div>
+  <span id="quickmenuLive" class="sr-only" aria-live="assertive"></span>
+
+  <footer class="info-footer">
+    Hold <kbd>Esc</kbd> for the quick menu &middot; Part of <a class="footer-link" href="https://neorgon.com/">Neorgon</a>
+  </footer>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

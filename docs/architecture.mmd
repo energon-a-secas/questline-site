@@ -30,23 +30,30 @@ flowchart TB
         app --> splash["splash.js\nBoot splash (press any key)"]
         app --> coach["coach.js\nFirst-run coach-mark"]
         render --> console["console.js\nNieR tab views + chrome helpers"]
+        console --> iconsfa["icons-fa.js\nFilled icon set (currentColor)"]
         render --> flow["flow.js\nFlow: reveal map + focus map"]
         render --> glossary["glossary.js\nJargon tooltips (gated to decrypted terms)"]
+        render --> banners["banners.js\nHome banner carousel + six-shifts reader"]
         flow --> console
         flow --> state
         console --> splash
-        console --> data["data.js\nChapters, tabs, glossary, ranks"]
+        console --> banners
+        banners --> modal["modal.js\nConfirm dialog + reading popup, shared focus trap"]
+        banners --> data["data.js\nChapters, tabs, glossary, ranks, banners"]
+        banners --> state
         render --> data
         state --> data
         console --> utils["utils.js\nescHtml, toast, action toast"]
         events --> render
         events --> console
+        events --> banners
         events --> celebrate["celebrate.js\nRank-up, XP, intel-decrypted toast"]
         events --> glossary
-        events --> modal["modal.js\nConfirm dialog + focus trap"]
+        events --> modal
         events --> splash
         events --> kiwi["kiwi.js\nEaster egg"]
         keynav --> render
+        keynav --> console
         keynav --> state
         keynav --> coach
         keynav --> splash
@@ -58,6 +65,7 @@ flowchart TB
     end
 
     state <-->|"questline-v1"| Storage[("localStorage")]
+    state <-->|"questline-prefs"| Storage
     splash <-->|"questline-splash"| Storage
     events <-->|"#tab / #chapter / #intel/&lt;id&gt; / #flow / #flow/&lt;id&gt;"| Hash["URL hash route"]
     quick -->|"set #section"| Hash

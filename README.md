@@ -38,12 +38,12 @@ Questline turns a roadmap and prioritization operating model into a video-game c
 
 ## Console sections
 
-- **Brief** -- rank, the six key shifts, and the ceremonies, at a glance
+- **Brief** -- a featured news hero, rank, the six key shifts, and the ceremonies, at a glance
 - **Chapters** -- master/detail list of the seven onboarding chapters with skill toggles
 - **Priority** -- priority bands, the ranked initiative list, and your rank ladder
-- **Intel** -- a field glossary of every key term, master/detail
+- **Intel** -- a searchable field glossary of every key term, master/detail
 - **Flow** -- a living chapter map that reveals as you clear work; click any node to focus its local plan
-- **System** -- save management, a title-screen toggle, an about panel, and a hidden friend
+- **System** -- save management, a title-screen toggle, a keyboard-controls toggle, an about panel, and a hidden friend
 
 ---
 
@@ -62,16 +62,19 @@ Questline turns a roadmap and prioritization operating model into a video-game c
 ## Features
 
 - **Game console interface** -- NieR-style tab bar, ghosted titles, master/detail panels, and a bottom key-hint bar that reflects the real working keys
+- **Featured news hero** -- one large, catchy banner on the home screen with a big optional image (a layered gradient stands in when none is set); it slow-rotates every ten seconds, with dots to jump, and opens the full story in the focused reading popup
+- **Focused reading popup** -- longer copy opens on a calm, near-black panel with the azure faceted frame, so reading happens away from the busy console; a banner or the six-shifts briefing both land here
+- **Six shifts, one read** -- the six key shifts collapse to a single read-check and a "Read the shifts" button that opens them all in the focused reader
+- **Searchable glossary** -- the Intel codex is fully open; a search box filters terms as you type, and pressing `/` anywhere jumps to it as a quick-navigation shortcut. Selecting a term updates only the detail panel, so the list keeps its place
 - **Boot splash** -- an optional title screen pauses on a "press any key to continue" beat before the console floods in; shows once, then a System toggle can bring it back every visit
-- **Full keyboard control** -- arrow keys move a cursor through lists, skills, and the map; `Enter` opens or toggles; hold `Enter` clears a chapter; `Q`/`E` cycle the tabs
+- **Full keyboard control** -- arrow keys move a cursor through lists, skills, and the map; `Enter` opens or toggles; hold `Enter` clears a chapter; `Q`/`E` cycle the tabs. A System toggle turns keyboard movement off for mouse-only use, and the hint bar follows it
 - **Quick menu** -- hold `Esc`, point with the arrow keys or mouse, release to jump to Brief, Chapters, Priority, or Flow
 - **First-run coach** -- a one-time card teaches the keyboard model and quick menu, then never shows again
 - **Reveal-as-you-go map** -- the Flow map starts in fog and grows as you clear chapters; locked future chapters stay hidden until you unlock them, then ease into view
 - **Focus a chapter** -- click any node on the map to focus its local plan: what it requires above, what it unlocks below, and a preview of its skills
-- **Jargon tooltips** -- decrypted terms in the copy are underlined; hover or focus one for a definition popover, click to open it in Intel
-- **A codex you decrypt** -- Intel terms stay encrypted until you clear the chapter that teaches them, so the codex genuinely fills in as you progress
-- **Complete in one move** -- a master toggle in the chapter header marks every skill done and stamps a cleared seal; clearing it again asks first
-- **Game-feel rewards** -- a rank-up plate on each threshold, an XP count-up on the progress bar, and a codex toast naming the Intel a chapter just decrypted
+- **Jargon tooltips** -- glossary terms in the copy are underlined; hover or focus one for a definition popover, click to open it in Intel
+- **Complete in one move** -- a master toggle in the chapter header marks every skill done and stamps a cleared seal; on hover it zooms slightly and a glow sweeps across it; clearing it again asks first
+- **Game-feel rewards** -- a rank-up plate on each threshold, an XP count-up on the progress bar, and a toast on each chapter cleared
 - **Soft strategy-UI motion** -- views settle in with a staggered, exponential ease when you navigate, while in-tab cursor moves stay perfectly still
 - **Considered reset** -- a quiet link, not a loud button; clicking it tints the screen corners red and asks first, then offers an Undo right after
 - **Progress that sticks** -- completed skills and rank persist in localStorage
@@ -87,8 +90,11 @@ Questline turns a roadmap and prioritization operating model into a video-game c
 - **`Enter`** -- open the cursored chapter, or toggle the cursored skill; **hold `Enter`** in a chapter to mark it complete
 - **`←` / `Backspace`** -- step from a chapter's skills back to the chapter list
 - **`Q` / `E`** -- cycle the console tabs
+- **`/`** -- jump to the Intel glossary and focus its search box, from anywhere
 - **Hold `Esc`** -- open the quick menu; point with arrows or mouse, release to jump
 - **Tap `Esc`** -- step back to the Brief
+
+Keyboard movement can be switched off in **System** (the `/` search shortcut, the quick menu, and all mouse control still work).
 
 ---
 
@@ -112,24 +118,32 @@ Then open http://localhost:8832/.
 questline-site/
 ├── index.html          # App shell + quick-menu overlay + SEO head + JSON-LD
 ├── css/
-│   └── style.css       # Design tokens + console, flowchart, quick-menu styles
+│   ├── style.css       # Manifest: @imports the parts in cascade order
+│   └── parts/
+│       ├── base.css        # Reset, design tokens, layout, header, nav/auth, buttons
+│       ├── components.css  # Overlays (modal, reader, splash, coach), toast, closed-bevel ring
+│       ├── flow.css        # Detroit-style chapter flowchart (Flow tab graph)
+│       └── console.css     # NieR console: tabs, panels, every tab view, controls
 ├── js/
 │   ├── app.js          # Entry point — wires modules together
-│   ├── data.js         # Chapters, skills, tabs, glossary, ranks (the content model)
-│   ├── state.js        # Hash routing, progress + unlock logic, flow reveal/focus, cursor state
-│   ├── console.js      # NieR-style console tabs (Brief, Chapters, Priority, Intel, System)
+│   ├── data.js         # Chapters, skills, tabs, glossary, ranks, banners (the content model)
+│   ├── state.js        # Hash routing, progress + unlock logic, flow reveal/focus, cursor + search state, prefs (questline-prefs)
+│   ├── console.js      # NieR-style console tabs (Brief, Chapters, Priority, Intel, System); icon() resolves both icon sets
+│   ├── icons-fa.js     # Filled FontAwesome-style icon set, rendered with currentColor (extracted from svgs/)
+│   ├── banners.js      # Home news hero (markup + slow-rotate controller) and the six-shifts reader content
 │   ├── flow.js         # The Flow tab: reveal-as-you-go full map + click-to-focus local map
-│   ├── render.js       # View dispatcher, entrance motion, flow SVG connector wires
-│   ├── keynav.js       # Keyboard cursor: arrows, Enter, hold-Enter, Q/E tabs
+│   ├── render.js       # View dispatcher, entrance motion, banner mount, flow SVG connector wires
+│   ├── keynav.js       # Keyboard cursor: arrows, Enter, hold-Enter, Q/E tabs, / search; honors the System opt-out
 │   ├── quickmenu.js    # Hold-Esc radial shortcut overlay
 │   ├── splash.js       # Boot splash (press any key); once-then-remembered, System-toggleable
 │   ├── coach.js        # First-run coach-mark (teaches the keyboard + quick menu)
-│   ├── glossary.js     # Jargon term tooltips, gated to decrypted Intel terms
-│   ├── celebrate.js    # Rank-up plate, XP count-up, intel-decrypted toast
-│   ├── modal.js        # Confirm dialog with focus trap (guards destructive actions)
+│   ├── glossary.js     # Jargon term tooltips for glossary terms in the copy
+│   ├── celebrate.js    # Rank-up plate, XP count-up, chapter-cleared toast
+│   ├── modal.js        # Confirm dialog + focused reading popup (openConfirm, openReader), shared focus trap
 │   ├── kiwi.js         # The hidden kiwi easter egg
-│   ├── events.js       # Routing, delegated clicks, skill toggles, reset+undo, danger vignette
+│   ├── events.js       # Routing, delegated clicks, skill toggles, Intel search + surgical detail patch, reset+undo, prefs toggles
 │   └── utils.js        # escHtml, toast, action toast, helpers
+├── svgs/               # Source SVG icons (extracted into js/icons-fa.js)
 ├── docs/
 │   └── architecture.svg
 ├── CNAME               # questline.neorgon.com

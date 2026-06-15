@@ -7,6 +7,9 @@
 // Content is intentionally generic: any team can map its own
 // roadmap and prioritization operating model onto this shape.
 
+import { SITE_GROUPS, SITES, SITES_BY_ID, SITE_LOGOS, siteMatches } from './sites.js';
+export { SITE_GROUPS, SITES, SITES_BY_ID, SITE_LOGOS, siteMatches };
+
 /** Inline icon paths (24x24, stroke). Keyed by name. */
 export const ICONS = {
   compass: '<circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/>',
@@ -223,6 +226,7 @@ export const TABS = [
   { id: 'playbooks', label: 'Playbooks', icon: 'route',       hint: 'Step-by-step workflows' },
   { id: 'priority',  label: 'Priority',  icon: 'chart-bar',   hint: 'Ranked backlog' },
   { id: 'intel',     label: 'Intel',     icon: 'atlas',       hint: 'Field glossary' },
+  { id: 'sites',     label: 'Sites',     icon: 'th-large',    hint: 'Useful pages from other teams' },
   { id: 'atlas',     label: 'Atlas',     icon: 'map',         hint: 'Team topology map' },
   { id: 'profile',   label: 'Profile',   icon: 'idcard',      hint: 'Class and certifications' },
   { id: 'flow',      label: 'Flow',      icon: 'code-branch', hint: 'Chapter map' },

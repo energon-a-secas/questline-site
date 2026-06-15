@@ -29,7 +29,14 @@
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-modal);
+  opacity: 0; transform: translateY(10px) scale(.99);
+  transition: opacity .25s var(--ease-out-expo), transform .38s var(--ease-out-expo);
 }
+.modal.is-visible .modal__dialog,
+.modal:not(.is-out) .modal__dialog { opacity: 1; transform: translateY(0) scale(1); }
+.modal.is-out .modal__dialog { opacity: 0; transform: translateY(10px) scale(.99); }
+.modal.is-out .modal__backdrop { opacity: 0; }
+.modal__backdrop { transition: opacity .2s ease-out; }
 .modal__header {
   display: flex;
   align-items: center;
@@ -84,6 +91,11 @@
   transition: opacity .3s var(--ease-out-expo), transform .42s var(--ease-out-expo);
 }
 .reader.is-in { opacity: 1; transform: translateY(0) scale(1); }
+.modal.is-out .reader {
+  opacity: 0; transform: translateY(10px) scale(.99);
+  transition: opacity .2s var(--ease-out-expo), transform .3s var(--ease-out-expo);
+}
+.modal.is-out .reader__rule { transform: scaleX(0); transition: transform .15s ease-out; }
 .reader--azure  { --reader-rim: var(--accent);  --reader-glow: var(--accent-glow); }
 .reader--gold   { --reader-rim: var(--gold);     --reader-glow: rgba(255,206,77,.4); }
 .reader--violet { --reader-rim: #b08cff;         --reader-glow: rgba(176,140,255,.4); }

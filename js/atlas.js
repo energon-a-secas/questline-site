@@ -135,6 +135,12 @@ function renderTeamCard(t, i) {
     </article>`;
 }
 
+function connectedTeamIds(team) {
+  const ids = new Set([team.id]);
+  (team.edges || []).forEach(e => ids.add(e.to));
+  return ids;
+}
+
 function renderEdgesSvg(teams, byId, maxLane) {
   // We render edges as an SVG overlay. Because the layout is a CSS grid of
   // lanes with cards, exact edge routing is expensive to keep synced on resize.
@@ -159,6 +165,7 @@ function renderEdgesSvg(teams, byId, maxLane) {
       const q = pos[e.to];
       if (!q) return;
       paths.push(`<path class="catlas__edge catlas__edge--${e.mode}"
+        data-from="${t.id}" data-to="${e.to}"
         d="M ${p.col + 0.5} ${p.row + 0.5} C ${p.col + 0.9} ${p.row + 0.5}, ${q.col + 0.1} ${q.row + 0.5}, ${q.col + 0.5} ${q.row + 0.5}"/>`);
     });
   });
@@ -305,6 +312,34 @@ export function validateAtlasJson(json) {
 // ── Event binding helpers ────────────────────────────────────
 
 export function bindAtlasEvents(s, container) {
+  const map = container?.querySelector('.catlas__map');
+  if (map) {
+    map.addEventListener('mouseenter', (e) => {
+      const card = e.target.closest('.catlas__card');
+      if (!card) return;
+      const teamId = card.dataset.team;
+      const teams = getTeams(s);
+      const team = teams.find(t => t.id === teamId);
+      const connected = team ? connectedTeamIds(team) : new Set([teamId]);
+      map.dataset.highlightTeam = teamId;
+      map.querySelectorAll('.catlas__card').forEach(c => {
+        c.classList.toggle('is-dimmed', !connected.has(c.dataset.team));
+      });
+      map.querySelectorAll('.catlas__edge').forEach(edge => {
+        const from = edge.dataset.from;
+        const to = edge.dataset.to;
+        const active = from === teamId || to === teamId;
+        edge.classList.toggle('is-dimmed', !active);
+        edge.classList.toggle('is-focused', active);
+      });
+    }, true);
+    map.addEventListener('mouseleave', () => {
+      delete map.dataset.highlightTeam;
+      map.querySelectorAll('.catlas__card').forEach(c => c.classList.remove('is-dimmed'));
+      map.querySelectorAll('.catlas__edge').forEach(e => e.classList.remove('is-dimmed', 'is-focused'));
+    }, true);
+  }
+
   container?.addEventListener('click', (e) => {
     const pick = e.target.closest('#atlasPickFile');
     if (pick) { container.querySelector('#atlasFile')?.click(); return true; }

@@ -17,23 +17,23 @@
   align-items: center;
   gap: var(--space-2);
   padding: var(--space-2) var(--space-4);
-  background: var(--panel);
+  background: var(--dbh-panel);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  color: var(--text-dim);
+  color: var(--text-muted);
   font: inherit;
-  font-size: var(--font-sm);
+  font-size: var(--text-sm);
   cursor: pointer;
   transition: color .15s, border-color .15s, background .15s;
 }
 
 .catlas__tab:hover {
-  color: var(--text);
-  border-color: var(--text-dim);
+  color: var(--text-primary);
+  border-color: var(--text-muted);
 }
 
 .catlas__tab.is-active {
-  color: var(--text);
+  color: var(--text-primary);
   border-color: var(--accent);
   background: color-mix(in srgb, var(--accent) 12%, transparent);
   box-shadow: 0 0 12px color-mix(in srgb, var(--accent) 25%, transparent);
@@ -104,11 +104,11 @@
   align-items: center;
   gap: var(--space-2);
   margin: 0;
-  font-size: var(--font-sm);
+  font-size: var(--text-sm);
   font-weight: 600;
   letter-spacing: .04em;
   text-transform: uppercase;
-  color: var(--lane-color, var(--text));
+  color: var(--lane-color, var(--text-primary));
 }
 
 .catlas__lane-h::before {
@@ -116,7 +116,7 @@
   width: 10px;
   height: 10px;
   border-radius: 2px;
-  background: var(--lane-color, var(--text));
+  background: var(--lane-color, var(--text-primary));
   transform: rotate(45deg);
 }
 
@@ -127,18 +127,49 @@
 }
 
 .catlas__card {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-left: 3px solid var(--team-color, var(--accent));
-  border-radius: var(--radius-sm);
+  --catlas-poly: polygon(8px 0, 100% 0, 100% 100%, 0 100%, 0 8px);
+  position: relative;
+  background: var(--dbh-edge);
+  clip-path: var(--catlas-poly);
   padding: var(--space-3);
   transition: transform .12s, border-color .12s, box-shadow .12s;
+  box-shadow: 0 12px 28px rgba(2,6,23,.35);
+}
+.catlas__card::before {
+  content: ""; position: absolute; inset: 1px; z-index: 0;
+  background: var(--dbh-panel); clip-path: var(--catlas-poly);
+  pointer-events: none;
+}
+.catlas__card > * { position: relative; z-index: 1; }
+.catlas__card::after {
+  content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+  background: var(--team-color, var(--accent));
+  box-shadow: 0 0 10px var(--team-color, var(--accent));
+  pointer-events: none;
 }
 
 .catlas__card:hover {
   transform: translateY(-2px);
-  border-color: color-mix(in srgb, var(--team-color, var(--accent)) 70%, var(--border));
-  box-shadow: 0 6px 20px rgba(0,0,0,.18);
+  box-shadow: 0 6px 20px rgba(0,0,0,.18), 0 0 0 1px var(--team-color, var(--accent-soft));
+}
+
+.catlas__map[data-highlight-team] .catlas__card.is-dimmed {
+  opacity: .25;
+  filter: grayscale(.5);
+}
+
+.catlas__map[data-highlight-team] .catlas__card:not(.is-dimmed) {
+  opacity: 1;
+}
+
+.catlas__edge.is-dimmed {
+  opacity: .08;
+}
+
+.catlas__edge.is-focused {
+  opacity: .9;
+  filter: drop-shadow(0 0 4px currentColor);
+  stroke-width: .06;
 }
 
 .catlas__card-head {
@@ -158,9 +189,9 @@
 
 .catlas__card-title {
   margin: 0;
-  font-size: var(--font-base);
+  font-size: var(--text-base);
   font-weight: 600;
-  color: var(--text);
+  color: var(--text-primary);
 }
 
 .catlas__card-needs {
@@ -171,13 +202,13 @@
 }
 
 .catlas__card-needs .ctag--sm {
-  font-size: var(--font-xs);
+  font-size: var(--text-xs);
   padding: 2px 8px;
 }
 
 .catlas__card-edges {
-  font-size: var(--font-xs);
-  color: var(--text-dim);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
 }
 
 .catlas__legend {
@@ -193,15 +224,15 @@
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
-  font-size: var(--font-sm);
-  color: var(--text-dim);
+  font-size: var(--text-sm);
+  color: var(--text-muted);
 }
 
 .catlas__legend-dot {
   width: 18px;
   height: 3px;
   border-radius: 2px;
-  background: var(--text-dim);
+  background: var(--text-muted);
 }
 
 .catlas__legend-item--collaboration .catlas__legend-dot {
@@ -221,17 +252,24 @@
 /* ── Customer-needs matrix ─────────────────────────────────── */
 
 .catlas__matrix-wrap {
+  position: relative;
   overflow-x: auto;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--panel);
+  background: var(--dbh-edge);
+  clip-path: polygon(10px 0, 100% 0, 100% 100%, 0 100%, 0 10px);
+  box-shadow: 0 16px 38px rgba(2,6,23,.45);
+}
+.catlas__matrix-wrap::before {
+  content: ""; position: absolute; inset: 1px; z-index: 0;
+  background: var(--dbh-panel); clip-path: polygon(10px 0, 100% 0, 100% 100%, 0 100%, 0 10px);
+  pointer-events: none;
 }
 
 .catlas__matrix {
+  position: relative; z-index: 1;
   width: 100%;
   min-width: 40rem;
   border-collapse: collapse;
-  font-size: var(--font-sm);
+  font-size: var(--text-sm);
 }
 
 .catlas__th,
@@ -247,9 +285,9 @@
 .catlas__th {
   position: sticky;
   top: 0;
-  background: color-mix(in srgb, var(--panel) 95%, var(--accent));
+  background: color-mix(in srgb, var(--dbh-panel) 95%, var(--accent));
   font-weight: 600;
-  color: var(--text);
+  color: var(--text-primary);
   z-index: 2;
 }
 
@@ -269,7 +307,7 @@
 .catlas__row-h {
   position: sticky;
   left: 0;
-  background: var(--panel);
+  background: var(--dbh-panel);
   min-width: 14rem;
   display: flex;
   align-items: center;
@@ -309,8 +347,8 @@
 
 .catlas__matrix-note {
   margin-top: var(--space-3);
-  font-size: var(--font-sm);
-  color: var(--text-dim);
+  font-size: var(--text-sm);
+  color: var(--text-muted);
 }
 
 /* ── Upload / validator ────────────────────────────────────── */
@@ -359,7 +397,7 @@
 }
 
 .catlas__upload-icon {
-  color: var(--text-dim);
+  color: var(--text-muted);
 }
 
 .catlas__upload-icon svg {
@@ -368,7 +406,7 @@
 
 .catlas__panel-h {
   margin: 0;
-  font-size: var(--font-base);
+  font-size: var(--text-base);
   font-weight: 600;
 }
 
@@ -380,7 +418,7 @@
 .catlas__result-box {
   padding: var(--space-3) var(--space-4);
   border-radius: var(--radius-sm);
-  font-size: var(--font-sm);
+  font-size: var(--text-sm);
 }
 
 .catlas__result-box.is-success {
@@ -405,8 +443,8 @@
 }
 
 .catlas__result-msg--info {
-  color: var(--text-dim);
-  font-size: var(--font-sm);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
 }
 
 .catlas__schema {
@@ -416,9 +454,9 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   padding: var(--space-3);
-  font-size: var(--font-xs);
+  font-size: var(--text-xs);
   line-height: 1.5;
-  color: var(--text-dim);
+  color: var(--text-muted);
 }
 
 .catlas__actions {
@@ -429,12 +467,12 @@
 }
 
 .catlas__muted {
-  color: var(--text-dim);
-  font-size: var(--font-xs);
+  color: var(--text-muted);
+  font-size: var(--text-xs);
 }
 
 .catlas__empty {
-  color: var(--text-dim);
-  font-size: var(--font-sm);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
   padding: var(--space-3);
 }

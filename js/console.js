@@ -6,12 +6,13 @@
 import {
   TABS, BRANCHES, BRANCH_BY_ID, BANDS, INITIATIVES,
   CEREMONIES, INTEL, ICONS, RANKS, INTEL_SCOPES,
+  SITE_GROUPS, SITES, SITES_BY_ID, SITE_LOGOS, siteMatches,
 } from './data.js';
 import {
   state, branchProgress, branchStatus, isBranchUnlocked,
   overallPercent, rankFor,
 } from './state.js';
-import { escHtml } from './utils.js';
+import { escHtml, domainFromUrl } from './utils.js';
 import { splashPref } from './splash.js';
 import { bannerStrip, shiftsControl } from './banners.js';
 import { FA } from './icons-fa.js';
@@ -60,21 +61,21 @@ function tabBar(active) {
         <span class="ctab__label">${escHtml(t.label)}</span>
       </a>`;
   }).join('');
-  // A search affordance sits at the end of the rail, beside System: it opens
-  // the global command palette (also on "/"). Placed here so "search the whole
-  // site" reads as a peer of the sections it searches.
+  // Search lives just below the tab boxes as a compact icon-only trigger. It
+  // opens the global command palette (also on "/") and is always reachable.
   const searchBtn = `
-    <button type="button" class="ctab ctab--search" id="openSearch"
+    <button type="button" class="search-fab" id="openSearch"
       title="Search everything (press /)" aria-label="Search everything">
-      <span class="ctab__icon">${icon('search', 18)}</span>
-      <span class="ctab__label">Search</span>
+      ${icon('search', 20)}
     </button>`;
   return `
-    <nav class="ctabs" aria-label="Console sections">
-      <span class="ctabs__rail" aria-hidden="true">‖</span>
-      ${items}
+    <div class="ctabs-wrap">
+      <nav class="ctabs" aria-label="Console sections">
+        <span class="ctabs__rail" aria-hidden="true">‖</span>
+        ${items}
+      </nav>
       ${searchBtn}
-    </nav>
+    </div>
     <div class="cdots" aria-hidden="true"></div>`;
 }
 
@@ -452,4 +453,130 @@ export function renderSystem(s) {
     </div>`;
   return shell('system', body, 'Manage your save and learn how the console works.',
     [{ k: 'Q/E', v: 'Tabs' }, { k: 'Esc', v: 'Menu' }]);
+}
+
+// ── Tab: Sites (master / detail) ─────────────────────────────
+// A catalog of external pages and tools owned by other teams. Reuses the
+// Intel master/detail pattern: group chips filter the list, search narrows
+// it, and the detail panel explains the team, context, and link.
+
+function siteLogo(site, size = 32) {
+  if (SITE_LOGOS.has(site.id)) {
+    return `<img src="assets/logos/${escHtml(site.id)}.svg" alt="" class="csite__logo" width="${size}" height="${size}" loading="lazy">`;
+  }
+  return `<span class="csite__logo csite__logo--fallback" aria-hidden="true">${icon(site.icon, size * 0.6)}</span>`;
+}
+
+function siteCard(site, active) {
+  const domain = domainFromUrl(site.url);
+  return `
+    <button type="button" class="csite-card ${active ? 'csite-card--active' : ''}"
+      data-site="${escHtml(site.id)}" aria-expanded="${active}"
+      style="--csite-accent:${escHtml(site.accent)}">
+      <span class="csite-card__accent" aria-hidden="true"></span>
+      <span class="csite-card__icon">${siteLogo(site, 40)}</span>
+      <span class="csite-card__main">
+        <span class="csite-card__name">${escHtml(site.name)}</span>
+        <span class="csite-card__domain">${escHtml(domain)}</span>
+        <span class="csite-card__desc">${escHtml(site.description)}</span>
+      </span>
+      <span class="csite-card__team">${escHtml(site.team)}</span>
+    </button>`;
+}
+
+function siteDetailAccordion(s, sel) {
+  const domain = domainFromUrl(sel.url);
+  const tags = (sel.tags || [])
+    .map(t => `<span class="csite__tag">${escHtml(t)}</span>`)
+    .join('');
+  const group = SITE_GROUPS.find(g => g.id === sel.group);
+
+  return `
+    <div class="csite-detail" style="--csite-accent:${escHtml(sel.accent)}">
+      <div class="csite-detail__head">
+        ${siteLogo(sel, 44)}
+        <div>
+          <h3 class="csite-detail__title">${escHtml(sel.name)}</h3>
+          <span class="csite-detail__domain">${escHtml(domain)}</span>
+        </div>
+      </div>
+      <p class="csite-detail__body">${escHtml(sel.description)}</p>
+      <div class="csite-detail__context">
+        <h4>When to use it</h4>
+        <p>${escHtml(sel.context)}</p>
+      </div>
+      <div class="csite-detail__rails">
+        <div class="csite-detail__rail">
+          <h4>Owner</h4>
+          <span>${escHtml(sel.team)}</span>
+        </div>
+        ${group ? `
+          <div class="csite-detail__rail">
+            <h4>Group</h4>
+            <span>${escHtml(group.label)}</span>
+          </div>` : ''}
+        ${tags ? `
+          <div class="csite-detail__rail">
+            <h4>Tags</h4>
+            <div class="csite-detail__tags">${tags}</div>
+          </div>` : ''}
+      </div>
+      <div class="csite-detail__actions">
+        <a class="btn btn--primary" href="${escHtml(sel.url)}" target="_blank" rel="noopener noreferrer">
+          ${icon('external', 14)} Open site
+        </a>
+        <button type="button" class="btn btn--ghost" id="copySiteLink" data-copy-url="${escHtml(sel.url)}">
+          ${icon('clone', 14)} Copy link
+        </button>
+      </div>
+    </div>`;
+}
+
+export function renderSites(s) {
+  const matches = siteMatches(s.ui.sitesQuery, s.ui.sitesGroup);
+  const sel = SITES_BY_ID[s.ui.sitesSel];
+  const selInMatches = sel && matches.some(site => site.id === sel.id);
+
+  const groups = SITE_GROUPS.map(g => `
+    <button type="button" class="cscope ${(s.ui.sitesGroup || 'all') === g.id ? 'is-active' : ''}"
+      data-site-group="${escHtml(g.id)}" aria-pressed="${(s.ui.sitesGroup || 'all') === g.id}">
+      ${escHtml(g.label)}</button>`).join('');
+
+  const groupsHtml = SITE_GROUPS
+    .filter(g => g.id !== 'all')
+    .map(g => {
+      const sites = matches.filter(site => site.group === g.id);
+      if (!sites.length) return '';
+      const cards = sites.map(site => {
+        const active = sel && sel.id === site.id;
+        return siteCard(site, active) + (active ? siteDetailAccordion(s, site) : '');
+      }).join('');
+      return `
+        <section class="csite-group">
+          <h3 class="csite-group__h">${escHtml(g.label)}</h3>
+          <p class="csite-group__desc">${escHtml(g.description)}</p>
+          <div class="csite-grid" role="list">${cards}</div>
+        </section>`;
+    })
+    .join('');
+
+  const detailTop = (sel && !selInMatches) ? siteDetailAccordion(s, sel) : '';
+
+  const body = `
+    ${screenTitle('Sites', 'Useful Pages')}
+    <p class="csites__lead clead">A curated list of external pages and tools maintained by teams across
+    the company. Pick a group, search, or tap a card to see its context.</p>
+    <div class="csite-toolbar">
+      <div class="cintel__search csite-toolbar__search">
+        <span class="cintel__search-icon" aria-hidden="true">${icon('search', 16)}</span>
+        <input type="search" id="sitesSearch" class="cintel__search-input"
+          placeholder="Search sites" aria-label="Search sites"
+          autocomplete="off" value="${escHtml(s.ui.sitesQuery || '')}">
+      </div>
+      <div class="cscopes" role="group" aria-label="Filter sites by group">${groups}</div>
+    </div>
+    ${detailTop}
+    <div class="csite-groups">${groupsHtml || `<p class="clist__empty">No site matches that.</p>`}</div>`;
+  return shell('sites', body, 'Tap a card to expand its team, context, and link.',
+    [{ k: '/', v: 'Search' }, { k: 'Q/E', v: 'Tabs' }, { k: 'Esc', v: 'Menu' }]);
 }

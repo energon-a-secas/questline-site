@@ -93,6 +93,7 @@ function mount(className, html, onClose, onClick) {
   document.body.classList.add('modal-open');
   root.addEventListener('click', onClick);
   document.addEventListener('keydown', onKey, true);
+  requestAnimationFrame(() => root?.classList.add('is-visible'));
 }
 
 function focusable() {
@@ -113,15 +114,32 @@ function onKey(e) {
 
 function close() {
   document.removeEventListener('keydown', onKey, true);
-  document.body.classList.remove('modal-open');
-  root?.remove();
+  const r = root;
+  const op = opener;
+  const cb = onCloseCb;
   root = null;
-  // Fire any teardown (e.g. clear the danger vignette) before restoring focus.
-  onCloseCb?.();
-  onCloseCb = null;
-  // Return focus to whatever opened the dialog.
-  opener?.focus?.();
   opener = null;
+  onCloseCb = null;
+  if (!r) {
+    cb?.();
+    op?.focus?.();
+    return;
+  }
+  r.classList.add('is-out');
+  r.addEventListener('transitionend', () => {
+    document.body.classList.remove('modal-open');
+    r.remove();
+    cb?.();
+    op?.focus?.();
+  }, { once: true });
+  setTimeout(() => {
+    if (r.isConnected) {
+      document.body.classList.remove('modal-open');
+      r.remove();
+      cb?.();
+      op?.focus?.();
+    }
+  }, 300);
 }
 
 /** Is a modal currently open? (so other Esc handlers can stand down) */

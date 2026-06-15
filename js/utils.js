@@ -69,6 +69,15 @@ export function showActionToast(msg, actionLabel, onAction, ms = 8000) {
   _toastTimer = setTimeout(dismiss, ms);
 }
 
+/** Extract a clean hostname from a URL string. */
+export function domainFromUrl(url) {
+  try {
+    return new URL(url).hostname.replace(/^www\./, '');
+  } catch {
+    return url || '';
+  }
+}
+
 /** Simple debounce. */
 export function debounce(fn, ms) {
   let timer;

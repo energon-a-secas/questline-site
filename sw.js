@@ -1,5 +1,5 @@
 // Questline Service Worker — offline-first caching strategy
-const CACHE_NAME = 'questline-v2';
+const CACHE_NAME = 'questline-v3';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -12,6 +12,7 @@ const STATIC_ASSETS = [
   '/css/parts/atlas.css',
   '/js/app.js',
   '/js/data.js',
+  '/js/sites.js',
   '/js/state.js',
   '/js/render.js',
   '/js/events.js',

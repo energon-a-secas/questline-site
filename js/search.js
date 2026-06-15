@@ -172,6 +172,7 @@ export function openSearch() {
   document.addEventListener('keydown', onKey, true);
 
   render();
+  requestAnimationFrame(() => root?.classList.add('is-visible'));
   const box = root.querySelector('#siteSearchInput');
   box?.focus();
 }
@@ -273,9 +274,22 @@ function onKey(e) {
 function close() {
   if (!root) return;
   document.removeEventListener('keydown', onKey, true);
-  document.body.classList.remove('modal-open');
-  root.remove();
+  root.classList.remove('is-visible');
+  const r = root;
+  const op = opener;
   root = null;
-  opener?.focus?.();
   opener = null;
+  r.addEventListener('transitionend', () => {
+    document.body.classList.remove('modal-open');
+    r.remove();
+    op?.focus?.();
+  }, { once: true });
+  // Fallback in case transitionend does not fire.
+  setTimeout(() => {
+    if (r.isConnected) {
+      document.body.classList.remove('modal-open');
+      r.remove();
+      op?.focus?.();
+    }
+  }, 300);
 }

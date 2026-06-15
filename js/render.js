@@ -10,7 +10,7 @@ import {
 } from './state.js';
 import {
   renderBrief, renderChapters, renderPriority, renderIntel,
-  renderSystem,
+  renderSites, renderSystem,
 } from './console.js';
 import { renderProfile } from './profile.js';
 import { renderPlaybooks } from './playbooks.js';
@@ -36,6 +36,7 @@ function viewHtml(s) {
     case 'playbooks': return renderPlaybooks(s, s.ui.playbookSel);
     case 'priority':  return renderPriority(s);
     case 'intel':     return renderIntel(s, s.ui.intelSel);
+    case 'sites':     return renderSites(s);
     case 'atlas':     return renderAtlas(s);
     case 'profile':   return renderProfile(s);
     case 'system':    return renderSystem(s);
@@ -147,6 +148,8 @@ export function drawWires(s) {
       const path = document.createElementNS(SVGNS, 'path');
       path.setAttribute('d', d);
       path.setAttribute('class', `wire ${lit ? 'wire--lit' : 'wire--dim'}`);
+      path.setAttribute('data-from', pid);
+      path.setAttribute('data-to', branch.id);
       frag.appendChild(path);
 
       // Junction node at the parent exit, DBH-style.

@@ -11,7 +11,7 @@
 // hold-Esc quick menu owns the keyboard while open; this stands down.
 
 import { state, TAB_IDS, viewFromHash, wrapIndex, visibleFlowOrder, focusOrder, isBranchUnlocked } from './state.js';
-import { BRANCHES, BRANCH_BY_ID } from './data.js';
+import { BRANCHES, BRANCH_BY_ID, siteMatches } from './data.js';
 import { intelMatches } from './console.js';
 import { rerenderActive } from './render.js';
 import { isModalOpen } from './modal.js';
@@ -51,6 +51,7 @@ function onKeyDown(e) {
   switch (s.view) {
     case 'chapters': return chaptersKey(s, e);
     case 'intel':    return intelKey(s, e);
+    case 'sites':    return sitesKey(s, e);
     case 'atlas':    return atlasKey(s, e);
     case 'flow':     return flowKey(s, e);
   }
@@ -84,6 +85,28 @@ function intelKey(s, e) {
     e.preventDefault(); location.hash = `#intel/${items[0].id}`;
   } else if (e.key === 'End') {
     e.preventDefault(); location.hash = `#intel/${items[items.length - 1].id}`;
+  }
+}
+
+// ── Sites master-list arrow nav (over the filtered catalog) ──
+
+function sitesKey(s, e) {
+  const items = siteMatches(s.ui.sitesQuery, s.ui.sitesGroup);
+  if (!items.length) return;
+  const cur = Math.max(0, items.findIndex(site => site.id === s.ui.sitesSel));
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+    e.preventDefault();
+    const dir = e.key === 'ArrowDown' ? 1 : -1;
+    s.ui.sitesSel = items[wrapIndex(cur + dir, items.length)].id;
+    s.ui.rowCursor = items.findIndex(site => site.id === s.ui.sitesSel);
+    rerenderActive(s);
+  } else if (e.key === 'Enter') {
+    e.preventDefault();
+    window.open(items[cur].url, '_blank', 'noopener,noreferrer');
+  } else if (e.key === 'Home') {
+    e.preventDefault(); s.ui.sitesSel = items[0].id; rerenderActive(s);
+  } else if (e.key === 'End') {
+    e.preventDefault(); s.ui.sitesSel = items[items.length - 1].id; rerenderActive(s);
   }
 }
 

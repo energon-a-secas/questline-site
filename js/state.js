@@ -58,6 +58,9 @@ export const state = {
     stepEditing: null, // step id whose inline editor is open (Playbooks)
     credEditing: null, // cert id whose credential form is open (Profile)
     atlasView: 'map',  // 'map' | 'matrix' | 'upload'
+    sitesSel: null,    // site id open in the Sites detail panel
+    sitesQuery: '',    // live sites search filter
+    sitesGroup: 'all', // sites group filter
     region: 'list',    // 'list' | 'detail' — which side owns the cursor
     rowCursor: 0,      // index into the active master list
     skillCursor: 0,    // index into the open chapter's nodes (detail region)

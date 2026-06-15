@@ -99,7 +99,7 @@ function mount() {
         `).join('')}
       </div>
       <footer class="daily__foot">
-        <button type="button" class="btn btn--ghost btn--sm" data-daily-dismiss>Don't remind me</button>
+        <button type="button" class="btn btn--ghost btn--sm" data-daily-dismiss>Hide this event</button>
         <div class="daily__foot-right">
           <button type="button" class="btn btn--ghost btn--sm" data-daily-snooze>Remind me tomorrow</button>
           <button type="button" class="btn btn--primary btn--sm" data-daily-close>Got it</button>
@@ -116,6 +116,7 @@ function mount() {
 
   root.addEventListener('click', onClick);
   document.addEventListener('keydown', onKey, true);
+  requestAnimationFrame(() => root?.classList.add('is-visible'));
   updateBellDot();
   sync();
   startAuto();
@@ -241,14 +242,22 @@ function close() {
   if (!root) return;
   stopAuto();
   document.removeEventListener('keydown', onKey, true);
-  document.body.classList.remove('modal-open');
-  root.remove();
+  const r = root;
+  const op = opener;
+  const cb = onCloseCb;
   root = null;
-  onCloseCb?.();
-  onCloseCb = null;
-  opener?.focus?.();
   opener = null;
-  updateBellDot();
+  onCloseCb = null;
+  r.classList.add('is-out');
+  const finish = () => {
+    document.body.classList.remove('modal-open');
+    r.remove();
+    cb?.();
+    op?.focus?.();
+    updateBellDot();
+  };
+  r.addEventListener('transitionend', finish, { once: true });
+  setTimeout(() => { if (r.isConnected) finish(); }, 300);
 }
 
 /** Is the daily dispatch currently open? */

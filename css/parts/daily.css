@@ -29,7 +29,11 @@
 .header-bell__dot.is-visible { opacity: 1; transform: scale(1); }
 
 /* ── Daily Dispatch modal ──────────────────────────────────── */
-.modal--daily .modal__backdrop { background: rgba(2, 4, 12, 0.78); }
+.modal--daily .modal__backdrop {
+  background: rgba(2, 4, 12, 0.78);
+  opacity: 0; transition: opacity .2s ease-out;
+}
+.modal--daily.is-visible .modal__backdrop { opacity: 1; }
 
 .daily {
   position: relative; z-index: 1;
@@ -42,7 +46,12 @@
   background: var(--daily-rim);
   clip-path: var(--poly);
   box-shadow: var(--shadow-modal);
+  opacity: 0; transform: translateY(14px) scale(.98);
+  transition: opacity .22s ease-out, transform .4s var(--ease-out-expo);
 }
+.modal--daily.is-visible .daily { opacity: 1; transform: translateY(0) scale(1); }
+.modal--daily.is-out .daily { opacity: 0; transform: translateY(10px) scale(.99); }
+.modal--daily.is-out .modal__backdrop { opacity: 0; }
 .daily::before {
   content: ""; position: absolute; inset: 1px; z-index: 0;
   background: #070e1a;
@@ -89,9 +98,23 @@
   position: absolute; inset: 0;
   display: flex; align-items: stretch;
   opacity: 0; pointer-events: none;
-  transition: opacity var(--dur) var(--ease-out-quint);
+  transform: translateX(18px);
+  transition: opacity .25s var(--ease-out-quint), transform .35s var(--ease-out-expo);
 }
-.daily__slide.is-active { opacity: 1; pointer-events: auto; }
+.daily__slide.is-active { opacity: 1; pointer-events: auto; transform: translateX(0); }
+.daily__slide.is-exiting { opacity: 0; transform: translateX(-18px); }
+
+.daily__slide.is-active .daily__card-title,
+.daily__slide.is-active .daily__blurb,
+.daily__slide.is-active .daily__cta {
+  opacity: 0; transform: translateY(8px);
+  animation: dailyTextIn .35s var(--ease-out-expo) forwards;
+}
+.daily__slide.is-active .daily__blurb { animation-delay: .06s; }
+.daily__slide.is-active .daily__cta { animation-delay: .12s; }
+@keyframes dailyTextIn {
+  to { opacity: 1; transform: translateY(0); }
+}
 
 .daily__card {
   position: relative; flex: 1;

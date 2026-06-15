@@ -11,8 +11,9 @@ import {
   setClass, setCredential, clearCredential,
   addPlaybook, updatePlaybook, deletePlaybook, addStep, updateStep, deleteStep, moveStep,
   setAtlasTeams,
+  visibleFlowOrder, focusOrder, isBranchUnlocked, wrapIndex,
 } from './state.js';
-import { INTEL, INTEL_BY_ID } from './data.js';
+import { INTEL, INTEL_BY_ID, SITES, SITES_BY_ID, siteMatches } from './data.js';
 import { openConfirm } from './modal.js';
 import { openChapterReader } from './chapterReader.js';
 import { openSearch } from './search.js';
@@ -67,6 +68,33 @@ export function bindEvents(s) {
 
   // Atlas has its own file input / drag-drop / download handlers.
   bindAtlasEvents(s, app);
+
+  // Flow map hover: highlight the focused node and its connected wires.
+  app.addEventListener('mouseenter', (e) => {
+    const node = e.target.closest('.tnode[data-branch]');
+    if (!node) return;
+    const tree = node.closest('.tree');
+    if (!tree) return;
+    const id = node.dataset.branch;
+    tree.dataset.focusBranch = id;
+    node.classList.add('is-focus');
+    tree.querySelectorAll('.wire').forEach(w => {
+      if (w.dataset.from === id || w.dataset.to === id) {
+        w.classList.add('is-focus');
+        const otherId = w.dataset.from === id ? w.dataset.to : w.dataset.from;
+        const other = tree.querySelector(`.tnode[data-branch="${otherId}"]`);
+        if (other) other.classList.add('is-focus');
+      }
+    });
+  }, true);
+  app.addEventListener('mouseleave', (e) => {
+    const node = e.target.closest('.tnode[data-branch]');
+    if (!node) return;
+    const tree = node.closest('.tree');
+    if (!tree) return;
+    delete tree.dataset.focusBranch;
+    tree.querySelectorAll('.tnode.is-focus, .wire.is-focus').forEach(el => el.classList.remove('is-focus'));
+  }, true);
 
   // Delegated clicks for all interactive controls.
   app.addEventListener('click', (e) => {
@@ -153,6 +181,48 @@ export function bindEvents(s) {
       else location.hash = `#intel/${id}`;
       return;
     }
+
+    // Sites group filter chip: re-render the grid for the new group.
+    const siteGroupBtn = e.target.closest('[data-site-group]');
+    if (siteGroupBtn) { s.ui.sitesGroup = siteGroupBtn.dataset.siteGroup; s.ui.sitesSel = null; rerenderActive(s); return; }
+
+    // Site card: toggle its expanded detail.
+    const siteCard = e.target.closest('[data-site]');
+    if (siteCard) {
+      const id = siteCard.dataset.site;
+      if (s.view === 'sites') {
+        s.ui.sitesSel = s.ui.sitesSel === id ? null : id;
+        rerenderActive(s);
+      } else {
+        location.hash = `#sites`;
+      }
+      return;
+    }
+
+    // Copy site link button.
+    const copySite = e.target.closest('#copySiteLink');
+    if (copySite) {
+      const url = copySite.dataset.copyUrl;
+      if (url) {
+        navigator.clipboard?.writeText(url).then(() => showToast('Link copied'))
+          .catch(() => showToast('Could not copy link'));
+      }
+      return;
+    }
+
+    // Flow map D-pad: move cursor or focus the selected chapter.
+    const flowDir = e.target.closest('[data-flow-dir]');
+    if (flowDir) {
+      e.preventDefault();
+      onFlowMove(s, flowDir.dataset.flowDir);
+      return;
+    }
+    const flowAction = e.target.closest('[data-flow-action="focus"]');
+    if (flowAction) {
+      e.preventDefault();
+      onFlowActivate(s);
+      return;
+    }
   });
 
   // Glossary search: filter the term list live, patching only the list (and,
@@ -160,6 +230,12 @@ export function bindEvents(s) {
   app.addEventListener('input', (e) => {
     const box = e.target.closest('#intelSearch');
     if (box) onIntelSearch(s, box.value);
+  });
+
+  // Sites search: filter the site grid live.
+  app.addEventListener('input', (e) => {
+    const box = e.target.closest('#sitesSearch');
+    if (box) { s.ui.sitesQuery = box.value; rerenderActive(s); }
   });
 
   // Cert row keyboard support (now a focusable div so the issuer link can nest).
@@ -255,6 +331,46 @@ function onIntelSearch(s, value) {
   if (matches.length && !matches.some(t => t.id === s.ui.intelSel)) {
     patchIntel(s, matches[0].id);
   }
+}
+
+// ── Flow map D-pad helpers ───────────────────────────────────
+
+function onFlowMove(s, dir) {
+  if (s.ui.flowFocus) {
+    const order = focusOrder(s.ui.flowFocus);
+    if (!order.length) return;
+    const delta = (dir === 'up' || dir === 'left') ? -1 : 1;
+    s.ui.flowCursor = wrapIndex(s.ui.flowCursor + delta, order.length);
+    rerenderActive(s);
+    scrollFlowCursorIntoView();
+    return;
+  }
+  const order = visibleFlowOrder(s);
+  if (!order.length) return;
+  const delta = (dir === 'up' || dir === 'left') ? -1 : 1;
+  s.ui.flowCursor = wrapIndex(s.ui.flowCursor + delta, order.length);
+  rerenderActive(s);
+  scrollFlowCursorIntoView();
+}
+
+function scrollFlowCursorIntoView() {
+  const cursor = document.querySelector('.tnode.is-cursor');
+  if (!cursor) return;
+  cursor.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+}
+
+function onFlowActivate(s) {
+  if (s.ui.flowFocus) {
+    const order = focusOrder(s.ui.flowFocus);
+    const id = order[s.ui.flowCursor];
+    if (!id) return;
+    if (id === s.ui.flowFocus && isBranchUnlocked(s, id)) location.hash = `#${id}`;
+    else location.hash = `#flow/${id}`;
+    return;
+  }
+  const order = visibleFlowOrder(s);
+  const id = order[s.ui.flowCursor];
+  if (id) location.hash = `#flow/${id}`;
 }
 
 /**

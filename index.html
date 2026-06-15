@@ -3,15 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Questline — Operating Model Skill Tree</title>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; script-src 'self' 'unsafe-inline' https://esm.sh cdn.jsdelivr.net cdnjs.cloudflare.com https://challenges.cloudflare.com https://www.googletagmanager.com https://www.google-analytics.com https://plausible.io; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://pub-b597cd281a384f98a47e1f043a6c4160.r2.dev; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://*.convex.cloud https://img.clerk.com https://pub-b597cd281a384f98a47e1f043a6c4160.r2.dev https://i.ytimg.com https://yt3.ggpht.com https://www.google-analytics.com; connect-src 'self' https://*.convex.cloud https://*.clerk.accounts.dev https://*.accounts.dev https://clerk-telemetry.com https://api.clerk.com https://challenges.cloudflare.com https://*.workers.dev https://www.google-analytics.com https://www.googletagmanager.com https://plausible.io; frame-src 'self' https://challenges.cloudflare.com https://*.clerk.accounts.dev https://*.accounts.dev https://www.youtube.com https://www.youtube-nocookie.com; worker-src 'self' blob:">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <title>Questline: Operating Model Skill Tree</title>
   <meta name="description" content="Turn a roadmap and prioritization operating model into a visual skill tree, with unlockable stages, ceremonies, and key dates">
-  <meta property="og:title" content="Questline — Operating Model Skill Tree">
+  <meta property="og:title" content="Questline: Operating Model Skill Tree">
   <meta property="og:description" content="Learn a roadmap and prioritization operating model as a video-game skill tree you unlock stage by stage">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://questline.neorgon.com/">
   <meta property="og:site_name" content="Neorgon">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Questline — Operating Model Skill Tree">
+  <meta name="twitter:title" content="Questline: Operating Model Skill Tree">
   <meta name="twitter:description" content="Learn a roadmap and prioritization operating model as a skill tree you unlock stage by stage">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://questline.neorgon.com/">
@@ -68,16 +71,10 @@
       </a>
     </div>
 
-    <button type="button" class="header-menu" id="openQuickMenu" aria-label="Open quick menu" title="Quick menu">
-      <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-        <path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/>
-      </svg>
-    </button>
-
     <button type="button" class="header-bell" id="openDaily" aria-label="Open daily dispatch" title="Daily dispatch">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+      <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M18 16c0-4.5 0-5.5-1.5-7C15 7.5 15 6 12 6s-3 1.5-4.5 3C6 10.5 6 11.5 6 16v2h12v-2z"/>
+        <path d="M10 20h4a2 2 0 1 1-4 0z"/>
       </svg>
       <span class="header-bell__dot" id="dailyBellDot" aria-hidden="true"></span>
     </button>
@@ -87,6 +84,12 @@
         <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
       </svg>
     </a>
+
+    <button type="button" class="header-menu" id="openQuickMenu" aria-label="Open quick menu" title="Quick menu">
+      <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+        <path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/>
+      </svg>
+    </button>
   </header>
 
   <main id="main">

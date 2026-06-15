@@ -112,6 +112,17 @@ function renderFullMap(s) {
   const lead = s.prefs.showFullMap
     ? 'The whole path is shown; dimmed chapters unlock as you clear their prerequisites.'
     : 'Clear a chapter to reveal the paths that branch from it.';
+  const pad = `
+    <div class="flowpad" aria-label="Map navigation">
+      <button type="button" class="flowpad__btn" data-flow-dir="up" aria-label="Move up">▲</button>
+      <div class="flowpad__mid">
+        <button type="button" class="flowpad__btn" data-flow-dir="left" aria-label="Move left">◀</button>
+        <button type="button" class="flowpad__btn flowpad__btn--center" data-flow-action="focus" aria-label="Focus selected chapter">⊙</button>
+        <button type="button" class="flowpad__btn" data-flow-dir="right" aria-label="Move right">▶</button>
+      </div>
+      <button type="button" class="flowpad__btn" data-flow-dir="down" aria-label="Move down">▼</button>
+    </div>`;
+
   const body = `
     ${screenTitle('Flow', 'Unlock Map')}
     ${rankPanel(s, lead)}
@@ -119,8 +130,9 @@ function renderFullMap(s) {
       <svg class="tree__wires" aria-hidden="true" preserveAspectRatio="none"></svg>
       <div class="tree__rows">${rows}</div>
     </div>
-    ${footnote}`;
-  return shell('flow', body, 'Open a chapter to focus its local map. The map grows as you clear work.',
+    ${footnote}
+    ${pad}`;
+  return shell('flow', body, 'Tap the pad to move, then focus the selected chapter.',
     [{ k: '↑↓', v: 'Move' }, { k: '↵', v: 'Focus' }, { k: 'Q/E', v: 'Tabs' }, { k: 'Esc', v: 'Menu' }]);
 }
 

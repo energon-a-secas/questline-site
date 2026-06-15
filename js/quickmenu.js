@@ -135,7 +135,7 @@ function setDir(next) {
   const live = document.getElementById('quickmenuLive');
   if (live) {
     const w = WEDGES.find(x => x.dir === next);
-    live.textContent = w ? `${w.label} — release to jump` : 'Quick menu open';
+    live.textContent = w ? `${w.label}: release to jump` : 'Quick menu open';
   }
 }
 

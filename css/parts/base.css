@@ -178,10 +178,17 @@ main#main {
 }
 
 /* ── Header ────────────────────────────────────────────────── */
+/* Retinted to match the Questline console: a deep ink-navy bar with an azure
+   sweep and a faint violet edge (a nod to the brand magenta), so the header
+   reads as part of the NieR-style game UI rather than the default magenta
+   brand gradient. A 1px azure underline + dotted seam echo the console tabs. */
 .header-bar {
-  background: linear-gradient(in oklch 135deg, #B015B0 0%, #3D0080 50%, #040714 100%);
+  background:
+    radial-gradient(120% 180% at 0% -40%, rgba(176,140,255,.22) 0%, transparent 55%),
+    linear-gradient(135deg, #122a52 0%, #0c1c3c 48%, #070e1a 100%);
   backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--accent);
+  box-shadow: 0 1px 0 0 rgba(42,168,255,.25), 0 6px 22px -10px rgba(2,6,23,.7);
   padding: 0 var(--space-6);
   height: 68px;
   position: sticky;
@@ -189,6 +196,13 @@ main#main {
   z-index: var(--z-sticky-header);
   display: flex;
   align-items: center;
+}
+/* Dotted seam beneath the header — the same NieR signature as the tab divider. */
+.header-bar::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: -7px; height: 6px;
+  background-image: radial-gradient(circle, var(--accent) 1px, transparent 1.2px);
+  background-size: 16px 6px; background-position: 0 2px;
+  opacity: .35; pointer-events: none;
 }
 
 .header-logo { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }

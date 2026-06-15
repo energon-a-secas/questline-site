@@ -5,7 +5,7 @@
 
 import {
   TABS, BRANCHES, BRANCH_BY_ID, BANDS, INITIATIVES,
-  CEREMONIES, INTEL, ICONS, RANKS,
+  CEREMONIES, INTEL, ICONS, RANKS, INTEL_SCOPES,
 } from './data.js';
 import {
   state, branchProgress, branchStatus, isBranchUnlocked,
@@ -159,111 +159,58 @@ export function renderBrief(s) {
     [{ k: '↵', v: 'Open chapters' }, { k: 'Q/E', v: 'Tabs' }, { k: 'Esc', v: 'Menu' }]);
 }
 
-// ── Tab: Chapters (master / detail) ────────────────────────
+// ── Tab: Chapters (big cards → section reader) ─────────────
+// Chapters are big items. Each renders as a card with its progress; clicking
+// one opens the navigable section-reader popup (chapterReader.js) where the
+// subsections read one at a time, jump-list and search included. The grid
+// replaces the old inline master/detail checklist.
 
 export function renderChapters(s, selectedId) {
-  // Pick a sensible default: the selected branch, else first unlocked.
+  // Track a "current" chapter (deep links / Q-E cursor target) but the card
+  // grid is the surface now; selection just rings the matching card.
   const sel = BRANCHES.find(b => b.id === selectedId)
     || BRANCHES.find(b => isBranchUnlocked(s, b.id))
     || BRANCHES[0];
-  // Keep shared cursor state in sync so keyboard nav lands on the open row.
   s.ui.chapterSel = sel.id;
   s.ui.rowCursor = BRANCHES.findIndex(b => b.id === sel.id);
 
-  const list = BRANCHES.map((b, i) => {
+  const cards = BRANCHES.map((b, i) => {
     const status = branchStatus(s, b.id);
     const { done, total } = branchProgress(s, b.id);
+    const pct = total ? Math.round((done / total) * 100) : 0;
     const locked = status === 'locked';
-    const active = b.id === sel.id;
-    const cursored = s.ui.region === 'list' && i === s.ui.rowCursor;
-    const meta = locked
-      ? icon('lock', 13)
-      : `${done}/${total}${status === 'complete' ? ` <span class="crow__seal" aria-label="complete">${icon('check', 12)}</span>` : ''}`;
+    const cursored = i === s.ui.rowCursor;
+    const lockNote = locked
+      ? `Clear ${escHtml(b.prereq.map(p => BRANCH_BY_ID[p]?.title).filter(Boolean).join(' and '))} first`
+      : '';
     return `
-      <button type="button" class="crow ${active ? 'crow--active' : ''} ${cursored ? 'is-cursor' : ''} crow--${status}"
-        data-chapter="${b.id}" ${locked ? 'data-locked="1"' : ''}
-        role="option" aria-selected="${active}">
-        <span class="crow__no">${chapterNo(b)}</span>
-        <span class="crow__name">${escHtml(b.title)}</span>
-        <span class="crow__meta">${meta}</span>
+      <button type="button" class="cchapter cchapter--${status} ${cursored ? 'is-cursor' : ''}"
+        data-chapter-open="${b.id}" aria-label="Open ${escHtml(b.title)}">
+        <span class="cchapter__top">
+          <span class="cchapter__icon">${icon(b.icon, 26)}</span>
+          <span class="cchapter__no">${chapterNo(b)}</span>
+          ${status === 'complete'
+            ? `<span class="cchapter__seal" aria-label="complete">${icon('check', 13)}</span>`
+            : locked ? `<span class="cchapter__lock">${icon('lock', 14)}</span>` : ''}
+        </span>
+        <span class="cchapter__title">${escHtml(b.title)}</span>
+        <span class="cchapter__tagline">${escHtml(b.tagline)}</span>
+        <span class="cchapter__bar"><span style="transform:scaleX(${pct / 100})"></span></span>
+        <span class="cchapter__foot">
+          <span class="cchapter__count">${locked ? lockNote : `${done}/${total} sections`}</span>
+          <span class="cchapter__go">${locked ? '' : `Read ${icon('caret-right', 13)}`}</span>
+        </span>
       </button>`;
   }).join('');
 
-  const detail = chapterDetail(s, sel);
-
   const body = `
-    ${screenTitle('Chapters', 'Onboarding Path')}
-    <div class="cmaster">
-      <div class="cpanel clist" role="listbox" aria-label="Chapters">
-        <div class="clist__head">Standard Path</div>
-        ${list}
-      </div>
-      <div class="cpanel cdetail">${detail}</div>
-    </div>`;
-  return shell('chapters', body, chapterHint(s), chapterKeys(s));
-}
-
-/** Region-aware hint copy + keys for the Chapters tab (no dead keys). */
-function chapterHint(s) {
-  return s.ui.region === 'detail'
-    ? 'Toggle skills, or clear the whole chapter.'
-    : 'Select a chapter to read and clear its skills.';
-}
-function chapterKeys(s) {
-  return s.ui.region === 'detail'
-    ? [{ k: '↑↓', v: 'Skill' }, { k: '↵', v: 'Toggle' }, { k: 'Hold ↵', v: 'Complete' }, { k: '←', v: 'Back' }]
-    : [{ k: '↑↓', v: 'Select' }, { k: '↵', v: 'Open' }, { k: 'Q/E', v: 'Tabs' }, { k: 'Esc', v: 'Menu' }];
-}
-
-function chapterDetail(s, branch) {
-  const locked = !isBranchUnlocked(s, branch.id);
-  if (locked) {
-    const names = branch.prereq.map(p => BRANCHES.find(b => b.id === p)?.title).filter(Boolean);
-    return `
-      <div class="cdetail__locked">
-        <span class="cdetail__lockicon">${icon('lock', 30)}</span>
-        <h3>${escHtml(branch.title)}</h3>
-        <p>Locked. Clear ${escHtml(names.join(' and '))} to unlock this chapter.</p>
-      </div>`;
-  }
-  const { done, total } = branchProgress(s, branch.id);
-  const pct = total ? Math.round((done / total) * 100) : 0;
-  const allDone = done === total;
-  const inDetail = s.ui.region === 'detail';
-  const skills = branch.nodes.map((n, i) => {
-    const checked = !!s.done[n.id];
-    const cursored = inDetail && i === s.ui.skillCursor;
-    const detail = n.list
-      ? `<ul class="skill__list">${n.list.map(li => `<li>${escHtml(li)}</li>`).join('')}</ul>`
-      : `<p class="skill__body">${escHtml(n.body)}</p>`;
-    return `
-      <div class="skill ${checked ? 'skill--done' : ''} ${cursored ? 'is-cursor' : ''}">
-        <button type="button" class="skill__check" data-node="${n.id}"
-          aria-pressed="${checked}" aria-label="Toggle ${escHtml(n.title)}">${icon('check', 16)}</button>
-        <div class="skill__main">
-          <div class="skill__head">
-            <span class="skill__title">${escHtml(n.title)}</span>
-            <span class="skill__tag">${escHtml(n.tag)}</span>
-          </div>
-          ${detail}
-        </div>
-      </div>`;
-  }).join('');
-
-  return `
-    <div class="cdetail__head">
-      <span class="cdetail__no">${chapterNo(branch)}</span>
-      <div class="cdetail__heading">
-        <h3 class="cdetail__title">${escHtml(branch.title)}</h3>
-        <p class="cdetail__summary">${escHtml(branch.summary)}</p>
-      </div>
-      ${completeControl(branch, done, total)}
-    </div>
-    <div class="branch-progress">
-      <div class="branch-progress__bar"><div style="transform:scaleX(${pct / 100})"></div></div>
-      <span class="branch-progress__count">${done}/${total} skills</span>
-    </div>
-    <div class="skills">${skills}</div>`;
+    ${screenTitle('Chapters', 'Field Manual')}
+    <p class="cchapters__lead clead">A short, generic onboarding manual. Open a chapter to
+    read its sections one at a time — step through with ◀ ▶, jump to any section, or
+    search across the whole manual. Mark a section complete to track your progress.</p>
+    <div class="cchapters">${cards}</div>`;
+  return shell('chapters', body, 'Open a chapter to read its sections in a focused view.',
+    [{ k: '↑↓', v: 'Card' }, { k: '↵', v: 'Open' }, { k: 'Q/E', v: 'Tabs' }, { k: 'Esc', v: 'Menu' }]);
 }
 
 /**
@@ -351,9 +298,18 @@ export function renderPriority(s) {
 // ── Tab: Intel (master / detail) ───────────────────────────
 
 export function renderIntel(s, selectedId) {
-  const sel = INTEL.find(t => t.id === selectedId) || INTEL[0];
+  // Keep selection consistent with the active scope+query: if the open term
+  // falls outside the current filter, land on the first match instead.
+  const matches = intelMatches(s.ui.intelQuery, s.ui.intelScope);
+  const sel = matches.find(t => t.id === selectedId)
+    || INTEL.find(t => t.id === selectedId) || matches[0] || INTEL[0];
   s.ui.intelSel = sel.id;
-  s.ui.rowCursor = INTEL.findIndex(t => t.id === sel.id);
+  s.ui.rowCursor = matches.findIndex(t => t.id === sel.id);
+
+  const scopes = INTEL_SCOPES.map(sc => `
+    <button type="button" class="cscope ${(s.ui.intelScope || 'all') === sc.id ? 'is-active' : ''}"
+      data-intel-scope="${sc.id}" aria-pressed="${(s.ui.intelScope || 'all') === sc.id}">
+      ${escHtml(sc.label)}</button>`).join('');
 
   const body = `
     ${screenTitle('Intel', 'Field Glossary')}
@@ -365,27 +321,32 @@ export function renderIntel(s, selectedId) {
             placeholder="Search terms — press /" aria-label="Search glossary terms"
             autocomplete="off" value="${escHtml(s.ui.intelQuery || '')}">
         </div>
+        <div class="cscopes" role="group" aria-label="Filter glossary by scope">${scopes}</div>
         <div class="clist__rows" id="intelRows">${intelListItems(s, sel.id)}</div>
       </div>
       <div class="cpanel cdetail cintel" id="intelDetail">${intelDetail(s, sel)}</div>
     </div>`;
-  return shell('intel', body, 'Search or select a term. Press / to search from anywhere.',
+  return shell('intel', body, 'Search, pick a scope, or select a term. Press / to search from anywhere.',
     [{ k: '/', v: 'Search' }, { k: '↑↓', v: 'Select' }, { k: 'Q/E', v: 'Tabs' }, { k: 'Esc', v: 'Menu' }]);
 }
 
-/** Terms matching the active query (term, kind, or aliases). Empty → all. */
-export function intelMatches(query) {
+/** Terms matching the active query (term, kind, or aliases) AND scope. Empty
+ *  query → all in scope; scope 'all' or omitted → every scope. */
+export function intelMatches(query, scope) {
   const q = (query || '').trim().toLowerCase();
-  if (!q) return INTEL.slice();
-  return INTEL.filter(t =>
-    t.term.toLowerCase().includes(q) ||
-    t.kind.toLowerCase().includes(q) ||
-    (t.aliases || []).some(a => a.toLowerCase().includes(q)));
+  const sc = scope || 'all';
+  return INTEL.filter(t => {
+    if (sc !== 'all' && t.scope !== sc) return false;
+    if (!q) return true;
+    return t.term.toLowerCase().includes(q) ||
+      t.kind.toLowerCase().includes(q) ||
+      (t.aliases || []).some(a => a.toLowerCase().includes(q));
+  });
 }
 
-/** The Intel master-list rows (filtered by the live query), for surgical swaps. */
+/** The Intel master-list rows (filtered by the live query + scope), for swaps. */
 export function intelListItems(s, selectedId) {
-  const matches = intelMatches(s.ui.intelQuery);
+  const matches = intelMatches(s.ui.intelQuery, s.ui.intelScope);
   if (!matches.length) {
     return `<p class="clist__empty">No term matches that.</p>`;
   }

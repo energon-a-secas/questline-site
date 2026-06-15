@@ -10,7 +10,7 @@
 // innerHTML re-render that selection causes. A confirm dialog or the
 // hold-Esc quick menu owns the keyboard while open; this stands down.
 
-import { state, TAB_IDS, viewFromHash, wrapIndex, visibleFlowOrder, focusOrder, isBranchUnlocked, toggleNode, isBranchComplete } from './state.js';
+import { state, TAB_IDS, viewFromHash, wrapIndex, visibleFlowOrder, focusOrder, isBranchUnlocked } from './state.js';
 import { BRANCHES, BRANCH_BY_ID } from './data.js';
 import { intelMatches } from './console.js';
 import { rerenderActive } from './render.js';
@@ -18,16 +18,11 @@ import { isModalOpen } from './modal.js';
 import { isQuickMenuOpen } from './quickmenu.js';
 import { isCoachOpen } from './coach.js';
 import { isSplashOpen } from './splash.js';
-import { showToast } from './utils.js';
-
-const HOLD_MS = 420;        // hold-Enter to mark a chapter complete
-let holdTimer = null;
-let holdFired = false;
-let pendingTap = null;      // { branchId, nodeId } captured on Enter keydown
+import { isChapterReaderOpen, openChapterReader } from './chapterReader.js';
+import { isSearchOpen, openSearch } from './search.js';
 
 export function initKeyNav() {
   window.addEventListener('keydown', onKeyDown);
-  window.addEventListener('keyup', onKeyUp);
 }
 
 function active(el) {
@@ -36,11 +31,13 @@ function active(el) {
 }
 
 function onKeyDown(e) {
-  if (isSplashOpen() || isModalOpen() || isQuickMenuOpen() || isCoachOpen() || active(document.activeElement)) return;
-  // "/" is a global search shortcut: jump to Intel and focus its search box.
-  // It works regardless of the keyboard-movement opt-out, since it is an
-  // explicit shortcut rather than passive cursor driving.
-  if (e.key === '/') { e.preventDefault(); focusGlossarySearch(); return; }
+  if (isSplashOpen() || isModalOpen() || isQuickMenuOpen() || isCoachOpen()
+    || isChapterReaderOpen() || isSearchOpen() || active(document.activeElement)) return;
+  // "/" is the global search shortcut: it opens the command palette, which can
+  // route to any section, chapter, term, playbook, or profile class. Works
+  // regardless of the keyboard-movement opt-out, since it is an explicit
+  // shortcut rather than passive cursor driving.
+  if (e.key === '/') { e.preventDefault(); openSearch(); return; }
   // Opt-out: with keyboard movement disabled, all arrow/Q-E/Enter driving is
   // silent. Mouse and the deliberately-summoned hold-Esc quick menu still work.
   if (!state.prefs.keyboardNav) return;
@@ -54,38 +51,6 @@ function onKeyDown(e) {
     case 'chapters': return chaptersKey(s, e);
     case 'intel':    return intelKey(s, e);
     case 'flow':     return flowKey(s, e);
-  }
-}
-
-function onKeyUp(e) {
-  if (e.key !== 'Enter') return;
-  clearTimeout(holdTimer);
-  holdTimer = null;
-  // Released before the hold elapsed → it was a tap: toggle one skill.
-  if (pendingTap && !holdFired) {
-    const branch = BRANCH_BY_ID[pendingTap.branchId];
-    const node = branch?.nodes.find(n => n.id === pendingTap.nodeId);
-    if (branch && node) toggleSkillAt(state, branch, node);
-  }
-  pendingTap = null;
-  holdFired = false;
-}
-
-/**
- * Global "/" shortcut: go to Intel (if not already there) and focus the
- * glossary search box. When a route change is needed the input only exists
- * after the next render, so focus is deferred a frame.
- */
-function focusGlossarySearch() {
-  const focusBox = () => {
-    const box = document.getElementById('intelSearch');
-    if (box) { box.focus(); box.select(); }
-  };
-  if (state.view !== 'intel') {
-    location.hash = '#intel';
-    requestAnimationFrame(() => requestAnimationFrame(focusBox));
-  } else {
-    focusBox();
   }
 }
 
@@ -104,9 +69,9 @@ function cycleTab(s, dir) {
 
 function intelKey(s, e) {
   // Arrow nav walks the currently-visible (filtered) terms, so it agrees with
-  // what the search box is showing. Selection deep-links via the hash, which
-  // the events layer patches in place (no scroll-to-top).
-  const items = intelMatches(s.ui.intelQuery);
+  // what the search box + scope chips are showing. Selection deep-links via the
+  // hash, which the events layer patches in place (no scroll-to-top).
+  const items = intelMatches(s.ui.intelQuery, s.ui.intelScope);
   if (!items.length) return;
   const cur = Math.max(0, items.findIndex(t => t.id === s.ui.intelSel));
   if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
@@ -120,81 +85,28 @@ function intelKey(s, e) {
   }
 }
 
-// ── Chapters: list region + detail (skills) region ─────────
+// ── Chapters: move the card cursor; Enter opens the reader ─
 
 function chaptersKey(s, e) {
-  if (s.ui.region === 'detail') return chapterDetailKey(s, e);
-
-  // List region.
-  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp'
+    || e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
     e.preventDefault();
-    const dir = e.key === 'ArrowDown' ? 1 : -1;
+    const dir = (e.key === 'ArrowDown' || e.key === 'ArrowRight') ? 1 : -1;
     s.ui.rowCursor = wrapIndex(s.ui.rowCursor + dir, BRANCHES.length);
     s.ui.chapterSel = BRANCHES[s.ui.rowCursor].id;
     rerenderActive(s);
-  } else if (e.key === 'Enter' || e.key === 'ArrowRight') {
+  } else if (e.key === 'Enter') {
     e.preventDefault();
     const branch = BRANCHES[s.ui.rowCursor];
-    if (branch && isBranchUnlocked(s, branch.id)) {
-      s.ui.region = 'detail';
-      s.ui.skillCursor = 0;
-      rerenderActive(s);
-    }
+    // The reader is open (reading is never gated); it just shows the lock note
+    // inside for chapters whose prerequisites are not yet cleared.
+    if (branch) openChapterReader(s, branch.id);
   } else if (e.key === 'Home') {
     e.preventDefault(); s.ui.rowCursor = 0; s.ui.chapterSel = BRANCHES[0].id; rerenderActive(s);
   } else if (e.key === 'End') {
     e.preventDefault(); s.ui.rowCursor = BRANCHES.length - 1;
     s.ui.chapterSel = BRANCHES[s.ui.rowCursor].id; rerenderActive(s);
   }
-}
-
-function chapterDetailKey(s, e) {
-  const branch = BRANCH_BY_ID[s.ui.chapterSel];
-  if (!branch) { s.ui.region = 'list'; return; }
-  const nodes = branch.nodes;
-
-  if (e.key === 'ArrowLeft' || e.key === 'Backspace') {
-    e.preventDefault();
-    s.ui.region = 'list';
-    rerenderActive(s);
-  } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-    e.preventDefault();
-    const dir = e.key === 'ArrowDown' ? 1 : -1;
-    s.ui.skillCursor = wrapIndex(s.ui.skillCursor + dir, nodes.length);
-    rerenderActive(s);
-  } else if (e.key === 'Enter') {
-    // A held Enter marks the whole chapter; a tap (release < HOLD_MS) toggles
-    // one skill. Key-repeat is ignored so the hold timer runs cleanly.
-    if (e.repeat) { e.preventDefault(); return; }
-    e.preventDefault();
-    holdFired = false;
-    pendingTap = { branchId: branch.id, nodeId: nodes[s.ui.skillCursor]?.id };
-    clearTimeout(holdTimer);
-    holdTimer = setTimeout(() => {
-      holdFired = true;
-      pendingTap = null;
-      completeChapterFromKey(s, branch.id);
-    }, HOLD_MS);
-  } else if (e.key === ' ' || e.key === 'Spacebar') {
-    e.preventDefault();
-    toggleSkillAt(s, branch, nodes[s.ui.skillCursor]);
-  }
-}
-
-function toggleSkillAt(s, branch, node) {
-  if (!node) return;
-  const wasComplete = isBranchComplete(s, branch.id);
-  toggleNode(s, node.id);
-  rerenderActive(s);
-  if (!wasComplete && isBranchComplete(s, branch.id)) {
-    showToast('Chapter cleared — new path unlocked');
-  }
-}
-
-function completeChapterFromKey(s, branchId) {
-  const ctl = document.querySelector(`[data-branch-done="${branchId}"]`);
-  // Reuse the click path (handles confirm-on-clear + celebration).
-  ctl?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
 }
 
 // ── Flow: arrow nav across the visible map, or a focus plan ─

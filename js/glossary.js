@@ -83,7 +83,7 @@ function markEl(el) {
       btn.type = 'button';
       btn.className = 'gloss';
       btn.dataset.intel = id;
-      btn.setAttribute('aria-label', `${m[0]} — show definition`);
+      btn.setAttribute('aria-label', `${m[0]}: show definition`);
       btn.textContent = m[0];
       frag.appendChild(btn);
       last = m.index + m[0].length;

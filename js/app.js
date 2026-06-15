@@ -20,7 +20,7 @@ function init() {
   initQuickMenu();
   initKeyNav();
   if (loadError) {
-    showToast('Saved progress could not be read — starting fresh.');
+    showToast('Saved progress could not be read. Starting fresh.');
     return;
   }
   // Boot splash first (if due), then the first-run coach once it is dismissed,

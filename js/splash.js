@@ -54,6 +54,7 @@ export function maybeShowSplash(onContinue) {
   root.setAttribute('role', 'dialog');
   root.setAttribute('aria-modal', 'true');
   root.setAttribute('aria-label', 'Questline title screen');
+  root.tabIndex = -1;   // make the dialog focusable so root.focus() lands here
   root.innerHTML = `
     <div class="splash__bg" aria-hidden="true"></div>
     <div class="splash__inner">

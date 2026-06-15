@@ -19,30 +19,55 @@ import { icon } from './console.js';
 
 const AUTO_MS = 10000;        // slow, ~10s auto-rotate
 let timer = null;
+let countdownTimer = null;    // 1s tick refreshing the live countdowns
 let index = 0;                // active hero, kept across re-renders
 
 const reduceMotion = () =>
   window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
+/**
+ * Gacha-style countdown to an event deadline. Returns a short, human label
+ * ("4d 06h left", "Closes today", "Window closed") and a tone the frame uses
+ * to warm the badge as the deadline nears. Deadlines are date-only (end of
+ * that day, local time), so a same-day event still reads as open.
+ */
+export function countdownFor(deadline) {
+  if (!deadline) return null;
+  const end = new Date(`${deadline}T23:59:59`).getTime();
+  const ms = end - Date.now();
+  if (ms <= 0) return { text: 'Window closed', tone: 'over', urgent: false };
+  const mins = Math.floor(ms / 60000);
+  const days = Math.floor(mins / 1440);
+  const hours = Math.floor((mins % 1440) / 60);
+  const rem = mins % 60;
+  let text;
+  if (days >= 1) text = `${days}d ${String(hours).padStart(2, '0')}h left`;
+  else if (hours >= 1) text = `${hours}h ${String(rem).padStart(2, '0')}m left`;
+  else text = `${rem}m left`;
+  return { text, tone: days <= 1 ? 'soon' : 'open', urgent: days < 1 };
+}
+
 // ── Markup ─────────────────────────────────────────────────
 
-/** One hero slide: a big optional image (gradient fallback) under the copy. */
+/** One hero slide: gacha-event framing with a live countdown badge. */
 function slide(b, i) {
-  const bg = b.image
-    ? `<span class="banner__img" style="background-image:url('${encodeURI(b.image)}')" aria-hidden="true"></span>`
-    : `<span class="banner__bg" aria-hidden="true">${icon(b.icon, 132)}</span>`;
+  const cd = countdownFor(b.deadline);
   return `
-    <button type="button" class="banner banner--${b.accent} fbevel ${b.image ? 'has-img' : ''} ${i === index ? 'is-active' : ''}"
+    <button type="button" class="banner banner--${b.accent} fbevel ${i === index ? 'is-active' : ''}"
       data-banner="${b.id}" role="tabpanel" aria-hidden="${i === index ? 'false' : 'true'}"
       ${i === index ? '' : 'tabindex="-1"'}>
-      ${bg}
+      <span class="banner__bg" aria-hidden="true">${icon(b.icon, 132)}</span>
       <span class="banner__scrim" aria-hidden="true"></span>
       <span class="banner__body">
-        <span class="banner__kicker">${escHtml(b.kicker)}</span>
+        <span class="banner__topline">
+          <span class="banner__kicker">${escHtml(b.kicker)}</span>
+          ${cd ? `<span class="banner__timer banner__timer--${cd.tone}" data-deadline="${escHtml(b.deadline)}">
+            ${icon('clock', 13)} <span class="banner__timer-val">${escHtml(cd.text)}</span></span>` : ''}
+        </span>
         <span class="banner__title">${escHtml(b.title)}</span>
         <span class="banner__blurb">${escHtml(b.blurb)}</span>
         <span class="banner__foot">
-          ${b.date ? `<span class="banner__date">${escHtml(b.date)}</span>` : ''}
+          ${b.deadlineLabel ? `<span class="banner__date">${escHtml(b.deadlineLabel)}${b.period ? ` · ${escHtml(b.period)}` : ''}</span>` : ''}
           <span class="banner__cta">${escHtml(b.cta)} ${icon('caret-right', 14)}</span>
         </span>
       </span>
@@ -70,7 +95,7 @@ export function bannerStrip(s) {
 /** Bind carousel controls. Safe to call on every Brief (re)render. */
 export function mountBanners(s) {
   const strip = document.querySelector('.bannerstrip');
-  if (!strip) { stopAuto(); return; }
+  if (!strip) { stopAuto(); stopCountdowns(); return; }
 
   strip.addEventListener('click', (e) => {
     const dot = e.target.closest('[data-banner-dot]');
@@ -86,6 +111,30 @@ export function mountBanners(s) {
   strip.addEventListener('focusout', startAuto);
 
   startAuto();
+  startCountdowns();
+}
+
+/** Tick the live countdown badges once a second, patching text in place. */
+function startCountdowns() {
+  stopCountdowns();
+  const tick = () => {
+    const badges = document.querySelectorAll('.banner__timer[data-deadline]');
+    if (!badges.length) { stopCountdowns(); return; }
+    badges.forEach(badge => {
+      const cd = countdownFor(badge.dataset.deadline);
+      if (!cd) return;
+      const val = badge.querySelector('.banner__timer-val');
+      if (val) val.textContent = cd.text;
+      badge.classList.remove('banner__timer--open', 'banner__timer--soon', 'banner__timer--over');
+      badge.classList.add(`banner__timer--${cd.tone}`);
+    });
+  };
+  tick();
+  countdownTimer = setInterval(tick, 1000);
+}
+
+function stopCountdowns() {
+  if (countdownTimer) { clearInterval(countdownTimer); countdownTimer = null; }
 }
 
 function go(next, restart) {
@@ -121,15 +170,20 @@ function stopAuto() {
   if (timer) { clearInterval(timer); timer = null; }
 }
 
-/** Open a banner's full story in the focused reading popup. */
+/** Open a banner's full story in the focused reading popup. A banner with an
+ *  `href` is a shortcut (e.g. cert season → Profile) and routes there instead. */
 export function openBanner(id) {
   const b = BANNERS_BY_ID[id];
   if (!b) return;
   if (b.reader === 'shifts') { openShiftsReader(); return; }
+  if (b.href) { location.hash = b.href; return; }
+  const cd = countdownFor(b.deadline);
+  const sub = [b.deadlineLabel, cd ? cd.text : null, b.period]
+    .filter(Boolean).join(' · ');
   openReader({
     kicker: b.kicker,
     title: b.title,
-    sub: b.date,
+    sub: sub || undefined,
     accent: b.accent,
     sections: b.sections,
   });

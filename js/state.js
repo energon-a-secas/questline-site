@@ -2,12 +2,18 @@
 // Tracks which skill nodes the player has completed and which
 // view is open. Progress persists in localStorage.
 
-import { BRANCHES, BRANCH_BY_ID, TOTAL_NODES, RANKS, TABS, INTEL, INTEL_BY_ID } from './data.js';
+import { BRANCHES, BRANCH_BY_ID, TOTAL_NODES, RANKS, TABS, INTEL, INTEL_BY_ID, PLAYBOOKS, CLASS_BY_ID } from './data.js';
 
 const STORAGE_KEY = 'questline-v1';
 // Preferences live under their own key so toggling a setting never rewrites
 // (or risks corrupting) the progress save. Both are plain JSON in localStorage.
 const PREFS_KEY = 'questline-prefs';
+// Profile (class + credential records) and playbooks (editable workflows) each
+// get their own key, so one feature's save never risks corrupting another.
+// The profile shape is deliberately Convex-ready: a flat doc that maps 1:1 to a
+// future `profiles` table row (classId + a creds map keyed by certId).
+const PROFILE_KEY = 'questline-profile';
+const PLAYBOOKS_KEY = 'questline-playbooks';
 
 /** Console tab ids that render inside the game shell (in tab-bar order). */
 export const TAB_IDS = TABS.map(t => t.id);
@@ -22,6 +28,16 @@ export const state = {
     shiftsRead: false,   // has the six-shifts reading popup been acknowledged
     showFullMap: false,  // Flow: reveal all chapters (locked dimmed) vs fog-of-war
   },
+  // Profile: the engineer class chosen and credential records. `creds` maps a
+  // certId → { id, issuer, issued, expires, status }. This object is persisted
+  // verbatim under PROFILE_KEY and mirrors a future Convex `profiles` row.
+  profile: {
+    classId: null,     // selected engineer class id, or null (not chosen yet)
+    creds: {},         // { [certId]: { id, issuer, issued, expires, status } }
+  },
+  // Playbooks: editable onboarding workflows. Seeded from data.js on first run,
+  // then owned by the user (add/edit/delete). Persisted under PLAYBOOKS_KEY.
+  playbooks: [],
   // Transient cursor/selection — never persisted. Survives the innerHTML
   // re-render because it lives here, not in the live DOM. Keyboard and mouse
   // share one cursor per surface so the two input modes never disagree.
@@ -29,6 +45,11 @@ export const state = {
     chapterSel: null,  // chapter id open in the Chapters detail panel
     intelSel: null,    // term id open in the Intel detail panel
     intelQuery: '',    // live glossary search filter (Intel tab)
+    intelScope: 'all', // glossary scope filter (all | basic | company | operating)
+    playbookSel: null, // playbook id open in the Playbooks detail panel
+    playbookEdit: false, // whether the open playbook is in edit mode
+    stepEditing: null, // step id whose inline editor is open (Playbooks)
+    credEditing: null, // cert id whose credential form is open (Profile)
     region: 'list',    // 'list' | 'detail' — which side owns the cursor
     rowCursor: 0,      // index into the active master list
     skillCursor: 0,    // index into the open chapter's nodes (detail region)
@@ -54,11 +75,162 @@ export function loadSaved(s) {
     loadError = true;   // corrupted data — start fresh, but tell the user
   }
   loadPrefs(s);
+  loadProfile(s);
+  loadPlaybooks(s);
   // View always derives from the URL hash, not storage.
   s.view = viewFromHash();
   s.ui.intelSel = intelFromHash();
   s.ui.flowFocus = s.view === 'flow' ? flowFocusFromHash() : null;
   return loadError;
+}
+
+// ── Profile (class + credentials) ──────────────────────────
+
+/** Merge a stored profile over the defaults (missing keys keep defaults). */
+export function loadProfile(s) {
+  try {
+    const raw = localStorage.getItem(PROFILE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object') {
+        if (CLASS_BY_ID[parsed.classId]) s.profile.classId = parsed.classId;
+        if (parsed.creds && typeof parsed.creds === 'object') s.profile.creds = parsed.creds;
+      }
+    }
+  } catch { /* corrupted profile — keep the defaults */ }
+}
+
+/** Persist the profile. Shape matches a future Convex `profiles` row. */
+export function saveProfile(s) {
+  try {
+    localStorage.setItem(PROFILE_KEY, JSON.stringify(s.profile));
+  } catch { /* quota exceeded or private browsing */ }
+}
+
+/** Choose (or clear) the engineer class and persist. */
+export function setClass(s, classId) {
+  s.profile.classId = CLASS_BY_ID[classId] ? classId : null;
+  saveProfile(s);
+}
+
+/**
+ * Upsert a credential record for a cert. `record` carries the credential id,
+ * issuer, issue/expiry dates, and status. An empty record (no id, status reset
+ * to in-progress, no dates) is treated as "cleared" and removed.
+ */
+export function setCredential(s, certId, record) {
+  if (!certId) return;
+  const empty = !record || (!record.id && !record.issued && !record.expires
+    && (!record.status || record.status === 'in-progress'));
+  if (empty) delete s.profile.creds[certId];
+  else s.profile.creds[certId] = { ...record };
+  saveProfile(s);
+}
+
+/** Remove a credential record entirely. */
+export function clearCredential(s, certId) {
+  delete s.profile.creds[certId];
+  saveProfile(s);
+}
+
+// ── Playbooks (editable workflows) ─────────────────────────
+
+/** Load saved playbooks, or seed from the shipped examples on first run. */
+export function loadPlaybooks(s) {
+  try {
+    const raw = localStorage.getItem(PLAYBOOKS_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) { s.playbooks = parsed; return; }
+    }
+  } catch { /* corrupted — fall through to seed */ }
+  // First run (or corrupted): deep-clone the seeds so edits never mutate data.
+  s.playbooks = PLAYBOOKS.map(p => ({ ...p, steps: p.steps.map(st => ({ ...st })) }));
+  savePlaybooks(s);
+}
+
+/** Persist the playbooks list. */
+export function savePlaybooks(s) {
+  try {
+    localStorage.setItem(PLAYBOOKS_KEY, JSON.stringify(s.playbooks));
+  } catch { /* quota exceeded or private browsing */ }
+}
+
+/** A short unique id for a new playbook or step (no Date/Math.random reliance). */
+let _idSeq = 0;
+function uid(prefix) {
+  _idSeq += 1;
+  return `${prefix}-${Date.now().toString(36)}-${_idSeq}`;
+}
+
+/** Add a new (empty) playbook and return it. */
+export function addPlaybook(s, fields = {}) {
+  const pb = {
+    id: uid('pb'),
+    title: fields.title || 'New playbook',
+    icon: fields.icon || 'route',
+    category: fields.category || 'Process',
+    summary: fields.summary || '',
+    estMinutes: fields.estMinutes || null,
+    steps: [],
+  };
+  s.playbooks.push(pb);
+  savePlaybooks(s);
+  return pb;
+}
+
+/** Patch fields on a playbook by id. */
+export function updatePlaybook(s, id, patch) {
+  const pb = s.playbooks.find(p => p.id === id);
+  if (!pb) return;
+  Object.assign(pb, patch);
+  savePlaybooks(s);
+}
+
+/** Delete a playbook by id. */
+export function deletePlaybook(s, id) {
+  s.playbooks = s.playbooks.filter(p => p.id !== id);
+  if (s.ui.playbookSel === id) s.ui.playbookSel = null;
+  savePlaybooks(s);
+}
+
+/** Append a step to a playbook and return it. */
+export function addStep(s, playbookId, fields = {}) {
+  const pb = s.playbooks.find(p => p.id === playbookId);
+  if (!pb) return null;
+  const step = { id: uid('st'), title: fields.title || 'New step', body: fields.body || '' };
+  if (fields.link) step.link = fields.link;
+  pb.steps.push(step);
+  savePlaybooks(s);
+  return step;
+}
+
+/** Patch a step within a playbook. */
+export function updateStep(s, playbookId, stepId, patch) {
+  const pb = s.playbooks.find(p => p.id === playbookId);
+  const step = pb?.steps.find(st => st.id === stepId);
+  if (!step) return;
+  Object.assign(step, patch);
+  savePlaybooks(s);
+}
+
+/** Delete a step from a playbook. */
+export function deleteStep(s, playbookId, stepId) {
+  const pb = s.playbooks.find(p => p.id === playbookId);
+  if (!pb) return;
+  pb.steps = pb.steps.filter(st => st.id !== stepId);
+  savePlaybooks(s);
+}
+
+/** Move a step up or down within its playbook (dir −1 up, +1 down). */
+export function moveStep(s, playbookId, stepId, dir) {
+  const pb = s.playbooks.find(p => p.id === playbookId);
+  if (!pb) return;
+  const i = pb.steps.findIndex(st => st.id === stepId);
+  const j = i + dir;
+  if (i < 0 || j < 0 || j >= pb.steps.length) return;
+  [pb.steps[i], pb.steps[j]] = [pb.steps[j], pb.steps[i]];
+  savePlaybooks(s);
 }
 
 /** Persist progress (not the transient view). */

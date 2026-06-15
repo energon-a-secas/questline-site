@@ -5,24 +5,21 @@
 import { render, rerenderActive, drawWires } from './render.js';
 import { showToast, showActionToast, debounce } from './utils.js';
 import {
-  state, viewFromHash, intelFromHash, flowFocusFromHash, toggleNode, setBranchDone,
-  resetProgress, restoreProgress, isBranchComplete, branchProgress,
-  overallPercent, rankFor, setKeyboardNav, setShiftsRead, setShowFullMap,
+  state, viewFromHash, intelFromHash, flowFocusFromHash,
+  resetProgress, restoreProgress,
+  setKeyboardNav, setShiftsRead, setShowFullMap,
+  setClass, setCredential, clearCredential,
+  addPlaybook, updatePlaybook, deletePlaybook, addStep, updateStep, deleteStep, moveStep,
 } from './state.js';
-import { BRANCHES, BRANCH_BY_ID, INTEL, INTEL_BY_ID } from './data.js';
+import { INTEL, INTEL_BY_ID } from './data.js';
 import { openConfirm } from './modal.js';
+import { openChapterReader } from './chapterReader.js';
 import { setSplashPref, splashPref } from './splash.js';
 import { openShiftsReader } from './banners.js';
 import { intelDetail, intelListItems, intelMatches } from './console.js';
 import { markGlossary } from './glossary.js';
 import { revealKiwi } from './kiwi.js';
 import { showGlossPopover, hideGlossPopover } from './glossary.js';
-import { celebrateRankUp, animateProgress, intelUnlockedToast } from './celebrate.js';
-
-/** Find which chapter a skill node belongs to. */
-function branchOfNode(nodeId) {
-  return BRANCHES.find(b => b.nodes.some(n => n.id === nodeId))?.id || null;
-}
 
 export function bindEvents(s) {
   // Route on hash change.
@@ -61,12 +58,6 @@ export function bindEvents(s) {
 
   // Delegated clicks for all interactive controls.
   app.addEventListener('click', (e) => {
-    const skill = e.target.closest('.skill__check');
-    if (skill) { onToggleSkill(s, skill.dataset.node); return; }
-
-    const branchBtn = e.target.closest('[data-branch-done]');
-    if (branchBtn) { onBranchAction(s, branchBtn); return; }
-
     const reset = e.target.closest('#resetBtn');
     if (reset) { onReset(s); return; }
 
@@ -94,13 +85,21 @@ export function bindEvents(s) {
     const gloss = e.target.closest('.gloss');
     if (gloss) { hideGlossPopover(); location.hash = `#intel/${gloss.dataset.intel}`; return; }
 
-    // Chapters master list: select a chapter in place (locked ones too,
-    // to show the "locked" detail). Selection lives in shared ui state.
-    const chapterRow = e.target.closest('[data-chapter]');
-    if (chapterRow) {
-      s.ui.chapterSel = chapterRow.dataset.chapter;
-      s.ui.region = 'list';
-      rerenderActive(s);
+    // Intel scope filter chip: re-render the list/detail for the new scope.
+    const scopeBtn = e.target.closest('[data-intel-scope]');
+    if (scopeBtn) { s.ui.intelScope = scopeBtn.dataset.intelScope; rerenderActive(s); return; }
+
+    // Profile: class selection, credential edit/cancel/clear.
+    if (handleProfileClick(s, e)) return;
+
+    // Playbooks: add/edit/delete playbooks and steps.
+    if (handlePlaybookClick(s, e)) return;
+
+    // Chapters: a card opens the navigable section-reader popup.
+    const chapterCard = e.target.closest('[data-chapter-open]');
+    if (chapterCard) {
+      s.ui.chapterSel = chapterCard.dataset.chapterOpen;
+      openChapterReader(s, chapterCard.dataset.chapterOpen);
       return;
     }
 
@@ -124,6 +123,16 @@ export function bindEvents(s) {
     if (box) onIntelSearch(s, box.value);
   });
 
+  // Form submits: credential records (Profile), playbook + step edits.
+  app.addEventListener('submit', (e) => {
+    const credForm = e.target.closest('[data-cred-form]');
+    if (credForm) { e.preventDefault(); onSaveCredential(s, credForm); return; }
+    const stepForm = e.target.closest('[data-step-form]');
+    if (stepForm) { e.preventDefault(); onSaveStep(s, stepForm); return; }
+    // The playbook meta form has no submit button; ignore stray submits.
+    if (e.target.closest('[data-pb-form]')) e.preventDefault();
+  });
+
   // Glossary term tooltips: hover and keyboard focus both reveal.
   app.addEventListener('mouseover', (e) => {
     const g = e.target.closest('.gloss');
@@ -140,104 +149,6 @@ export function bindEvents(s) {
     if (e.target.closest('.gloss')) hideGlossPopover();
   });
   window.addEventListener('scroll', hideGlossPopover, { passive: true });
-}
-
-/**
- * Toggle one skill with a surgical DOM patch (no full re-render), so the
- * clicked control keeps focus and the CSS transitions actually run. Only
- * when a completion boundary is crossed (unlock states change) do we fall
- * back to a full re-render so the flow/master list reflects new unlocks.
- */
-function onToggleSkill(s, nodeId) {
-  if (!nodeId) return;
-  const branchId = s.ui.chapterSel || branchOfNode(nodeId);
-  if (s.view === 'chapters' && branchId) s.ui.chapterSel = branchId;
-
-  const beforePct = overallPercent(s);
-  const beforeRank = rankFor(beforePct).name;
-  const wasComplete = branchId && isBranchComplete(s, branchId);
-  toggleNode(s, nodeId);
-  const nowComplete = branchId && isBranchComplete(s, branchId);
-
-  // Crossing a chapter's completion boundary changes unlocks elsewhere, so a
-  // full re-render is warranted. Otherwise patch in place.
-  if (wasComplete !== nowComplete) {
-    rerenderActive(s);
-  } else {
-    patchSkill(s, nodeId, branchId);
-  }
-  afterProgress(s, beforePct, beforeRank, branchId, wasComplete, nowComplete);
-}
-
-/** In-place DOM update for a single skill toggle. */
-function patchSkill(s, nodeId, branchId) {
-  const app = document.getElementById('app');
-  const btn = app.querySelector(`.skill__check[data-node="${nodeId}"]`);
-  if (!btn) return;
-  const checked = !!s.done[nodeId];
-  btn.setAttribute('aria-pressed', String(checked));
-  btn.closest('.skill')?.classList.toggle('skill--done', checked);
-
-  if (!branchId) return;
-  const { done, total } = branchProgress(s, branchId);
-  const pct = total ? Math.round((done / total) * 100) : 0;
-  const fill = app.querySelector('.branch-progress__bar div');
-  if (fill) fill.style.transform = `scaleX(${pct / 100})`;
-  const count = app.querySelector('.branch-progress__count');
-  if (count) count.textContent = `${done}/${total} skills`;
-  // Refresh just the master-toggle control (empty/partial/seal) in the head.
-  patchCompleteControl(s, branchId, done, total);
-}
-
-/** Swap the chapter-complete control to match the new done/total. */
-function patchCompleteControl(s, branchId, done, total) {
-  const app = document.getElementById('app');
-  const ctl = app.querySelector('.cdone[data-branch-done]');
-  if (!ctl) return; // a seal is showing; the unlock-boundary path re-rendered
-  const partial = done > 0 && done < total;
-  ctl.classList.toggle('is-partial', partial);
-  ctl.setAttribute('aria-pressed', partial ? 'mixed' : 'false');
-  const txt = ctl.querySelector('.cdone__txt');
-  if (txt) txt.textContent = partial ? 'Finish' : 'All';
-}
-
-function onBranchAction(s, btn) {
-  const branchId = btn.dataset.branchDone;
-  const clearing = btn.dataset.value === 'clear';
-
-  // Clearing a fully-complete chapter wipes manual progress, so confirm it
-  // the same way a reset does, rather than letting it be a same-pixel click.
-  if (clearing) {
-    const branch = BRANCH_BY_ID[branchId];
-    openConfirm({
-      title: 'Clear this chapter?',
-      body: `This unchecks every skill in ${branch?.title || 'this chapter'}. You can complete it again any time.`,
-      confirmLabel: 'Clear chapter',
-      danger: true,
-      onConfirm: () => { setBranchDone(s, branchId, false); rerenderActive(s); },
-    });
-    return;
-  }
-
-  const beforePct = overallPercent(s);
-  const beforeRank = rankFor(beforePct).name;
-  const wasComplete = isBranchComplete(s, branchId);
-  setBranchDone(s, branchId, true);
-  rerenderActive(s);
-  afterProgress(s, beforePct, beforeRank, branchId, wasComplete, true);
-}
-
-/** Shared post-mutation feedback: unlock toast, intel-unlocked, rank-up, XP. */
-function afterProgress(s, beforePct, beforeRank, branchId, wasComplete, nowComplete) {
-  const afterPct = overallPercent(s);
-  animateProgress(beforePct, afterPct);
-  if (branchId && !wasComplete && nowComplete) {
-    intelUnlockedToast(s, branchId);
-  }
-  const afterRank = rankFor(afterPct).name;
-  if (afterRank !== beforeRank && afterPct > beforePct) {
-    celebrateRankUp(rankFor(afterPct));
-  }
 }
 
 /** Flip the title-screen (splash) preference and update the toggle in place. */
@@ -289,7 +200,7 @@ function onIntelSearch(s, value) {
   const rows = app?.querySelector('#intelRows');
   if (rows) rows.innerHTML = intelListItems(s, s.ui.intelSel);
   // Keep the open term valid: if it no longer matches, jump to the first hit.
-  const matches = intelMatches(value);
+  const matches = intelMatches(value, s.ui.intelScope);
   if (matches.length && !matches.some(t => t.id === s.ui.intelSel)) {
     patchIntel(s, matches[0].id);
   }
@@ -316,6 +227,163 @@ function hideDangerVignette() {
   const v = document.getElementById('danger-vignette');
   if (!v) return;
   v.classList.remove('is-on');
+}
+
+// ── Profile handlers ───────────────────────────────────────
+
+/** Class pick + credential open/cancel/clear. Returns true if handled. */
+function handleProfileClick(s, e) {
+  const classBtn = e.target.closest('[data-class]');
+  if (classBtn) {
+    setClass(s, classBtn.dataset.class);
+    s.ui.credEditing = null;
+    rerenderActive(s);
+    return true;
+  }
+  const editBtn = e.target.closest('[data-cred-edit]');
+  if (editBtn) {
+    const id = editBtn.dataset.credEdit;
+    s.ui.credEditing = s.ui.credEditing === id ? null : id;
+    rerenderActive(s);
+    return true;
+  }
+  const cancelBtn = e.target.closest('[data-cred-cancel]');
+  if (cancelBtn) { s.ui.credEditing = null; rerenderActive(s); return true; }
+  const clearBtn = e.target.closest('[data-cred-clear]');
+  if (clearBtn) {
+    clearCredential(s, clearBtn.dataset.credClear);
+    s.ui.credEditing = null;
+    rerenderActive(s);
+    showToast('Credential removed');
+    return true;
+  }
+  return false;
+}
+
+/** Persist a credential form's fields against its cert. */
+function onSaveCredential(s, form) {
+  const certId = form.dataset.credForm;
+  const data = new FormData(form);
+  setCredential(s, certId, {
+    id: (data.get('id') || '').trim(),
+    issuer: (data.get('issuer') || '').trim(),
+    issued: data.get('issued') || '',
+    expires: data.get('expires') || '',
+    status: data.get('status') || 'in-progress',
+  });
+  s.ui.credEditing = null;
+  rerenderActive(s);
+  showToast('Credential saved');
+}
+
+// ── Playbook handlers ──────────────────────────────────────
+
+/** Add/select/edit playbooks and their steps. Returns true if handled. */
+function handlePlaybookClick(s, e) {
+  // Add a new playbook and open it in edit mode.
+  if (e.target.closest('#addPlaybook')) {
+    const pb = addPlaybook(s);
+    s.ui.playbookSel = pb.id;
+    s.ui.playbookEdit = true;
+    s.ui.stepEditing = null;
+    rerenderActive(s);
+    return true;
+  }
+  // Select a playbook from the master list.
+  const row = e.target.closest('[data-playbook]');
+  if (row) {
+    s.ui.playbookSel = row.dataset.playbook;
+    s.ui.playbookEdit = false;
+    s.ui.stepEditing = null;
+    s.ui.region = 'list';
+    rerenderActive(s);
+    return true;
+  }
+  // Enter edit mode.
+  if (e.target.closest('#editPlaybook')) { s.ui.playbookEdit = true; rerenderActive(s); return true; }
+  // Leave edit mode (persisting the meta form first).
+  if (e.target.closest('#donePlaybook')) {
+    commitPlaybookMeta(s);
+    s.ui.playbookEdit = false;
+    s.ui.stepEditing = null;
+    rerenderActive(s);
+    return true;
+  }
+  // Delete the open playbook (with confirm).
+  if (e.target.closest('#deletePlaybook')) {
+    const pb = s.playbooks.find(p => p.id === s.ui.playbookSel);
+    openConfirm({
+      title: 'Delete this playbook?',
+      body: `This permanently removes "${pb?.title || 'this playbook'}" and its steps from this device.`,
+      confirmLabel: 'Delete playbook',
+      danger: true,
+      onConfirm: () => {
+        deletePlaybook(s, s.ui.playbookSel);
+        s.ui.playbookEdit = false;
+        rerenderActive(s);
+        showToast('Playbook deleted');
+      },
+    });
+    return true;
+  }
+  // Add a step to the open playbook and open its editor.
+  if (e.target.closest('#addStep')) {
+    commitPlaybookMeta(s);
+    const step = addStep(s, s.ui.playbookSel);
+    s.ui.stepEditing = step?.id || null;
+    rerenderActive(s);
+    return true;
+  }
+  // Step controls: edit, cancel, delete, move.
+  const stepEdit = e.target.closest('[data-step-edit]');
+  if (stepEdit) { commitPlaybookMeta(s); s.ui.stepEditing = stepEdit.dataset.stepEdit; rerenderActive(s); return true; }
+  const stepCancel = e.target.closest('[data-step-cancel]');
+  if (stepCancel) { s.ui.stepEditing = null; rerenderActive(s); return true; }
+  const stepDelete = e.target.closest('[data-step-delete]');
+  if (stepDelete) {
+    deleteStep(s, s.ui.playbookSel, stepDelete.dataset.stepDelete);
+    s.ui.stepEditing = null;
+    rerenderActive(s);
+    return true;
+  }
+  const stepMove = e.target.closest('[data-step-move]');
+  if (stepMove) {
+    moveStep(s, s.ui.playbookSel, stepMove.dataset.stepMove, Number(stepMove.dataset.dir));
+    rerenderActive(s);
+    return true;
+  }
+  return false;
+}
+
+/** Read the playbook meta form (if present) into state, without re-rendering. */
+function commitPlaybookMeta(s) {
+  const form = document.querySelector('[data-pb-form]');
+  if (!form) return;
+  const data = new FormData(form);
+  const est = (data.get('estMinutes') || '').toString().trim();
+  updatePlaybook(s, form.dataset.pbForm, {
+    title: (data.get('title') || '').trim() || 'Untitled playbook',
+    category: (data.get('category') || '').trim() || 'Process',
+    summary: (data.get('summary') || '').trim(),
+    estMinutes: est ? Number(est) : null,
+  });
+}
+
+/** Persist a step form's fields. */
+function onSaveStep(s, form) {
+  const stepId = form.dataset.stepForm;
+  const playbookId = form.dataset.pb;
+  const data = new FormData(form);
+  const linkUrl = (data.get('linkUrl') || '').trim();
+  const linkLabel = (data.get('linkLabel') || '').trim();
+  updateStep(s, playbookId, stepId, {
+    title: (data.get('title') || '').trim() || 'Untitled step',
+    body: (data.get('body') || '').trim(),
+    link: linkUrl ? { url: linkUrl, label: linkLabel || 'Read more' } : undefined,
+  });
+  s.ui.stepEditing = null;
+  rerenderActive(s);
+  showToast('Step saved');
 }
 
 function onReset(s) {

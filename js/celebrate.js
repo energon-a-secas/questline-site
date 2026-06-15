@@ -71,9 +71,9 @@ export function animateProgress(from, to) {
 export function intelUnlockedToast(s, branchId) {
   const terms = intelUnlockedBy(s, branchId);
   if (!terms.length) {
-    showToast('Chapter cleared — new path unlocked');
+    showToast('Chapter cleared. New path unlocked');
     return;
   }
   const names = terms.map(t => t.term).join(', ');
-  showToast(`Chapter cleared — see Intel: ${names}`);
+  showToast(`Chapter cleared. See Intel: ${names}`);
 }

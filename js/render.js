@@ -12,6 +12,8 @@ import {
   renderBrief, renderChapters, renderPriority, renderIntel,
   renderSystem,
 } from './console.js';
+import { renderProfile } from './profile.js';
+import { renderPlaybooks } from './playbooks.js';
 import { renderFlow } from './flow.js';
 import { markGlossary } from './glossary.js';
 import { mountBanners } from './banners.js';
@@ -29,12 +31,14 @@ function viewHtml(s) {
     return renderChapters(s, view);
   }
   switch (view) {
-    case 'chapters': return renderChapters(s, s.ui.chapterSel);
-    case 'priority': return renderPriority(s);
-    case 'intel':    return renderIntel(s, s.ui.intelSel);
-    case 'system':   return renderSystem(s);
+    case 'chapters':  return renderChapters(s, s.ui.chapterSel);
+    case 'playbooks': return renderPlaybooks(s, s.ui.playbookSel);
+    case 'priority':  return renderPriority(s);
+    case 'intel':     return renderIntel(s, s.ui.intelSel);
+    case 'profile':   return renderProfile(s);
+    case 'system':    return renderSystem(s);
     case 'brief':
-    default:         return renderBrief(s);
+    default:          return renderBrief(s);
   }
 }
 

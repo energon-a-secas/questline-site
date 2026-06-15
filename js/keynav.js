@@ -15,6 +15,7 @@ import { BRANCHES, BRANCH_BY_ID } from './data.js';
 import { intelMatches } from './console.js';
 import { rerenderActive } from './render.js';
 import { isModalOpen } from './modal.js';
+import { isDailyOpen } from './daily.js';
 import { isQuickMenuOpen } from './quickmenu.js';
 import { isCoachOpen } from './coach.js';
 import { isSplashOpen } from './splash.js';
@@ -31,7 +32,7 @@ function active(el) {
 }
 
 function onKeyDown(e) {
-  if (isSplashOpen() || isModalOpen() || isQuickMenuOpen() || isCoachOpen()
+  if (isSplashOpen() || isModalOpen() || isDailyOpen() || isQuickMenuOpen() || isCoachOpen()
     || isChapterReaderOpen() || isSearchOpen() || active(document.activeElement)) return;
   // "/" is the global search shortcut: it opens the command palette, which can
   // route to any section, chapter, term, playbook, or profile class. Works
@@ -50,6 +51,7 @@ function onKeyDown(e) {
   switch (s.view) {
     case 'chapters': return chaptersKey(s, e);
     case 'intel':    return intelKey(s, e);
+    case 'atlas':    return atlasKey(s, e);
     case 'flow':     return flowKey(s, e);
   }
 }
@@ -106,6 +108,23 @@ function chaptersKey(s, e) {
   } else if (e.key === 'End') {
     e.preventDefault(); s.ui.rowCursor = BRANCHES.length - 1;
     s.ui.chapterSel = BRANCHES[s.ui.rowCursor].id; rerenderActive(s);
+  }
+}
+
+// ── Atlas: arrow keys cycle the Map / Matrix / Upload views ─
+
+function atlasKey(s, e) {
+  const views = ['map', 'matrix', 'upload'];
+  let idx = views.indexOf(s.ui.atlasView || 'map');
+  if (idx < 0) idx = 0;
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+    e.preventDefault();
+    s.ui.atlasView = views[wrapIndex(idx + 1, views.length)];
+    rerenderActive(s);
+  } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+    e.preventDefault();
+    s.ui.atlasView = views[wrapIndex(idx - 1, views.length)];
+    rerenderActive(s);
   }
 }
 

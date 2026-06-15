@@ -85,7 +85,7 @@
   --z-toast: 500;
 }
 
-html { height: 100%; }
+html { height: 100%; scroll-behavior: smooth; }
 body {
   font-family: var(--font);
   background: var(--bg);
@@ -205,6 +205,14 @@ main#main {
   opacity: .35; pointer-events: none;
 }
 
+/* Scroll progress indicator — thin azure line at the very top of the viewport. */
+.scroll-progress {
+  position: fixed; top: 0; left: 0; height: 2px; z-index: 1000;
+  background: linear-gradient(90deg, var(--accent), var(--accent-bright));
+  box-shadow: 0 0 8px var(--accent-glow);
+  width: 0%; transition: width 0.1s linear;
+}
+
 .header-logo { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 
 .header-logo-img {
@@ -250,6 +258,28 @@ nav {
 }
 .header-home:hover { color: #fff; background: rgba(255,255,255,0.12); }
 .header-home svg { width: 34px; height: 34px; display: block; }
+
+/* Mobile-only quick-menu trigger. Hidden on wide screens; appears when the
+   hold-Esc shortcut is impractical on touch/narrow viewports. */
+.header-menu {
+  display: none; align-items: center; justify-content: center;
+  margin-left: 8px;
+  min-width: var(--control-height);
+  min-height: var(--control-height);
+  padding: var(--space-2);
+  color: rgba(255,255,255,0.9); background: transparent;
+  border: 1px solid rgba(255,255,255,0.18); border-radius: var(--radius-sm);
+  cursor: pointer; transition: color var(--dur), background var(--dur);
+  flex-shrink: 0;
+}
+.header-menu:hover { color: #fff; background: rgba(255,255,255,0.12); }
+.header-menu svg { width: 28px; height: 28px; display: block; }
+
+@media (max-width: 760px) {
+  .header-menu { display: inline-flex; }
+  /* Prevent iOS from zooming into form fields on focus. */
+  input, textarea, select, [type="search"] { font-size: 1rem; }
+}
 
 /* ── Buttons (canonical) ─────────────────────────────────────
  * Use .btn + a variant. Aliases: .nav-link = toolbar ghost; .auth-* map below.

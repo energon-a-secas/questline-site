@@ -5,8 +5,11 @@
 // A quick tap of Esc (released before the cross appears) goes back.
 
 import { isModalOpen } from './modal.js';
+import { isDailyOpen } from './daily.js';
 import { isCoachOpen } from './coach.js';
 import { isSplashOpen } from './splash.js';
+import { isChapterReaderOpen } from './chapterReader.js';
+import { isSearchOpen } from './search.js';
 
 const HOLD_MS = 240;          // how long Esc must be held before the cross shows
 const DEAD_ZONE = 26;         // px from center before a mouse direction registers
@@ -35,6 +38,13 @@ export function initQuickMenu() {
   const cross = document.getElementById('quickmenuCross');
   if (!root || !cross) return;
 
+  // Visible menu trigger for touch/narrow viewports.
+  document.getElementById('openQuickMenu')?.addEventListener('click', () => {
+    if (isSplashOpen() || isModalOpen() || isDailyOpen() || isCoachOpen()
+      || isChapterReaderOpen() || isSearchOpen()) return;
+    showCross();
+  });
+
   cross.innerHTML = WEDGES.map(w => `
     <button type="button" class="qm__wedge qm__wedge--${w.dir}" data-dir="${w.dir}" data-hash="${w.hash}">
       <span class="qm__glyph">${w.glyph}</span>
@@ -43,9 +53,10 @@ export function initQuickMenu() {
 
   // ── Keyboard ──
   window.addEventListener('keydown', (e) => {
-    // A confirm dialog, the boot splash, or the first-run coach owns Escape
-    // while it is open.
-    if (isSplashOpen() || isModalOpen() || isCoachOpen()) return;
+    // A confirm dialog, the daily dispatch, the boot splash, the first-run coach,
+    // the chapter section reader, or the search palette owns Escape while open.
+    if (isSplashOpen() || isModalOpen() || isDailyOpen() || isCoachOpen()
+      || isChapterReaderOpen() || isSearchOpen()) return;
     if (e.key !== 'Escape') {
       if (open) handleArrow(e);
       return;

@@ -13,11 +13,15 @@ let open = false;
 /** Is the first-run coach card showing? (so keynav / quick menu stand down) */
 export function isCoachOpen() { return open; }
 
-/** Show the coach-mark once, on first visit only. */
-export function maybeShowCoach() {
+/**
+ * Show the coach-mark once, on first visit only.
+ * @param {() => void} [onComplete] runs after the coach is dismissed, or
+ * immediately if the coach does not show.
+ */
+export function maybeShowCoach(onComplete) {
   let seen = false;
   try { seen = localStorage.getItem(SEEN_KEY) === '1'; } catch { /* private mode */ }
-  if (seen) return;
+  if (seen) { onComplete?.(); return; }
 
   const root = document.createElement('div');
   root.className = 'coach';
@@ -30,8 +34,9 @@ export function maybeShowCoach() {
       <span class="coach__kicker">New game</span>
       <h2 class="coach__title" id="coachTitle">Drive it like a console</h2>
       <ul class="coach__keys">
-        <li><kbd>↑</kbd><kbd>↓</kbd><span>Move the cursor; <kbd>↵</kbd> opens or toggles</span></li>
+        <li><kbd>↑</kbd><kbd>↓</kbd><span>Move the cursor; <kbd>↵</kbd> opens</span></li>
         <li><kbd>Q</kbd><kbd>E</kbd><span>Cycle the tabs</span></li>
+        <li><kbd>/</kbd><span>Search everything — sections, terms, classes</span></li>
         <li><kbd>Hold Esc</kbd><span>Quick menu: point, release to jump</span></li>
       </ul>
       <p class="coach__note">Mouse works everywhere too. This shows once.</p>
@@ -41,11 +46,12 @@ export function maybeShowCoach() {
   open = true;
 
   const close = () => {
+    if (!open) return;
     open = false;
     try { localStorage.setItem(SEEN_KEY, '1'); } catch { /* ignore */ }
     window.removeEventListener('keydown', onKey, true);
     root.classList.remove('is-visible');
-    setTimeout(() => root.remove(), 200);
+    setTimeout(() => { root.remove(); onComplete?.(); }, 200);
   };
   // keynav and the quick menu stand down via isCoachOpen(); we only need to
   // catch Escape ourselves to dismiss. Capture so it wins over any sibling.

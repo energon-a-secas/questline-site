@@ -9,6 +9,10 @@ import { CLASSES, CLASS_BY_ID, CRED_STATUSES } from './data.js';
 import { state } from './state.js';
 import { escHtml } from './utils.js';
 import { icon, screenTitle, shell } from './console.js';
+import { issuerLogo } from './logos.js';
+
+/** Tier initial lookup, used for the small rung badge. */
+const TIER_INITIAL = { Entry: 'E', Intermediate: 'I', Advanced: 'A', Referent: 'R' };
 
 /** Count earned credentials across a class's ladder, for the progress stat. */
 function classProgress(s, cls) {
@@ -36,6 +40,15 @@ export function renderProfile(s) {
     hints);
 }
 
+/** Render a 48–56 px faceted class crest plate with symbol and accent color. */
+function classCrest(cls, size = 56) {
+  const { symbol, color } = cls.crest || { symbol: '?', color: '#8ca6c2' };
+  return `
+    <span class="cclass__crest" style="--crest-color:${escHtml(color)};--crest-size:${size}px" aria-hidden="true">
+      <span class="cclass__crest-symbol">${escHtml(symbol)}</span>
+    </span>`;
+}
+
 /** The class selector: a row of faceted cards, one per engineer class. */
 function classPicker(s) {
   const cards = CLASSES.map(c => {
@@ -44,12 +57,12 @@ function classPicker(s) {
     return `
       <button type="button" class="cclass ${active ? 'is-active' : ''}" data-class="${c.id}"
         aria-pressed="${active}">
-        <span class="cclass__icon">${icon(c.icon, 26)}</span>
+        ${classCrest(c, 52)}
         <span class="cclass__main">
           <span class="cclass__title">${escHtml(c.title)}</span>
           <span class="cclass__tagline">${escHtml(c.tagline)}</span>
         </span>
-        ${active ? `<span class="cclass__count">${earned}/${total}</span>` : ''}
+        <span class="cclass__count">${earned}/${total}</span>
       </button>`;
   }).join('');
   return `
@@ -63,10 +76,13 @@ function classPicker(s) {
 function classPrompt() {
   return `
     <section class="cpanel cprofile__empty">
-      <span class="cprofile__emptyicon">${icon('idcard', 34)}</span>
-      <p class="clead">Pick an engineer class above to reveal its certification
+      <span class="cprofile__crest" aria-hidden="true">
+        <span class="cprofile__crest-symbol">?</span>
+      </span>
+      <p class="clead"><strong>Choose an engineer class</strong> to reveal its certification
       ladder. Each ladder runs Entry → Intermediate → Advanced → Referent, and
       you can log a credential ID against any certification you hold.</p>
+      <p class="cprofile__emptycta">Select a class card above to begin.</p>
     </section>`;
 }
 
@@ -78,7 +94,7 @@ function classSheet(s, cls) {
   return `
     <section class="cpanel">
       <div class="cprofile__head">
-        <span class="cprofile__classicon">${icon(cls.icon, 30)}</span>
+        ${classCrest(cls, 64)}
         <div class="cprofile__heading">
           <h3 class="cdetail__title">${escHtml(cls.title)}</h3>
           <p class="cdetail__summary">${escHtml(cls.blurb)}</p>
@@ -92,6 +108,15 @@ function classSheet(s, cls) {
     </section>`;
 }
 
+/** A small faceted badge with the tier initial, colored by the tier accent. */
+function tierBadge(rung) {
+  const initial = TIER_INITIAL[rung.tier] || rung.tier[0];
+  return `
+    <span class="crung__badge" aria-hidden="true" data-tier="${rung.tier.toLowerCase()}">
+      ${escHtml(initial)}
+    </span>`;
+}
+
 /** One ladder rung: the tier label, a blurb, and its certifications. */
 function rungBlock(s, cls, rung, i) {
   const tierNo = String(i + 1).padStart(2, '0');
@@ -100,6 +125,7 @@ function rungBlock(s, cls, rung, i) {
     <div class="crung crung--${rung.tier.toLowerCase()}">
       <div class="crung__head">
         <span class="crung__no">${tierNo}</span>
+        ${tierBadge(rung)}
         <span class="crung__tier">${escHtml(rung.tier)}</span>
         <span class="crung__blurb">${escHtml(rung.blurb)}</span>
       </div>
@@ -107,7 +133,33 @@ function rungBlock(s, cls, rung, i) {
     </div>`;
 }
 
-/** A single certification row: name, issuer, status pill, and an edit toggle
+/** A 28 px faceted issuer badge for the left of a cert row. */
+function certBadge(cert) {
+  return `
+    <span class="ccert__badge" aria-hidden="true" title="${escHtml(cert.issuer)}">
+      ${issuerLogo(cert.issuer)}
+    </span>`;
+}
+
+/** Faceted checkbox-style status glyph: check / dash / X / empty. */
+function statusGlyph(status) {
+  if (status === 'earned') return icon('check', 14);
+  if (status === 'in-progress') return `<svg viewBox="0 0 14 14" width="14" height="14" aria-hidden="true"><path d="M3 7h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
+  if (status === 'expired') return `<svg viewBox="0 0 14 14" width="14" height="14" aria-hidden="true"><path d="M4 4l6 6M10 4l-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
+  return '';
+}
+
+/** Issuer name, optionally linked to the cert's official page. */
+function certIssuer(cert) {
+  if (!cert.url) return `<span class="ccert__issuer">${escHtml(cert.issuer)}</span>`;
+  return `
+    <a class="ccert__issuer ccert__issuer--link" href="${escHtml(cert.url)}" target="_blank" rel="noopener noreferrer"
+      title="Open ${escHtml(cert.name)} exam page">
+      ${escHtml(cert.issuer)} ${icon('external', 10)}
+    </a>`;
+}
+
+/** A single certification row: badge, name, issuer, status glyph, and edit toggle
  *  that expands the credential form (id + issuer + dates + status). */
 function certRow(s, cert) {
   const rec = s.profile.creds[cert.id];
@@ -116,15 +168,19 @@ function certRow(s, cert) {
   const open = s.ui.credEditing === cert.id;
   return `
     <div class="ccert ccert--${status || 'none'} ${open ? 'is-editing' : ''}" data-cert-row="${cert.id}">
-      <button type="button" class="ccert__main" data-cred-edit="${cert.id}"
-        aria-expanded="${open}" aria-label="Edit credential for ${escHtml(cert.name)}">
-        <span class="ccert__dot" aria-hidden="true"></span>
+      <div class="ccert__info">
+        ${certBadge(cert)}
+        <span class="ccert__status-glyph" aria-hidden="true">${statusGlyph(status)}</span>
         <span class="ccert__text">
           <span class="ccert__name">${escHtml(cert.name)}</span>
-          <span class="ccert__issuer">${escHtml(cert.issuer)}</span>
+          ${certIssuer(cert)}
         </span>
         <span class="ccert__status">${escHtml(statusLabel)}</span>
         ${rec?.id ? `<span class="ccert__credid" title="Credential ID">${escHtml(rec.id)}</span>` : ''}
+      </div>
+      <button type="button" class="ccert__edit" data-cred-edit="${cert.id}"
+        aria-expanded="${open}" aria-label="Edit credential for ${escHtml(cert.name)}">
+        ${icon('pencil', 14)}
       </button>
       ${open ? credForm(cert, rec) : ''}
     </div>`;

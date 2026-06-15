@@ -55,7 +55,9 @@ function nodeCard(s, branch, { cursored = false, ghost = false } = {}) {
   return `
     <${tag} ${href} class="tnode tnode--${status} ${cursored ? 'is-cursor' : ''}"
       data-branch="${branch.id}" role="listitem" aria-label="${escHtml(label)}"
-      ${tag === 'div' ? 'aria-disabled="true" tabindex="0"' : ''}>
+      ${tag === 'div'
+        ? 'aria-disabled="true" tabindex="0"'
+        : `tabindex="${cursored ? '-1' : '0'}"`}>
       <span class="tnode__inner">
         <span class="tnode__frame">
           <span class="tnode__icon">${icon(branch.icon, 30)}</span>

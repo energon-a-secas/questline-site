@@ -1,0 +1,37 @@
+{
+  "name": "Questline — Operating Model Skill Tree",
+  "short_name": "Questline",
+  "description": "Turn a roadmap and prioritization operating model into a visual skill tree, with unlockable stages, ceremonies, and key dates.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a1424",
+  "theme_color": "#0a1424",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/og-preview.jpg",
+      "sizes": "1200x630",
+      "type": "image/jpeg"
+    }
+  ],
+  "categories": ["education", "productivity"],
+  "lang": "en",
+  "dir": "ltr"
+}

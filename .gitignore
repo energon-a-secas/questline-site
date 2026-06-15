@@ -9,6 +9,9 @@ test-results/
 playwright-report/
 blob-report/
 
+# ── Local verification screenshots ────────────────────────────────────────────
+scripts/.verify/
+
 # ── Node ──────────────────────────────────────────────────────────────────────
 node_modules/
 npm-debug.log*

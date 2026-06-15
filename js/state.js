@@ -14,6 +14,8 @@ const PREFS_KEY = 'questline-prefs';
 // future `profiles` table row (classId + a creds map keyed by certId).
 const PROFILE_KEY = 'questline-profile';
 const PLAYBOOKS_KEY = 'questline-playbooks';
+const ENGAGEMENT_KEY = 'questline-engagement';
+const ATLAS_KEY = 'questline-atlas';
 
 /** Console tab ids that render inside the game shell (in tab-bar order). */
 export const TAB_IDS = TABS.map(t => t.id);
@@ -26,7 +28,7 @@ export const state = {
   prefs: {
     keyboardNav: true,   // arrow/Q-E/Enter movement; users can switch it off
     shiftsRead: false,   // has the six-shifts reading popup been acknowledged
-    showFullMap: false,  // Flow: reveal all chapters (locked dimmed) vs fog-of-war
+    showFullMap: true,   // Flow: reveal all chapters (locked dimmed) vs fog-of-war
   },
   // Profile: the engineer class chosen and credential records. `creds` maps a
   // certId → { id, issuer, issued, expires, status }. This object is persisted
@@ -38,6 +40,11 @@ export const state = {
   // Playbooks: editable onboarding workflows. Seeded from data.js on first run,
   // then owned by the user (add/edit/delete). Persisted under PLAYBOOKS_KEY.
   playbooks: [],
+  // Atlas: uploaded team topology / product-deliverable formats, persisted under
+  // ATLAS_KEY. If null, the shipped sample topology is displayed.
+  atlas: {
+    teams: null,       // uploaded topology array, or null to use sample data
+  },
   // Transient cursor/selection — never persisted. Survives the innerHTML
   // re-render because it lives here, not in the live DOM. Keyboard and mouse
   // share one cursor per surface so the two input modes never disagree.
@@ -45,11 +52,12 @@ export const state = {
     chapterSel: null,  // chapter id open in the Chapters detail panel
     intelSel: null,    // term id open in the Intel detail panel
     intelQuery: '',    // live glossary search filter (Intel tab)
-    intelScope: 'all', // glossary scope filter (all | basic | company | operating)
+    intelScope: 'all', // glossary scope filter (all | basic | company | operating | product)
     playbookSel: null, // playbook id open in the Playbooks detail panel
     playbookEdit: false, // whether the open playbook is in edit mode
     stepEditing: null, // step id whose inline editor is open (Playbooks)
     credEditing: null, // cert id whose credential form is open (Profile)
+    atlasView: 'map',  // 'map' | 'matrix' | 'upload'
     region: 'list',    // 'list' | 'detail' — which side owns the cursor
     rowCursor: 0,      // index into the active master list
     skillCursor: 0,    // index into the open chapter's nodes (detail region)
@@ -77,6 +85,7 @@ export function loadSaved(s) {
   loadPrefs(s);
   loadProfile(s);
   loadPlaybooks(s);
+  loadAtlas(s);
   // View always derives from the URL hash, not storage.
   s.view = viewFromHash();
   s.ui.intelSel = intelFromHash();
@@ -154,6 +163,36 @@ export function savePlaybooks(s) {
   try {
     localStorage.setItem(PLAYBOOKS_KEY, JSON.stringify(s.playbooks));
   } catch { /* quota exceeded or private browsing */ }
+}
+
+// ── Atlas (uploaded team topology) ───────────────────────────
+
+/** Load uploaded atlas topology, or keep the shipped sample on first run. */
+export function loadAtlas(s) {
+  try {
+    const raw = localStorage.getItem(ATLAS_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && Array.isArray(parsed.teams)) {
+        s.atlas.teams = parsed.teams;
+        return;
+      }
+    }
+  } catch { /* corrupted — keep the sample */ }
+  s.atlas.teams = null;
+}
+
+/** Persist the uploaded atlas topology. */
+export function saveAtlas(s) {
+  try {
+    localStorage.setItem(ATLAS_KEY, JSON.stringify({ teams: s.atlas.teams }));
+  } catch { /* quota exceeded or private browsing */ }
+}
+
+/** Replace the atlas topology with an uploaded set. */
+export function setAtlasTeams(s, teams) {
+  s.atlas.teams = teams;
+  saveAtlas(s);
 }
 
 /** A short unique id for a new playbook or step (no Date/Math.random reliance). */
@@ -280,6 +319,26 @@ export function setShowFullMap(s, on) {
 export function resetProgress(s) {
   s.done = {};
   save(s);
+}
+
+/**
+ * Wipe every persisted save slot: progress, preferences, profile, playbooks,
+ * and engagement. Used by the System reset confirmation.
+ */
+export function resetAll(s) {
+  s.done = {};
+  s.prefs = { keyboardNav: true, shiftsRead: false, showFullMap: true };
+  s.profile = { classId: null, creds: {} };
+  s.playbooks = [];
+  s.atlas = { teams: null };
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(PREFS_KEY);
+    localStorage.removeItem(PROFILE_KEY);
+    localStorage.removeItem(PLAYBOOKS_KEY);
+    localStorage.removeItem(ENGAGEMENT_KEY);
+    localStorage.removeItem(ATLAS_KEY);
+  } catch { /* private mode / no storage */ }
 }
 
 /** Put back a snapshot of `done` (used by the post-reset Undo). */

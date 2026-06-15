@@ -1,9 +1,8 @@
 /* ════════════════════════════════════════════════════════════
    Questline — stylesheet manifest
    ────────────────────────────────────────────────────────────
-   The styles are split into parts for navigation; @import keeps
-   the cascade in the same order as one file. Load order matters:
-   base.css defines the design tokens (:root) every part depends on.
+   Styles are now loaded directly via <link> tags in index.html
+   for parallel fetching and faster first paint.
 
      base.css        Reset, tokens, layout, header, nav/auth, buttons, sheet
      components.css  Overlays (modal, reader, splash, coach), card, toast,
@@ -11,7 +10,3 @@
      flow.css        Detroit-style chapter flowchart (Flow tab graph)
      console.css     NieR console: tabs, panels, every tab view, controls
    ════════════════════════════════════════════════════════════ */
-@import url("parts/base.css");
-@import url("parts/components.css");
-@import url("parts/flow.css");
-@import url("parts/console.css");

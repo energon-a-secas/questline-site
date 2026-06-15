@@ -5,21 +5,27 @@
 import { render, rerenderActive, drawWires } from './render.js';
 import { showToast, showActionToast, debounce } from './utils.js';
 import {
-  state, viewFromHash, intelFromHash, flowFocusFromHash,
-  resetProgress, restoreProgress,
+  state, viewFromHash, intelFromHash, flowFocusFromHash, isBranchView,
+  resetProgress, resetAll, restoreProgress,
   setKeyboardNav, setShiftsRead, setShowFullMap,
   setClass, setCredential, clearCredential,
   addPlaybook, updatePlaybook, deletePlaybook, addStep, updateStep, deleteStep, moveStep,
+  setAtlasTeams,
 } from './state.js';
 import { INTEL, INTEL_BY_ID } from './data.js';
 import { openConfirm } from './modal.js';
 import { openChapterReader } from './chapterReader.js';
+import { openSearch } from './search.js';
 import { setSplashPref, splashPref } from './splash.js';
 import { openShiftsReader } from './banners.js';
+import { openDaily, updateBellDot } from './daily.js';
 import { intelDetail, intelListItems, intelMatches } from './console.js';
+import { bindAtlasEvents } from './atlas.js';
 import { markGlossary } from './glossary.js';
 import { revealKiwi } from './kiwi.js';
 import { showGlossPopover, hideGlossPopover } from './glossary.js';
+import { dismissFocus, nextTip, setFocusBranchId } from './engagement.js';
+import { shareProgress } from './share.js';
 
 export function bindEvents(s) {
   // Route on hash change.
@@ -47,6 +53,9 @@ export function bindEvents(s) {
       if (prev === 'chapters' && s.view !== 'chapters') s.ui.chapterSel = null;
     }
     render(s);
+    // A bare chapter-id hash (#foundations, e.g. Flow's "Open in Chapters")
+    // renders the grid, then opens that chapter in the section reader on top.
+    if (isBranchView(s.view)) openChapterReader(s, s.view);
   });
 
   // Redraw flowchart wires when the layout reflows.
@@ -56,8 +65,17 @@ export function bindEvents(s) {
 
   const app = document.getElementById('app');
 
+  // Atlas has its own file input / drag-drop / download handlers.
+  bindAtlasEvents(s, app);
+
   // Delegated clicks for all interactive controls.
   app.addEventListener('click', (e) => {
+    if (e.target.closest('#openSearch')) { openSearch(); return; }
+
+    if (e.target.closest('#openDaily')) { openDaily(); return; }
+    // Note: #openDaily lives outside #app, so this branch is a fallback; the
+    // real listener is wired directly in app.js.
+
     const reset = e.target.closest('#resetBtn');
     if (reset) { onReset(s); return; }
 
@@ -81,6 +99,19 @@ export function bindEvents(s) {
     const egg = e.target.closest('#kiwiEgg');
     if (egg) { revealKiwi(); return; }
 
+    // Today's Focus dismiss
+    if (e.target.closest('#dismissFocus')) { dismissFocus(); rerenderActive(s); return; }
+
+    // Daily tip next
+    if (e.target.closest('#nextTip')) { nextTip(); rerenderActive(s); return; }
+
+    // Today's Focus CTA: remember which branch the user picked up.
+    const focusCta = e.target.closest('[data-focus-cta]');
+    if (focusCta) { setFocusBranchId(focusCta.dataset.focusCta); }
+
+    // Share progress
+    if (e.target.closest('#shareBtn')) { shareProgress(s); return; }
+
     // A glossary term: route to its Intel entry (shares the data-intel path).
     const gloss = e.target.closest('.gloss');
     if (gloss) { hideGlossPopover(); location.hash = `#intel/${gloss.dataset.intel}`; return; }
@@ -88,6 +119,14 @@ export function bindEvents(s) {
     // Intel scope filter chip: re-render the list/detail for the new scope.
     const scopeBtn = e.target.closest('[data-intel-scope]');
     if (scopeBtn) { s.ui.intelScope = scopeBtn.dataset.intelScope; rerenderActive(s); return; }
+
+    // Atlas view switcher.
+    const atlasViewBtn = e.target.closest('[data-atlas-view]');
+    if (atlasViewBtn) { s.ui.atlasView = atlasViewBtn.dataset.atlasView; rerenderActive(s); return; }
+
+    // Atlas: restore the shipped sample topology.
+    const atlasReset = e.target.closest('#atlasResetSample');
+    if (atlasReset) { setAtlasTeams(s, null); rerenderActive(s); showToast('Restored sample topology'); return; }
 
     // Profile: class selection, credential edit/cancel/clear.
     if (handleProfileClick(s, e)) return;
@@ -121,6 +160,18 @@ export function bindEvents(s) {
   app.addEventListener('input', (e) => {
     const box = e.target.closest('#intelSearch');
     if (box) onIntelSearch(s, box.value);
+  });
+
+  // Cert row keyboard support (now a focusable div so the issuer link can nest).
+  app.addEventListener('keydown', (e) => {
+    const certMain = e.target.closest('[data-cred-edit]');
+    if (!certMain) return;
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      const id = certMain.dataset.credEdit;
+      s.ui.credEditing = s.ui.credEditing === id ? null : id;
+      rerenderActive(s);
+    }
   });
 
   // Form submits: credential records (Profile), playbook + step edits.
@@ -240,6 +291,8 @@ function handleProfileClick(s, e) {
     rerenderActive(s);
     return true;
   }
+  // Let the cert issuer external link open in a new tab without flipping edit.
+  if (e.target.closest('.ccert__issuer--link')) return false;
   const editBtn = e.target.closest('[data-cred-edit]');
   if (editBtn) {
     const id = editBtn.dataset.credEdit;
@@ -389,18 +442,20 @@ function onSaveStep(s, form) {
 function onReset(s) {
   showDangerVignette();
   openConfirm({
-    title: 'Reset save data?',
-    body: 'This clears every completed skill and your rank on this device. You can undo it right after.',
-    confirmLabel: 'Reset save data',
+    title: 'Reset all save data?',
+    body: 'This clears all progress, profile, playbooks, preferences, and engagement data on this device. You can undo the skill progress right after.',
+    confirmLabel: 'Reset all save data',
     danger: true,
     onClose: hideDangerVignette,    // fires on confirm OR cancel
     onConfirm: () => {
-      // Snapshot before wiping so the undo toast can put it all back.
+      // Snapshot before wiping so the undo toast can put skill progress back.
       const snapshot = { ...s.done };
-      resetProgress(s);
+      resetAll(s);
       s.ui.chapterSel = null;
+      s.ui.playbookSel = null;
+      s.ui.credEditing = null;
       rerenderActive(s);
-      showActionToast('Save data reset', 'Undo', () => {
+      showActionToast('All save data reset', 'Undo', () => {
         restoreProgress(s, snapshot);
         rerenderActive(s);
         showToast('Progress restored');

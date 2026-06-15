@@ -38,6 +38,10 @@ export const ICONS = {
   server: '<rect x="3" y="4" width="18" height="7" rx="1.5"/><rect x="3" y="13" width="18" height="7" rx="1.5"/><path d="M7 7.5h.01M7 16.5h.01"/>',
   // Playbook / banner glyphs
   route: '<circle cx="6" cy="19" r="2.5"/><circle cx="18" cy="5" r="2.5"/><path d="M8.5 19H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.5"/>',
+  sitemap: '<path d="M3 18h6v-5H6V9h12v4h-3v5h6"/><path d="M12 3v6"/>',
+  map: '<path d="M3 7l6-2 6 3 6-2v13l-6 2-6-3-6 2z"/><path d="M9 5v13M15 8v13"/>',
+  upload: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/>',
+  grid: '<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>',
   'compass-drafting': '<path d="M12 3v6"/><path d="M10 8.5l-5 11M14 8.5l5 11"/><circle cx="12" cy="6" r="2"/>',
   'flag-checkered': '<path d="M5 21V4c4-2 8 2 14 0v9c-6 2-10-2-14 0"/><path d="M5 8.5h14M9 4.4v9M13 5v9"/>',
   award: '<circle cx="12" cy="9" r="5"/><path d="M9 13.5L7.5 21l4.5-2.5L16.5 21 15 13.5"/>',
@@ -219,17 +223,19 @@ export const TABS = [
   { id: 'playbooks', label: 'Playbooks', icon: 'route',       hint: 'Step-by-step workflows' },
   { id: 'priority',  label: 'Priority',  icon: 'chart-bar',   hint: 'Ranked backlog' },
   { id: 'intel',     label: 'Intel',     icon: 'atlas',       hint: 'Field glossary' },
+  { id: 'atlas',     label: 'Atlas',     icon: 'map',         hint: 'Team topology map' },
   { id: 'profile',   label: 'Profile',   icon: 'idcard',      hint: 'Class and certifications' },
   { id: 'flow',      label: 'Flow',      icon: 'code-branch', hint: 'Chapter map' },
   { id: 'system',    label: 'System',    icon: 'cog',         hint: 'Save and settings' },
 ];
 
-/** Glossary scopes for the Intel tab filter (All + the three term scopes). */
+/** Glossary scopes for the Intel tab filter (All + term scopes). */
 export const INTEL_SCOPES = [
   { id: 'all',       label: 'All' },
   { id: 'basic',     label: 'Basics' },
   { id: 'company',   label: 'Company' },
   { id: 'operating', label: 'Operating Model' },
+  { id: 'product',   label: 'Product' },
 ];
 
 /** The six key shifts, shown on the Brief tab. */
@@ -424,9 +430,74 @@ const COMPANY_TERMS = [
     aliases: ['NSD', 'north star'], see: ['project', 'roadmap', 'stakeholder'] },
 ];
 
-/** The full glossary: operating-model terms first, then basics, then company
- *  jargon. The Intel tab filters this by scope and searches across all. */
-export const INTEL = [...OPERATING_TERMS, ...BASIC_TERMS, ...COMPANY_TERMS];
+/** Product operating-model terms — product types, team topologies, interaction
+ *  modes, and deliverable formats (scope 'product'). */
+const PRODUCT_TERMS = [
+  { id: 'customer-need', term: 'Customer need', kind: 'Concept', scope: 'product',
+    body: 'The job a customer is trying to do, the problem they need solved, or the outcome they want. Product work starts here, not with a feature list. A clear customer need keeps teams aligned on value instead of output.',
+    aliases: ['customer needs', 'jobs to be done'], see: ['product-outcome', 'problem-statement'] },
+  { id: 'problem-statement', term: 'Problem statement', kind: 'Artifact', scope: 'product',
+    body: 'A concise description of who has a problem, what the problem is, why it matters, and what success looks like. It frames the work before solutions are proposed.',
+    see: ['customer-need', 'product-outcome'] },
+  { id: 'product-outcome', term: 'Product outcome', kind: 'Concept', scope: 'product',
+    body: 'A measurable change in customer behavior or business result that a product aims to produce. Outcomes describe impact; outputs describe deliverables.',
+    aliases: ['outcome'], see: ['customer-need', 'north-star-metric'] },
+  { id: 'north-star-metric', term: 'North Star metric', kind: 'Metric', scope: 'product',
+    body: 'The single most important measure of product value, representing the core value customers get. Teams use it to stay focused and weigh tradeoffs.',
+    see: ['product-outcome', 'kpi'] },
+  { id: 'product-brief', term: 'Product brief', kind: 'Artifact', scope: 'product',
+    body: 'A short document that captures customer need, proposed outcome, scope, non-goals, dependencies, and success criteria. It is the standard starting point for product commitments.',
+    aliases: ['brief'], see: ['product-spec', 'prd', 'rfc'] },
+  { id: 'product-spec', term: 'Product spec', kind: 'Artifact', scope: 'product',
+    body: 'The detailed description of what a product team will build and why. It links customer need to acceptance criteria, design, dependencies, and rollout.',
+    see: ['spec', 'product-brief', 'prd'] },
+  { id: 'prd', term: 'PRD', kind: 'Artifact', scope: 'product',
+    body: 'Product Requirements Document. A structured spec that defines the problem, target users, requirements, acceptance criteria, and success metrics for a feature or product.',
+    aliases: ['product requirements document'], see: ['product-spec', 'product-brief'] },
+  { id: 'rfc', term: 'RFC', kind: 'Artifact', scope: 'product',
+    body: 'Request for Comments. A document used to propose a decision, architecture, or approach and gather feedback before committing. Common for cross-team or high-stakes choices.',
+    aliases: ['request for comments'], see: ['product-brief', 'product-spec'] },
+  { id: 'stream-aligned-team', term: 'Stream-aligned team', kind: 'Topology', scope: 'product',
+    body: 'A team organized around a single, valuable stream of work — often a product, customer segment, or user journey. It has end-to-end ownership of outcomes for that stream.',
+    see: ['platform-team', 'enabling-team', 'complicated-subsystem-team'] },
+  { id: 'platform-team', term: 'Platform team', kind: 'Topology', scope: 'product',
+    body: 'A team that builds internal platforms, APIs, or tooling that other teams consume as a service. It reduces cognitive load and redundant work across stream-aligned teams.',
+    see: ['stream-aligned-team', 'x-as-a-service'] },
+  { id: 'enabling-team', term: 'Enabling team', kind: 'Topology', scope: 'product',
+    body: 'A team that temporarily helps another team adopt a new capability, technology, or practice. It coaches and then steps back so the stream-aligned team can own the work.',
+    see: ['stream-aligned-team', 'facilitating'] },
+  { id: 'complicated-subsystem-team', term: 'Complicated-subsystem team', kind: 'Topology', scope: 'product',
+    body: 'A team formed around a deep, specialized domain that multiple stream-aligned teams depend on — for example, a machine-learning model, graphics engine, or compliance engine.',
+    see: ['stream-aligned-team', 'platform-team'] },
+  { id: 'collaboration-mode', term: 'Collaboration', kind: 'Interaction', scope: 'product',
+    body: 'Two teams work closely together for a bounded time to discover or build something. High bandwidth, temporary, and best for uncertain or high-stakes work.',
+    aliases: ['collaborating'], see: ['x-as-a-service', 'facilitating'] },
+  { id: 'x-as-a-service', term: 'X-as-a-Service', kind: 'Interaction', scope: 'product',
+    body: 'One team consumes a capability from another team through a defined interface, documentation, and SLO. Low bandwidth, durable, and ideal for well-understood dependencies.',
+    aliases: ['xaas', 'as a service'], see: ['collaboration-mode', 'platform-team'] },
+  { id: 'facilitating', term: 'Facilitating', kind: 'Interaction', scope: 'product',
+    body: 'One team helps another team overcome a barrier or learn a skill, then withdraws. Common for enabling teams, security reviews, or architecture coaching.',
+    see: ['collaboration-mode', 'enabling-team'] },
+  { id: 'cross-capability-team', term: 'Cross-capability team', kind: 'Concept', scope: 'product',
+    body: 'A team that brings together different skills — product, engineering, design, data — to own an outcome end to end. It is the default shape for stream-aligned product work.',
+    aliases: ['cross-functional team'], see: ['stream-aligned-team', 'product-trio'] },
+  { id: 'product-trio', term: 'Product trio', kind: 'Role', scope: 'product',
+    body: 'A small leadership cell of product, engineering, and design that jointly discovers and validates what to build. It keeps decisions balanced across viability, feasibility, and usability.',
+    see: ['cross-capability-team', 'product-manager'] },
+  { id: 'product-manager', term: 'Product manager', kind: 'Role', scope: 'product',
+    body: 'The role accountable for what problems the team solves, for whom, and why. They frame customer needs, define outcomes, and prioritize the backlog with engineering and design.',
+    see: ['product-trio', 'product-owner'] },
+  { id: 'product-owner', term: 'Product owner', kind: 'Role', scope: 'product',
+    body: 'A role that owns the backlog and prioritization for a team, often in more delivery-focused contexts. They turn strategy into actionable work and keep the team unblocked.',
+    see: ['product-manager', 'owner'] },
+  { id: 'value-stream', term: 'Value stream', kind: 'Concept', scope: 'product',
+    body: 'The sequence of activities that delivers value to a customer. Organizing teams around value streams aligns them with customer outcomes and reduces handoffs.',
+    see: ['stream-aligned-team', 'customer-need'] },
+];
+
+/** The full glossary: operating-model terms first, then basics, company jargon,
+ *  and product terms. The Intel tab filters this by scope and searches across all. */
+export const INTEL = [...OPERATING_TERMS, ...BASIC_TERMS, ...COMPANY_TERMS, ...PRODUCT_TERMS];
 
 /** Flat lookup by intel term id. */
 export const INTEL_BY_ID = Object.fromEntries(INTEL.map(t => [t.id, t]));
@@ -534,28 +605,29 @@ export const CLASSES = [
     icon: 'layer-group',
     tagline: 'Forge the foundations others build on',
     blurb: 'The architect-engineer who shapes cloud terrain, provisions worlds as code, and keeps the platform humming under any load.',
+    crest: { symbol: 'I', color: '#2aa8ff' },
     rungs: [
       { tier: 'Entry', blurb: 'You can navigate a cloud console, read infrastructure code, and stand up basic resources under supervision.', certs: [
-        { id: 'aws-ccp', name: 'AWS Certified Cloud Practitioner', issuer: 'Amazon Web Services' },
-        { id: 'terraform-associate', name: 'HashiCorp Certified: Terraform Associate', issuer: 'HashiCorp' },
-        { id: 'kcna', name: 'Kubernetes and Cloud Native Associate (KCNA)', issuer: 'The Linux Foundation / CNCF' },
+        { id: 'aws-ccp', name: 'AWS Certified Cloud Practitioner', issuer: 'Amazon Web Services', logo: 'aws', url: 'https://aws.amazon.com/certification/' },
+        { id: 'terraform-associate', name: 'HashiCorp Certified: Terraform Associate', issuer: 'HashiCorp', logo: 'hashicorp', url: 'https://www.hashicorp.com/certification' },
+        { id: 'kcna', name: 'Kubernetes and Cloud Native Associate (KCNA)', issuer: 'The Linux Foundation / CNCF', logo: 'kubernetes', url: 'https://www.cncf.io/certification/' },
       ]},
       { tier: 'Intermediate', blurb: 'You design and operate production-grade infrastructure independently, automate provisioning, and run real clusters.', certs: [
-        { id: 'aws-saa', name: 'AWS Certified Solutions Architect – Associate', issuer: 'Amazon Web Services' },
-        { id: 'cka', name: 'Certified Kubernetes Administrator (CKA)', issuer: 'The Linux Foundation / CNCF' },
-        { id: 'az-104', name: 'Microsoft Certified: Azure Administrator Associate (AZ-104)', issuer: 'Microsoft' },
-        { id: 'gcp-ace', name: 'Google Cloud Associate Cloud Engineer', issuer: 'Google Cloud' },
+        { id: 'aws-saa', name: 'AWS Certified Solutions Architect – Associate', issuer: 'Amazon Web Services', logo: 'aws', url: 'https://aws.amazon.com/certification/' },
+        { id: 'cka', name: 'Certified Kubernetes Administrator (CKA)', issuer: 'The Linux Foundation / CNCF', logo: 'kubernetes', url: 'https://www.cncf.io/certification/' },
+        { id: 'az-104', name: 'Microsoft Certified: Azure Administrator Associate (AZ-104)', issuer: 'Microsoft', logo: 'azure', url: 'https://learn.microsoft.com/en-us/credentials/certifications/' },
+        { id: 'gcp-ace', name: 'Google Cloud Associate Cloud Engineer', issuer: 'Google Cloud', logo: 'gcp', url: 'https://cloud.google.com/learn/certification' },
       ]},
       { tier: 'Advanced', blurb: 'You own multi-account, multi-region architecture, harden clusters, and design platforms others depend on.', certs: [
-        { id: 'aws-sap', name: 'AWS Certified Solutions Architect – Professional', issuer: 'Amazon Web Services' },
-        { id: 'aws-devops-pro', name: 'AWS Certified DevOps Engineer – Professional', issuer: 'Amazon Web Services' },
-        { id: 'cks', name: 'Certified Kubernetes Security Specialist (CKS)', issuer: 'The Linux Foundation / CNCF' },
-        { id: 'terraform-authoring', name: 'HashiCorp Certified: Terraform Authoring and Operations Professional', issuer: 'HashiCorp' },
+        { id: 'aws-sap', name: 'AWS Certified Solutions Architect – Professional', issuer: 'Amazon Web Services', logo: 'aws', url: 'https://aws.amazon.com/certification/' },
+        { id: 'aws-devops-pro', name: 'AWS Certified DevOps Engineer – Professional', issuer: 'Amazon Web Services', logo: 'aws', url: 'https://aws.amazon.com/certification/' },
+        { id: 'cks', name: 'Certified Kubernetes Security Specialist (CKS)', issuer: 'The Linux Foundation / CNCF', logo: 'kubernetes', url: 'https://www.cncf.io/certification/' },
+        { id: 'terraform-authoring', name: 'HashiCorp Certified: Terraform Authoring and Operations Professional', issuer: 'HashiCorp', logo: 'hashicorp', url: 'https://www.hashicorp.com/certification' },
       ]},
       { tier: 'Referent', blurb: 'The recognized platform authority — the SME teams consult on architecture and a contributor to the wider ecosystem.', certs: [
-        { id: 'gcp-pca', name: 'Google Cloud Professional Cloud Architect', issuer: 'Google Cloud' },
-        { id: 'cncf-maintainer', name: 'Open-source maintainer (Terraform module / Kubernetes operator)', issuer: 'Recognition' },
-        { id: 'platform-arb', name: 'Internal Platform Architecture Review Board', issuer: 'Recognition' },
+        { id: 'gcp-pca', name: 'Google Cloud Professional Cloud Architect', issuer: 'Google Cloud', logo: 'gcp', url: 'https://cloud.google.com/learn/certification' },
+        { id: 'cncf-maintainer', name: 'Open-source maintainer (Terraform module / Kubernetes operator)', issuer: 'Recognition', logo: 'recognition', url: '' },
+        { id: 'platform-arb', name: 'Internal Platform Architecture Review Board', issuer: 'Recognition', logo: 'recognition', url: '' },
       ]},
     ],
   },
@@ -565,27 +637,28 @@ export const CLASSES = [
     icon: 'heart-pulse',
     tagline: 'Keep the realm alive at scale',
     blurb: 'The guardian who watches every signal, answers the page at 3am, and trades toil for automation so the system never goes dark.',
+    crest: { symbol: 'S', color: '#34d399' },
     rungs: [
       { tier: 'Entry', blurb: 'You understand reliability fundamentals, can read dashboards, and follow runbooks during an incident.', certs: [
-        { id: 'pca-prometheus', name: 'Prometheus Certified Associate (PCA)', issuer: 'The Linux Foundation / CNCF' },
-        { id: 'kcna-sre', name: 'Kubernetes and Cloud Native Associate (KCNA)', issuer: 'The Linux Foundation / CNCF' },
-        { id: 'datadog-fundamentals', name: 'Datadog Fundamentals', issuer: 'Datadog' },
+        { id: 'pca-prometheus', name: 'Prometheus Certified Associate (PCA)', issuer: 'The Linux Foundation / CNCF', logo: 'kubernetes', url: 'https://www.cncf.io/certification/' },
+        { id: 'kcna-sre', name: 'Kubernetes and Cloud Native Associate (KCNA)', issuer: 'The Linux Foundation / CNCF', logo: 'kubernetes', url: 'https://www.cncf.io/certification/' },
+        { id: 'datadog-fundamentals', name: 'Datadog Fundamentals', issuer: 'Datadog', logo: 'datadog', url: 'https://www.datadoghq.com/training/' },
       ]},
       { tier: 'Intermediate', blurb: 'You build CI/CD pipelines, instrument services with metrics and traces, and take primary on-call rotations.', certs: [
-        { id: 'gitlab-cicd', name: 'GitLab Certified CI/CD Associate', issuer: 'GitLab' },
-        { id: 'cka-sre', name: 'Certified Kubernetes Administrator (CKA)', issuer: 'The Linux Foundation / CNCF' },
-        { id: 'aws-sysops', name: 'AWS Certified SysOps Administrator – Associate', issuer: 'Amazon Web Services' },
-        { id: 'github-actions', name: 'GitHub Actions Certification', issuer: 'GitHub' },
+        { id: 'gitlab-cicd', name: 'GitLab Certified CI/CD Associate', issuer: 'GitLab', logo: 'gitlab', url: 'https://about.gitlab.com/services/education/' },
+        { id: 'cka-sre', name: 'Certified Kubernetes Administrator (CKA)', issuer: 'The Linux Foundation / CNCF', logo: 'kubernetes', url: 'https://www.cncf.io/certification/' },
+        { id: 'aws-sysops', name: 'AWS Certified SysOps Administrator – Associate', issuer: 'Amazon Web Services', logo: 'aws', url: 'https://aws.amazon.com/certification/' },
+        { id: 'github-actions', name: 'GitHub Actions Certification', issuer: 'GitHub', logo: 'github', url: 'https://resources.github.com/learn/certifications/' },
       ]},
       { tier: 'Advanced', blurb: 'You define SLOs and error budgets, lead incident command, and engineer resilience through chaos testing.', certs: [
-        { id: 'aws-devops-pro-sre', name: 'AWS Certified DevOps Engineer – Professional', issuer: 'Amazon Web Services' },
-        { id: 'gremlin-cep', name: 'Gremlin Certified Chaos Engineering Practitioner', issuer: 'Gremlin' },
-        { id: 'cka-otel', name: 'Certified Kubernetes Administrator (CKA)', issuer: 'The Linux Foundation / CNCF' },
+        { id: 'aws-devops-pro-sre', name: 'AWS Certified DevOps Engineer – Professional', issuer: 'Amazon Web Services', logo: 'aws', url: 'https://aws.amazon.com/certification/' },
+        { id: 'gremlin-cep', name: 'Gremlin Certified Chaos Engineering Practitioner', issuer: 'Gremlin', logo: 'gremlin', url: 'https://www.gremlin.com/certification' },
+        { id: 'cka-otel', name: 'Certified Kubernetes Administrator (CKA)', issuer: 'The Linux Foundation / CNCF', logo: 'kubernetes', url: 'https://www.cncf.io/certification/' },
       ]},
       { tier: 'Referent', blurb: 'The reliability authority who sets org-wide observability strategy, mentors incident commanders, and shares hard-won lessons.', certs: [
-        { id: 'sre-conference-speaker', name: 'Conference speaker (SREcon / Monitorama)', issuer: 'Recognition' },
-        { id: 'incident-command-lead', name: 'Org-wide Incident Command program lead', issuer: 'Recognition' },
-        { id: 'reliability-arb', name: 'Internal Reliability Review Board', issuer: 'Recognition' },
+        { id: 'sre-conference-speaker', name: 'Conference speaker (SREcon / Monitorama)', issuer: 'Recognition', logo: 'recognition', url: '' },
+        { id: 'incident-command-lead', name: 'Org-wide Incident Command program lead', issuer: 'Recognition', logo: 'recognition', url: '' },
+        { id: 'reliability-arb', name: 'Internal Reliability Review Board', issuer: 'Recognition', logo: 'recognition', url: '' },
       ]},
     ],
   },
@@ -595,27 +668,28 @@ export const CLASSES = [
     icon: 'shield-halved',
     tagline: 'Guard the gates, govern the data',
     blurb: 'The sentinel who breaks systems to harden them and shepherds data through pipelines, balancing offense, defense, and governance.',
+    crest: { symbol: 'X', color: '#b08cff' },
     rungs: [
       { tier: 'Entry', blurb: 'You grasp security and data fundamentals, recognize common threats, and handle data responsibly.', certs: [
-        { id: 'comptia-security-plus', name: 'CompTIA Security+', issuer: 'CompTIA' },
-        { id: 'kcsa', name: 'Kubernetes and Cloud Native Security Associate (KCSA)', issuer: 'The Linux Foundation / CNCF' },
-        { id: 'databricks-de-associate', name: 'Databricks Certified Data Engineer Associate', issuer: 'Databricks' },
+        { id: 'comptia-security-plus', name: 'CompTIA Security+', issuer: 'CompTIA', logo: 'comptia', url: 'https://www.comptia.org/certifications/' },
+        { id: 'kcsa', name: 'Kubernetes and Cloud Native Security Associate (KCSA)', issuer: 'The Linux Foundation / CNCF', logo: 'kubernetes', url: 'https://www.cncf.io/certification/' },
+        { id: 'databricks-de-associate', name: 'Databricks Certified Data Engineer Associate', issuer: 'Databricks', logo: 'databricks', url: 'https://www.databricks.com/learn/certification' },
       ]},
       { tier: 'Intermediate', blurb: 'You secure cloud workloads, run guided penetration tests, and build reliable data pipelines and warehouses.', certs: [
-        { id: 'aws-security-specialty', name: 'AWS Certified Security – Specialty', issuer: 'Amazon Web Services' },
-        { id: 'dbt-analytics-engineer', name: 'dbt Analytics Engineering Certification', issuer: 'dbt Labs' },
-        { id: 'databricks-de-pro', name: 'Databricks Certified Data Engineer Professional', issuer: 'Databricks' },
-        { id: 'comptia-pentest-plus', name: 'CompTIA PenTest+', issuer: 'CompTIA' },
+        { id: 'aws-security-specialty', name: 'AWS Certified Security – Specialty', issuer: 'Amazon Web Services', logo: 'aws', url: 'https://aws.amazon.com/certification/' },
+        { id: 'dbt-analytics-engineer', name: 'dbt Analytics Engineering Certification', issuer: 'dbt Labs', logo: 'dbt', url: 'https://www.getdbt.com/dbt-certification' },
+        { id: 'databricks-de-pro', name: 'Databricks Certified Data Engineer Professional', issuer: 'Databricks', logo: 'databricks', url: 'https://www.databricks.com/learn/certification' },
+        { id: 'comptia-pentest-plus', name: 'CompTIA PenTest+', issuer: 'CompTIA', logo: 'comptia', url: 'https://www.comptia.org/certifications/' },
       ]},
       { tier: 'Advanced', blurb: 'You perform exploit-driven offensive testing, architect governed ML/data platforms, and lead security reviews.', certs: [
-        { id: 'oscp', name: 'Offensive Security Certified Professional (OSCP)', issuer: 'OffSec' },
-        { id: 'aws-ml-specialty', name: 'AWS Certified Machine Learning – Specialty', issuer: 'Amazon Web Services' },
-        { id: 'cks-security', name: 'Certified Kubernetes Security Specialist (CKS)', issuer: 'The Linux Foundation / CNCF' },
+        { id: 'oscp', name: 'Offensive Security Certified Professional (OSCP)', issuer: 'OffSec', logo: 'offsec', url: 'https://www.offsec.com/courses/' },
+        { id: 'aws-ml-specialty', name: 'AWS Certified Machine Learning – Specialty', issuer: 'Amazon Web Services', logo: 'aws', url: 'https://aws.amazon.com/certification/' },
+        { id: 'cks-security', name: 'Certified Kubernetes Security Specialist (CKS)', issuer: 'The Linux Foundation / CNCF', logo: 'kubernetes', url: 'https://www.cncf.io/certification/' },
       ]},
       { tier: 'Referent', blurb: 'The trusted security and data authority — the org’s top advisor on governance, threat modeling, and offensive capability.', certs: [
-        { id: 'cissp', name: 'Certified Information Systems Security Professional (CISSP)', issuer: 'ISC2' },
-        { id: 'osep', name: 'Offensive Security Experienced Penetrator (OSEP)', issuer: 'OffSec' },
-        { id: 'security-governance-board', name: 'Data Governance & Security Council lead', issuer: 'Recognition' },
+        { id: 'cissp', name: 'Certified Information Systems Security Professional (CISSP)', issuer: 'ISC2', logo: 'isc2', url: 'https://www.isc2.org/certifications/' },
+        { id: 'osep', name: 'Offensive Security Experienced Penetrator (OSEP)', issuer: 'OffSec', logo: 'offsec', url: 'https://www.offsec.com/courses/' },
+        { id: 'security-governance-board', name: 'Data Governance & Security Council lead', issuer: 'Recognition', logo: 'recognition', url: '' },
       ]},
     ],
   },
@@ -625,27 +699,28 @@ export const CLASSES = [
     icon: 'server',
     tagline: 'Engineer the systems behind the screen',
     blurb: 'The craftsperson who wields languages and frameworks to build resilient APIs, model data, and design distributed systems that scale.',
+    crest: { symbol: 'B', color: '#ffce4d' },
     rungs: [
       { tier: 'Entry', blurb: 'You ship features in a primary language, write clean APIs, and work confidently with a relational database.', certs: [
-        { id: 'oracle-java-foundations', name: 'Oracle Certified Foundations Associate, Java', issuer: 'Oracle' },
-        { id: 'mongodb-associate-developer', name: 'MongoDB Associate Developer', issuer: 'MongoDB' },
-        { id: 'az-900', name: 'Microsoft Certified: Azure Fundamentals (AZ-900)', issuer: 'Microsoft' },
+        { id: 'oracle-java-foundations', name: 'Oracle Certified Foundations Associate, Java', issuer: 'Oracle', logo: 'oracle', url: 'https://education.oracle.com/oracle-certification' },
+        { id: 'mongodb-associate-developer', name: 'MongoDB Associate Developer', issuer: 'MongoDB', logo: 'mongodb', url: 'https://www.mongodb.com/university/certification' },
+        { id: 'az-900', name: 'Microsoft Certified: Azure Fundamentals (AZ-900)', issuer: 'Microsoft', logo: 'azure', url: 'https://learn.microsoft.com/en-us/credentials/certifications/' },
       ]},
       { tier: 'Intermediate', blurb: 'You design robust APIs, optimize databases, and build cloud-native services that handle real production traffic.', certs: [
-        { id: 'aws-developer-associate', name: 'AWS Certified Developer – Associate', issuer: 'Amazon Web Services' },
-        { id: 'oracle-java-se-pro', name: 'Oracle Certified Professional: Java SE Developer', issuer: 'Oracle' },
-        { id: 'postgresql-associate', name: 'PostgreSQL Associate Certification', issuer: 'EnterpriseDB' },
-        { id: 'gcp-professional-developer', name: 'Google Cloud Professional Cloud Developer', issuer: 'Google Cloud' },
+        { id: 'aws-developer-associate', name: 'AWS Certified Developer – Associate', issuer: 'Amazon Web Services', logo: 'aws', url: 'https://aws.amazon.com/certification/' },
+        { id: 'oracle-java-se-pro', name: 'Oracle Certified Professional: Java SE Developer', issuer: 'Oracle', logo: 'oracle', url: 'https://education.oracle.com/oracle-certification' },
+        { id: 'postgresql-associate', name: 'PostgreSQL Associate Certification', issuer: 'EnterpriseDB', logo: 'enterprisedb', url: 'https://www.enterprisedb.com/training/certification' },
+        { id: 'gcp-professional-developer', name: 'Google Cloud Professional Cloud Developer', issuer: 'Google Cloud', logo: 'gcp', url: 'https://cloud.google.com/learn/certification' },
       ]},
       { tier: 'Advanced', blurb: 'You architect distributed systems, lead system-design decisions, and own the reliability and data model of major services.', certs: [
-        { id: 'aws-sap-backend', name: 'AWS Certified Solutions Architect – Professional', issuer: 'Amazon Web Services' },
-        { id: 'confluent-ccdak', name: 'Confluent Certified Developer for Apache Kafka (CCDAK)', issuer: 'Confluent' },
-        { id: 'mongodb-associate-dba', name: 'MongoDB Associate Database Administrator', issuer: 'MongoDB' },
+        { id: 'aws-sap-backend', name: 'AWS Certified Solutions Architect – Professional', issuer: 'Amazon Web Services', logo: 'aws', url: 'https://aws.amazon.com/certification/' },
+        { id: 'confluent-ccdak', name: 'Confluent Certified Developer for Apache Kafka (CCDAK)', issuer: 'Confluent', logo: 'confluent', url: 'https://www.confluent.io/certification/' },
+        { id: 'mongodb-associate-dba', name: 'MongoDB Associate Database Administrator', issuer: 'MongoDB', logo: 'mongodb', url: 'https://www.mongodb.com/university/certification' },
       ]},
       { tier: 'Referent', blurb: 'The go-to system-design authority who sets backend standards, reviews critical architecture, and shapes the engineering community.', certs: [
-        { id: 'gcp-pca-backend', name: 'Google Cloud Professional Cloud Architect', issuer: 'Google Cloud' },
-        { id: 'oss-framework-maintainer', name: 'Open-source maintainer (framework / library)', issuer: 'Recognition' },
-        { id: 'backend-arb', name: 'Internal Architecture Review Board', issuer: 'Recognition' },
+        { id: 'gcp-pca-backend', name: 'Google Cloud Professional Cloud Architect', issuer: 'Google Cloud', logo: 'gcp', url: 'https://cloud.google.com/learn/certification' },
+        { id: 'oss-framework-maintainer', name: 'Open-source maintainer (framework / library)', issuer: 'Recognition', logo: 'recognition', url: '' },
+        { id: 'backend-arb', name: 'Internal Architecture Review Board', issuer: 'Recognition', logo: 'recognition', url: '' },
       ]},
     ],
   },
@@ -731,7 +806,128 @@ export const PLAYBOOKS = [
       { id: 's7', title: 'Lock and publish', body: 'Finalize commitments, publish the plan, and create the tracking epics.', link: { label: 'Planning hub', url: 'https://confluence.example.com/planning/q3' } },
     ],
   },
+  {
+    id: 'product-brief', title: 'Write a product brief', icon: 'file-lines', category: 'Product', seed: true,
+    summary: 'Turn a customer need into a shareable, decision-ready product brief.', estMinutes: 40,
+    steps: [
+      { id: 's1', title: 'Name the customer and need', body: 'Describe who you are solving for and the job they are trying to do. Keep it to one or two sentences.' },
+      { id: 's2', title: 'Frame the problem', body: 'Explain why the need matters today, what happens if it stays unsolved, and what a good outcome looks like.' },
+      { id: 's3', title: 'Scope and non-goals', body: 'State what is in scope for this brief and, just as importantly, what is out of scope.' },
+      { id: 's4', title: 'List open questions', body: 'Capture what you still need to learn before committing to a solution. This is where discovery begins.' },
+      { id: 's5', title: 'Define success metrics', body: 'Pick one North Star metric and one or two supporting signals that prove value.' },
+      { id: 's6', title: 'Share for feedback', body: 'Send the brief to the product trio and key stakeholders before it becomes a full spec.', link: { label: 'Brief template', url: 'https://confluence.example.com/product/brief-template' } },
+    ],
+  },
+  {
+    id: 'team-topology', title: 'Choose a team topology', icon: 'sitemap', category: 'Product', seed: true,
+    summary: 'Map teams to value streams, platforms, and deep subsystems using Team Topologies.', estMinutes: 50,
+    steps: [
+      { id: 's1', title: 'Identify value streams', body: 'List the customer journeys or product areas that deliver value end to end. Each stream is a candidate for a stream-aligned team.' },
+      { id: 's2', title: 'Spot repeated work', body: 'Find infrastructure, APIs, or tooling that multiple streams rebuild. These are candidates for platform teams.' },
+      { id: 's3', title: 'Find deep specialties', body: 'Look for complex domains — like compliance, ML, or rendering — that several teams depend on but cannot own fully.' },
+      { id: 's4', title: 'Map dependencies', body: 'Draw the lines between teams and classify each relationship as collaboration, X-as-a-Service, or facilitation.' },
+      { id: 's5', title: 'Reduce cognitive load', body: 'Adjust boundaries so stream-aligned teams can deliver value without owning every detail. Platform and enabling teams exist to absorb that load.' },
+      { id: 's6', title: 'Publish the topology', body: 'Share the map, update it quarterly, and use it in planning to keep dependencies visible.' },
+    ],
+  },
+  {
+    id: 'cross-team-dependency', title: 'Manage a cross-team dependency', icon: 'route', category: 'Product', seed: true,
+    summary: 'Get what you need from another team without slowing either side down.', estMinutes: 35,
+    steps: [
+      { id: 's1', title: 'Name the dependency clearly', body: 'State exactly what you need, by when, and why it blocks your outcome.' },
+      { id: 's2', title: 'Choose the interaction mode', body: 'Collaborate for uncertain work, consume X-as-a-Service for stable APIs, or ask for facilitation if you need to learn a skill.' },
+      { id: 's3', title: 'Agree on the interface', body: 'Define the contract — API, SLO, deliverable, or checkpoint — so both teams can work in parallel.' },
+      { id: 's4', title: 'Link it to both backlogs', body: 'Create a tracking item on both sides and set a checkpoint date before the hard deadline.' },
+      { id: 's5', title: 'Escalate early if slipping', body: 'If the dependency is at risk, flag it in the dependency tracing ceremony before it becomes a surprise.' },
+    ],
+  },
 ];
 
 /** Distinct playbook categories, for grouping/filtering. */
 export const PLAYBOOK_CATEGORIES = [...new Set(PLAYBOOKS.map(p => p.category))];
+
+// ── Atlas: team topology and product-deliverable format ─────
+
+/**
+ * Sample team topology nodes for the Atlas tab. Each node represents a team
+ * grouped by the customer need it serves, with topology kind and interaction
+ * edges to other teams. This seeds the topology map; users can upload their own
+ * format via the Atlas validator.
+ */
+export const TEAM_TOPOLOGY = [
+  { id: 'cx-core', name: 'Customer Experience', topology: 'stream-aligned', needs: ['onboarding', 'support', 'retention'],
+    edges: [
+      { to: 'platform-foundation', mode: 'x-as-a-service', label: 'cloud / deployment' },
+      { to: 'data-insights', mode: 'x-as-a-service', label: 'event data' },
+      { to: 'design-enablement', mode: 'facilitating', label: 'design system' },
+    ] },
+  { id: 'merchant-solutions', name: 'Merchant Solutions', topology: 'stream-aligned', needs: ['checkout', 'payments', 'reporting'],
+    edges: [
+      { to: 'platform-payments', mode: 'x-as-a-service', label: 'payments API' },
+      { to: 'data-insights', mode: 'collaboration', label: 'reporting' },
+      { to: 'security-governance', mode: 'facilitating', label: 'compliance review' },
+    ] },
+  { id: 'platform-foundation', name: 'Platform Foundation', topology: 'platform', needs: ['developer velocity', 'reliability'],
+    edges: [
+      { to: 'security-governance', mode: 'x-as-a-service', label: 'policy checks' },
+    ] },
+  { id: 'platform-payments', name: 'Payments Platform', topology: 'platform', needs: ['transaction integrity', 'compliance'],
+    edges: [
+      { to: 'platform-foundation', mode: 'x-as-a-service', label: 'compute' },
+      { to: 'security-governance', mode: 'collaboration', label: 'PCI scope' },
+    ] },
+  { id: 'data-insights', name: 'Data & Insights', topology: 'platform', needs: ['analytics', 'experimentation'],
+    edges: [
+      { to: 'platform-foundation', mode: 'x-as-a-service', label: 'warehouse' },
+    ] },
+  { id: 'ml-recommendations', name: 'Recommendations Engine', topology: 'complicated-subsystem', needs: ['personalization'],
+    edges: [
+      { to: 'cx-core', mode: 'x-as-a-service', label: 'recommendations' },
+      { to: 'data-insights', mode: 'collaboration', label: 'features / training' },
+      { to: 'platform-foundation', mode: 'x-as-a-service', label: 'GPU fleet' },
+    ] },
+  { id: 'design-enablement', name: 'Design Enablement', topology: 'enabling', needs: ['design quality', 'accessibility'],
+    edges: [] },
+  { id: 'security-governance', name: 'Security & Governance', topology: 'enabling', needs: ['risk reduction', 'compliance'],
+    edges: [] },
+];
+
+/** Customer-need domains used to color and group teams in the Atlas matrix. */
+export const CUSTOMER_NEEDS = [
+  { id: 'onboarding', label: 'Onboarding' },
+  { id: 'support', label: 'Support' },
+  { id: 'retention', label: 'Retention' },
+  { id: 'checkout', label: 'Checkout' },
+  { id: 'payments', label: 'Payments' },
+  { id: 'reporting', label: 'Reporting' },
+  { id: 'developer-velocity', label: 'Developer velocity' },
+  { id: 'reliability', label: 'Reliability' },
+  { id: 'analytics', label: 'Analytics' },
+  { id: 'experimentation', label: 'Experimentation' },
+  { id: 'personalization', label: 'Personalization' },
+  { id: 'design-quality', label: 'Design quality' },
+  { id: 'accessibility', label: 'Accessibility' },
+  { id: 'risk-reduction', label: 'Risk reduction' },
+  { id: 'compliance', label: 'Compliance' },
+];
+
+/** Expected shape of a product-deliverable / team-topology upload.
+ *  Used by the Atlas validator before persisting in localStorage. */
+export const FORMAT_SCHEMA = {
+  required: ['teams'],
+  types: {
+    teams: 'array',
+    'teams[].id': 'string',
+    'teams[].name': 'string',
+    'teams[].topology': 'string',
+    'teams[].needs': 'array',
+    'teams[].edges': 'array',
+    'teams[].edges[].to': 'string',
+    'teams[].edges[].mode': 'string',
+    'teams[].edges[].label': 'string',
+  },
+  enums: {
+    'teams[].topology': ['stream-aligned', 'platform', 'enabling', 'complicated-subsystem'],
+    'teams[].edges[].mode': ['collaboration', 'x-as-a-service', 'facilitating'],
+  },
+};

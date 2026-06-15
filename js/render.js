@@ -14,6 +14,7 @@ import {
 } from './console.js';
 import { renderProfile } from './profile.js';
 import { renderPlaybooks } from './playbooks.js';
+import { renderAtlas } from './atlas.js';
 import { renderFlow } from './flow.js';
 import { markGlossary } from './glossary.js';
 import { mountBanners } from './banners.js';
@@ -35,6 +36,7 @@ function viewHtml(s) {
     case 'playbooks': return renderPlaybooks(s, s.ui.playbookSel);
     case 'priority':  return renderPriority(s);
     case 'intel':     return renderIntel(s, s.ui.intelSel);
+    case 'atlas':     return renderAtlas(s);
     case 'profile':   return renderProfile(s);
     case 'system':    return renderSystem(s);
     case 'brief':
@@ -89,6 +91,13 @@ export function rerenderActive(s) {
   el.classList.remove('qview-enter');
   el.innerHTML = viewHtml(s);
   afterWrite(s);
+  restoreCursorFocus();
+}
+
+/** After a re-render, move focus to the current keyboard cursor target. */
+function restoreCursorFocus() {
+  const target = app()?.querySelector('.crow.is-cursor, .cchapter.is-cursor, .tnode.is-cursor');
+  if (target) target.focus({ preventScroll: true });
 }
 
 // ── Flowchart wires ────────────────────────────────────────

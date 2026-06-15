@@ -21,6 +21,7 @@ const AUTO_MS = 10000;        // slow, ~10s auto-rotate
 let timer = null;
 let countdownTimer = null;    // 1s tick refreshing the live countdowns
 let index = 0;                // active hero, kept across re-renders
+let paused = false;           // session-level pause state for the carousel
 
 const reduceMotion = () =>
   window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
@@ -83,10 +84,18 @@ export function bannerStrip(s) {
     `<button type="button" class="banner__dot ${i === index ? 'is-active' : ''}"
        data-banner-dot="${i}" aria-label="Show: ${escHtml(b.title)}"
        aria-current="${i === index ? 'true' : 'false'}"></button>`).join('');
+  const pauseBtn = `
+    <button type="button" class="banner__pause" id="bannerPause"
+      aria-label="${paused ? 'Play auto-advance' : 'Pause auto-advance'}"
+      aria-pressed="${paused}">
+      ${paused ? '▶' : '⏸'}
+    </button>`;
   return `
     <div class="bannerstrip" aria-label="Featured news" aria-roledescription="carousel">
       <div class="bannerstrip__stage">${slides}</div>
-      <div class="banner__dots" role="tablist" aria-label="Choose a banner">${dots}</div>
+      <div class="banner__dots" role="tablist" aria-label="Choose a banner">
+        ${dots}${BANNERS.length > 1 ? pauseBtn : ''}
+      </div>
     </div>`;
 }
 
@@ -100,6 +109,8 @@ export function mountBanners(s) {
   strip.addEventListener('click', (e) => {
     const dot = e.target.closest('[data-banner-dot]');
     if (dot) { go(Number(dot.dataset.bannerDot), true); return; }
+    const pause = e.target.closest('#bannerPause');
+    if (pause) { togglePause(); return; }
     const card = e.target.closest('[data-banner]');
     if (card) openBanner(card.dataset.banner);
   });
@@ -162,8 +173,20 @@ function go(next, restart) {
 
 function startAuto() {
   stopAuto();
-  if (reduceMotion() || BANNERS.length < 2) return;
+  if (paused || reduceMotion() || BANNERS.length < 2) return;
   timer = setInterval(() => go(index + 1), AUTO_MS);
+}
+
+function togglePause() {
+  paused = !paused;
+  const btn = document.getElementById('bannerPause');
+  if (btn) {
+    btn.setAttribute('aria-label', paused ? 'Play auto-advance' : 'Pause auto-advance');
+    btn.setAttribute('aria-pressed', String(paused));
+    btn.textContent = paused ? '▶' : '⏸';
+  }
+  if (paused) stopAuto();
+  else startAuto();
 }
 
 function stopAuto() {

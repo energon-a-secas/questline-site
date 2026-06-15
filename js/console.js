@@ -15,6 +15,7 @@ import { escHtml } from './utils.js';
 import { splashPref } from './splash.js';
 import { bannerStrip, shiftsControl } from './banners.js';
 import { FA } from './icons-fa.js';
+import { focusWidgetHtml, tipWidgetHtml } from './engagement.js';
 
 // Shared chrome helpers, also used by the Flow tab (flow.js).
 // Two icon families: the hand-drawn 24x24 stroke set (ICONS) and the supplied
@@ -59,10 +60,20 @@ function tabBar(active) {
         <span class="ctab__label">${escHtml(t.label)}</span>
       </a>`;
   }).join('');
+  // A search affordance sits at the end of the rail, beside System: it opens
+  // the global command palette (also on "/"). Placed here so "search the whole
+  // site" reads as a peer of the sections it searches.
+  const searchBtn = `
+    <button type="button" class="ctab ctab--search" id="openSearch"
+      title="Search everything (press /)" aria-label="Search everything">
+      <span class="ctab__icon">${icon('search', 18)}</span>
+      <span class="ctab__label">Search</span>
+    </button>`;
   return `
     <nav class="ctabs" aria-label="Console sections">
       <span class="ctabs__rail" aria-hidden="true">‖</span>
       ${items}
+      ${searchBtn}
     </nav>
     <div class="cdots" aria-hidden="true"></div>`;
 }
@@ -72,9 +83,21 @@ function hintBar(text, hints) {
   // With keyboard movement off, drop the hints that promise disabled keys
   // (arrows, Q/E, Enter, Backspace) and keep only the hold-Esc quick menu,
   // which is summoned deliberately and still works.
-  const shown = state.prefs.keyboardNav
+  let shown = state.prefs.keyboardNav
     ? hints
     : hints.filter(h => /esc/i.test(h.k));
+
+  // On touch/narrow viewports, swap keyboard glyphs for tap labels.
+  const isTouch = window.matchMedia?.('(pointer: coarse)').matches;
+  const isNarrow = window.matchMedia?.('(max-width: 760px)').matches;
+  if (isTouch || isNarrow) {
+    shown = [
+      { k: 'Tap', v: 'to open' },
+      { k: 'Tabs', v: 'to switch' },
+      { k: '◆', v: 'for menu' },
+    ];
+  }
+
   const keys = shown.map(h =>
     `<span class="chint"><kbd>${escHtml(h.k)}</kbd> ${escHtml(h.v)}</span>`
   ).join('');
@@ -134,6 +157,7 @@ export function renderBrief(s) {
 
   const body = `
     ${screenTitle('Brief', 'Operating Model')}
+    ${focusWidgetHtml(s)}
     ${bannerStrip(s)}
     <div class="cbrief">
       <section class="cpanel cbrief__lead">
@@ -154,7 +178,8 @@ export function renderBrief(s) {
         <h3 class="cpanel__h">Ceremonies</h3>
         <ul class="cminis">${ceremonies}</ul>
       </section>
-    </div>`;
+    </div>
+    ${tipWidgetHtml()}`;
   return shell('brief', body, 'Read the brief, then onboard through the chapters.',
     [{ k: '↵', v: 'Open chapters' }, { k: 'Q/E', v: 'Tabs' }, { k: 'Esc', v: 'Menu' }]);
 }
@@ -185,7 +210,8 @@ export function renderChapters(s, selectedId) {
       : '';
     return `
       <button type="button" class="cchapter cchapter--${status} ${cursored ? 'is-cursor' : ''}"
-        data-chapter-open="${b.id}" aria-label="Open ${escHtml(b.title)}">
+        data-chapter-open="${b.id}" aria-label="Open ${escHtml(b.title)}"
+        tabindex="${cursored ? '-1' : '0'}">
         <span class="cchapter__top">
           <span class="cchapter__icon">${icon(b.icon, 26)}</span>
           <span class="cchapter__no">${chapterNo(b)}</span>
@@ -211,37 +237,6 @@ export function renderChapters(s, selectedId) {
     <div class="cchapters">${cards}</div>`;
   return shell('chapters', body, 'Open a chapter to read its sections in a focused view.',
     [{ k: '↑↓', v: 'Card' }, { k: '↵', v: 'Open' }, { k: 'Q/E', v: 'Tabs' }, { k: 'Esc', v: 'Menu' }]);
-}
-
-/**
- * The chapter-completion control, in the detail head next to the title.
- * Three states map to branchProgress: empty (none done), partial
- * (indeterminate), and cleared (a stamped seal). State IS the control, so
- * there is no verb-toggle ambiguity, and clearing a full chapter routes
- * through a confirm rather than being a same-pixel click.
- */
-function completeControl(branch, done, total) {
-  if (total > 0 && done === total) {
-    return `
-      <button type="button" class="cseal" data-branch-done="${branch.id}" data-value="clear"
-        aria-pressed="true" aria-label="Chapter cleared — click to undo">
-        <span class="cseal__mark">${icon('check', 16)}</span>
-        <span class="cseal__txt">Cleared</span>
-      </button>`;
-  }
-  const partial = done > 0;
-  // Both glyphs are always present; the state class shows the right one, so
-  // a surgical patch only has to toggle a class (no innerHTML swap).
-  return `
-    <button type="button" class="cdone ${partial ? 'is-partial' : ''}" data-branch-done="${branch.id}"
-      data-value="all" aria-pressed="${partial ? 'mixed' : 'false'}"
-      aria-label="Mark all skills in this chapter complete">
-      <span class="cdone__box">
-        <span class="cdone__dash" aria-hidden="true"></span>
-        <span class="cdone__check" aria-hidden="true">${icon('check', 14)}</span>
-      </span>
-      <span class="cdone__txt">${partial ? 'Finish' : 'All'}</span>
-    </button>`;
 }
 
 // ── Tab: Priority ──────────────────────────────────────────
@@ -355,7 +350,8 @@ export function intelListItems(s, selectedId) {
     const cursored = s.ui.region === 'list' && t.id === selectedId;
     return `
     <button type="button" class="crow ${active ? 'crow--active' : ''} ${cursored ? 'is-cursor' : ''}"
-      data-intel="${t.id}" role="option" aria-selected="${active}">
+      data-intel="${t.id}" role="option" aria-selected="${active}"
+      tabindex="${cursored ? '-1' : '0'}">
       <span class="crow__name">${escHtml(t.term)}</span>
       <span class="crow__meta"><span class="crow__kind">${escHtml(t.kind)}</span></span>
     </button>`;
@@ -434,6 +430,9 @@ export function renderSystem(s) {
         <p class="csys__danger">
           <button type="button" class="clink-danger" id="resetBtn">Reset save data</button>
         </p>
+        <div style="margin-top:var(--space-4)">
+          <button type="button" class="btn btn--ghost btn--sm" id="shareBtn">Share progress</button>
+        </div>
       </section>
       <section class="cpanel">
         <h3 class="cpanel__h">About</h3>
@@ -442,6 +441,7 @@ export function renderSystem(s) {
         <a href="#flow">Flow</a> for the chapter unlock map.</p>
         <ul class="cabout">
           <li><span>Sections</span><span>${TABS.length} tabs</span></li>
+          <li><span>Search</span><span>Press / or the rail button</span></li>
           <li><span>Quick menu</span><span>Hold Esc, point, release</span></li>
           <li><span>Theme</span><span>Modern Disney console</span></li>
         </ul>

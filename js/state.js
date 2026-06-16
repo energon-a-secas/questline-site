@@ -26,15 +26,19 @@ export const state = {
   // Persisted preferences (questline-prefs). keyboardNav drives the System
   // opt-out; shiftsRead marks the six-shifts briefing as read.
   prefs: {
-    keyboardNav: true,   // arrow/Q-E/Enter movement; users can switch it off
-    shiftsRead: false,   // has the six-shifts reading popup been acknowledged
-    showFullMap: true,   // Flow: reveal all chapters (locked dimmed) vs fog-of-war
+    keyboardNav: true,     // arrow/Q-E/Enter movement; users can switch it off
+    shiftsRead: false,     // has the six-shifts reading popup been acknowledged
+    showFullMap: true,     // Flow: reveal all chapters (locked dimmed) vs fog-of-war
+    showClassSheets: true, // Profile: render certification ladders for selected classes
   },
   // Profile: the engineer class chosen and credential records. `creds` maps a
-  // certId → { id, issuer, issued, expires, status }. This object is persisted
-  // verbatim under PROFILE_KEY and mirrors a future Convex `profiles` row.
+  // certId → { id, issuer, issued, expires, status }. `classIds` holds up to
+  // two selected classes; if empty, no class sheet is shown. The object is
+  // persisted verbatim under PROFILE_KEY and mirrors a future Convex `profiles`
+  // row.
   profile: {
-    classId: null,     // selected engineer class id, or null (not chosen yet)
+    classIds: [],      // selected engineer class ids (max 2)
+    classId: null,     // legacy single-class field (migrated to classIds)
     creds: {},         // { [certId]: { id, issuer, issued, expires, status } }
   },
   // Playbooks: editable onboarding workflows. Seeded from data.js on first run,
@@ -57,6 +61,7 @@ export const state = {
     playbookEdit: false, // whether the open playbook is in edit mode
     stepEditing: null, // step id whose inline editor is open (Playbooks)
     credEditing: null, // cert id whose credential form is open (Profile)
+    classSelecting: false, // Profile class-select screen open (vs the sheet view)
     atlasView: 'map',  // 'map' | 'matrix' | 'upload'
     sitesSel: null,    // site id open in the Sites detail panel
     sitesQuery: '',    // live sites search filter
@@ -93,6 +98,7 @@ export function loadSaved(s) {
   s.view = viewFromHash();
   s.ui.intelSel = intelFromHash();
   s.ui.flowFocus = s.view === 'flow' ? flowFocusFromHash() : null;
+  s.ui.classSelecting = profileSelectFromHash();
   return loadError;
 }
 
@@ -105,7 +111,12 @@ export function loadProfile(s) {
     if (raw) {
       const parsed = JSON.parse(raw);
       if (parsed && typeof parsed === 'object') {
-        if (CLASS_BY_ID[parsed.classId]) s.profile.classId = parsed.classId;
+        // Migrate legacy single-class saves into the new classIds array.
+        const ids = Array.isArray(parsed.classIds) ? parsed.classIds : [];
+        if (CLASS_BY_ID[parsed.classId] && !ids.includes(parsed.classId)) {
+          ids.unshift(parsed.classId);
+        }
+        s.profile.classIds = ids.slice(0, 2).filter(id => CLASS_BY_ID[id]);
         if (parsed.creds && typeof parsed.creds === 'object') s.profile.creds = parsed.creds;
       }
     }
@@ -119,9 +130,25 @@ export function saveProfile(s) {
   } catch { /* quota exceeded or private browsing */ }
 }
 
-/** Choose (or clear) the engineer class and persist. */
+/** Toggle a class in the profile. Up to two classes can be active. */
 export function setClass(s, classId) {
-  s.profile.classId = CLASS_BY_ID[classId] ? classId : null;
+  if (!CLASS_BY_ID[classId]) return;
+  const ids = s.profile.classIds || [];
+  const idx = ids.indexOf(classId);
+  if (idx > -1) {
+    ids.splice(idx, 1);
+  } else if (ids.length < 2) {
+    ids.push(classId);
+  }
+  s.profile.classIds = ids;
+  s.profile.classId = ids[0] || null;
+  saveProfile(s);
+}
+
+/** Clear all selected classes and persist. */
+export function clearClasses(s) {
+  s.profile.classIds = [];
+  s.profile.classId = null;
   saveProfile(s);
 }
 
@@ -158,11 +185,13 @@ export function loadPlaybooks(s) {
   } catch { /* corrupted — fall through to seed */ }
   // First run (or corrupted): deep-clone the seeds so edits never mutate data.
   s.playbooks = PLAYBOOKS.map(p => ({ ...p, steps: p.steps.map(st => ({ ...st })) }));
+  bumpPlaybooksVersion();
   savePlaybooks(s);
 }
 
 /** Persist the playbooks list. */
 export function savePlaybooks(s) {
+  bumpPlaybooksVersion();
   try {
     localStorage.setItem(PLAYBOOKS_KEY, JSON.stringify(s.playbooks));
   } catch { /* quota exceeded or private browsing */ }
@@ -200,10 +229,16 @@ export function setAtlasTeams(s, teams) {
 
 /** A short unique id for a new playbook or step (no Date/Math.random reliance). */
 let _idSeq = 0;
+let _playbooksVersion = 0;
 function uid(prefix) {
   _idSeq += 1;
   return `${prefix}-${Date.now().toString(36)}-${_idSeq}`;
 }
+
+/** Monotonic version for the editable playbooks list. Anything that mutates
+ *  playbooks bumps this so consumers (e.g. the search index) know to rebuild. */
+export function getPlaybooksVersion() { return _playbooksVersion; }
+function bumpPlaybooksVersion() { _playbooksVersion += 1; }
 
 /** Add a new (empty) playbook and return it. */
 export function addPlaybook(s, fields = {}) {
@@ -318,6 +353,12 @@ export function setShowFullMap(s, on) {
   savePrefs(s);
 }
 
+/** Toggle certification ladder visibility in the Profile tab. */
+export function setShowClassSheets(s, on) {
+  s.prefs.showClassSheets = !!on;
+  savePrefs(s);
+}
+
 /** Wipe all progress. */
 export function resetProgress(s) {
   s.done = {};
@@ -330,9 +371,10 @@ export function resetProgress(s) {
  */
 export function resetAll(s) {
   s.done = {};
-  s.prefs = { keyboardNav: true, shiftsRead: false, showFullMap: true };
-  s.profile = { classId: null, creds: {} };
+  s.prefs = { keyboardNav: true, shiftsRead: false, showFullMap: true, showClassSheets: true };
+  s.profile = { classId: null, classIds: [], creds: {} };
   s.playbooks = [];
+  bumpPlaybooksVersion();
   s.atlas = { teams: null };
   try {
     localStorage.removeItem(STORAGE_KEY);
@@ -362,9 +404,15 @@ export function viewFromHash() {
   const id = (location.hash || '').replace(/^#/, '');
   if (id === 'flow' || id === 'home' || id.startsWith('flow/')) return 'flow';
   if (id.startsWith('intel/')) return 'intel';
+  if (id === 'profile/select') return 'profile';
   if (TAB_IDS.includes(id)) return id;
   if (BRANCH_BY_ID[id]) return id;
   return 'brief';
+}
+
+/** True when the hash requests the dedicated class-select screen. */
+export function profileSelectFromHash() {
+  return (location.hash || '').replace(/^#/, '') === 'profile/select';
 }
 
 /** The focused branch id encoded in the Flow hash (#flow/<id>), or null. */

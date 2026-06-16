@@ -10,6 +10,14 @@ const GOLD = '#ffce4d';
 const WHITE = '#f0f5ff';
 const MUTED = '#8ca6c2';
 
+/** Brand logos from @lobehub/icons-static-svg (proper brand marks). */
+const LOBEHUB_LOGOS = {
+  'amazon web services': 'assets/icons/lobehub/aws.svg',
+  'microsoft': 'assets/icons/lobehub/microsoft.svg',
+  'google cloud': 'assets/icons/lobehub/googlecloud.svg',
+  'github': 'assets/icons/lobehub/github.svg',
+};
+
 /** Logo library keyed by issuer short code. */
 export const LOGOS = {
   aws: `<svg viewBox="0 0 28 28" aria-hidden="true">
@@ -75,6 +83,11 @@ export const LOGOS = {
     <path fill="none" stroke="${AZURE}" stroke-width="1.5" d="M8 6l6 4 6-4v12l-6 4-6-4z"/>
     <path fill="none" stroke="${WHITE}" stroke-width="1.4" d="M14 10v12"/>
   </svg>`,
+  docker: `<svg viewBox="0 0 28 28" aria-hidden="true">
+    <rect x="5" y="11" width="18" height="9" rx="1.5" fill="none" stroke="${AZURE}" stroke-width="1.5"/>
+    <path fill="none" stroke="${WHITE}" stroke-width="1.4" d="M7 15h3M12 15h3M17 15h3"/>
+    <path fill="none" stroke="${AZURE}" stroke-width="1.5" d="M8 11V8h3v3M13 11V7h3v4"/>
+  </svg>`,
   confluent: `<svg viewBox="0 0 28 28" aria-hidden="true">
     <path fill="none" stroke="${AZURE}" stroke-width="1.5" d="M6 10h16M6 14h12M6 18h16"/>
     <path fill="none" stroke="${WHITE}" stroke-width="1.4" d="M20 7l3 3-3 3M8 21l-3-3 3-3"/>
@@ -120,6 +133,7 @@ const ISSUER_CODES = {
   'dbt labs': 'dbt',
   'dbt': 'dbt',
   'confluent': 'confluent',
+  'docker': 'docker',
   'prometheus': 'prometheus',
   'gremlin': 'gremlin',
   'enterprisedb': 'enterprisedb',
@@ -138,9 +152,15 @@ export function issuerCode(issuer) {
 
 /**
  * Return the inline SVG logo for an issuer, or a fallback shield/award glyph
- * when no match exists.
+ * when no match exists. Brand logos from @lobehub/icons-static-svg are used
+ * when available; otherwise the stylized monogram set takes over.
  */
 export function issuerLogo(issuer) {
+  const key = (issuer || '').toLowerCase().trim();
+  const lobehub = LOBEHUB_LOGOS[key];
+  if (lobehub) {
+    return `<img src="${lobehub}" alt="" class="ccert__logo" loading="lazy">`;
+  }
   const code = issuerCode(issuer);
   return LOGOS[code] || `<svg viewBox="0 0 28 28" aria-hidden="true">
     <path fill="none" stroke="${MUTED}" stroke-width="1.5" d="M14 3l10 4v8c0 6-4.5 10-10 11-5.5-1-10-5-10-11V7z"/>

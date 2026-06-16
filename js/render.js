@@ -48,6 +48,7 @@ function viewHtml(s) {
 /** Post-write passes shared by every render path. */
 function afterWrite(s) {
   markGlossary(app());
+  keepActiveTabInView();
   // The Brief screen hosts the featured banner carousel; bind its controls.
   if (s.view === 'brief') mountBanners(s);
   // Only the full map carries the SVG connector overlay; the focus map lays
@@ -93,6 +94,20 @@ export function rerenderActive(s) {
   el.innerHTML = viewHtml(s);
   afterWrite(s);
   restoreCursorFocus();
+}
+
+/**
+ * On the mobile scroll-rail tab bar, the active tab can sit off-screen after a
+ * navigation. Nudge it into view so the user always sees where they are. The
+ * tab bar wraps (no horizontal scroll) on wide screens, so this is a no-op
+ * there — guard on the rail actually being scrollable.
+ */
+function keepActiveTabInView() {
+  const tabs = document.querySelector('.ctabs');
+  const activeTab = tabs?.querySelector('.ctab--active');
+  if (!tabs || !activeTab) return;
+  if (tabs.scrollWidth <= tabs.clientWidth + 4) return;   // not scrollable
+  activeTab.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
 }
 
 /** After a re-render, move focus to the current keyboard cursor target. */

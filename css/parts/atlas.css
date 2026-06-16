@@ -47,6 +47,12 @@
   min-height: 24rem;
 }
 
+/* Topology colors are driven by data attributes so the JS never needs inline styles. */
+[data-topology="stream-aligned"] { --lane-color: #f59e0b; --team-color: #f59e0b; }
+[data-topology="platform"] { --lane-color: #2aa8ff; --team-color: #2aa8ff; }
+[data-topology="enabling"] { --lane-color: #34d399; --team-color: #34d399; }
+[data-topology="complicated-subsystem"] { --lane-color: #b08cff; --team-color: #b08cff; }
+
 /* ── Topology map ──────────────────────────────────────────── */
 
 .catlas__map {
@@ -56,6 +62,11 @@
   gap: var(--space-4);
 }
 
+/* Edges are a trace-on-demand layer, not always-on spaghetti: hidden until a
+   team card is hovered/focused, then only that team's links show (see the
+   [data-highlight-team] rules below). This keeps the default map clean and
+   legible; the per-card "N cross-team links" text + the matrix carry the
+   relationship data for keyboard/AT users. */
 .catlas__edges {
   position: absolute;
   inset: 0;
@@ -63,15 +74,20 @@
   height: 100%;
   pointer-events: none;
   z-index: 0;
-  opacity: .35;
+  opacity: 0;
+  transition: opacity var(--dur);
   overflow: visible;
 }
+.catlas__map[data-highlight-team] .catlas__edges { opacity: 1; }
 
 .catlas__edge {
   fill: none;
   stroke-width: .035;
   stroke-linecap: round;
+  opacity: 0;
+  transition: opacity var(--dur);
 }
+.catlas__map[data-highlight-team] .catlas__edge.is-focused { opacity: 1; }
 
 .catlas__edge--collaboration { stroke: #f59e0b; stroke-dasharray: .2 .15; }
 .catlas__edge--x-as-a-service { stroke: #2aa8ff; }
@@ -127,30 +143,32 @@
 }
 
 .catlas__card {
-  --catlas-poly: polygon(8px 0, 100% 0, 100% 100%, 0 100%, 0 8px);
   position: relative;
-  background: var(--dbh-edge);
-  clip-path: var(--catlas-poly);
+  background: var(--team-color, var(--dbh-edge));
+  clip-path: var(--plate-poly);
   padding: var(--space-3);
-  transition: transform .12s, border-color .12s, box-shadow .12s;
-  box-shadow: 0 12px 28px rgba(2,6,23,.35);
+  filter: drop-shadow(0 10px 20px rgba(2,6,23,.4));
+  transition: transform .12s, filter .12s, color .12s;
 }
 .catlas__card::before {
   content: ""; position: absolute; inset: 1px; z-index: 0;
-  background: var(--dbh-panel); clip-path: var(--catlas-poly);
+  background: var(--surface-raise); box-shadow: var(--surface-raise-hi);
+  clip-path: var(--plate-poly);
   pointer-events: none;
 }
 .catlas__card > * { position: relative; z-index: 1; }
 .catlas__card::after {
-  content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+  content: ""; position: absolute; left: -1px; top: var(--bevel); z-index: 2;
+  width: 2px; height: calc(var(--bevel) * 1.42);
   background: var(--team-color, var(--accent));
-  box-shadow: 0 0 10px var(--team-color, var(--accent));
+  box-shadow: 0 0 8px var(--team-color, var(--accent));
+  transform-origin: top left; transform: rotate(-45deg);
   pointer-events: none;
 }
 
 .catlas__card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0,0,0,.18), 0 0 0 1px var(--team-color, var(--accent-soft));
+  filter: drop-shadow(0 16px 28px rgba(2,6,23,.55)) drop-shadow(0 0 14px var(--team-color, var(--accent-glow)));
 }
 
 .catlas__map[data-highlight-team] .catlas__card.is-dimmed {
@@ -206,16 +224,36 @@
   padding: 2px 8px;
 }
 
-.catlas__card-edges {
+/* Accessible text equivalent of the edge graph: each cross-team link as a
+   typed, mode-colored row. Always present (the SVG is aria-hidden). */
+.catlas__card-links {
+  list-style: none;
+  display: flex; flex-direction: column; gap: 3px;
+  margin-top: var(--space-2);
   font-size: var(--text-xs);
   color: var(--text-muted);
 }
+.catlas__link { display: flex; align-items: center; gap: 6px; }
+.catlas__link-dot {
+  width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+  background: var(--text-muted);
+}
+.catlas__link-dot--collaboration { background: #f59e0b; }
+.catlas__link-dot--x-as-a-service { background: #2aa8ff; }
+.catlas__link-dot--facilitating { background: #34d399; }
+.catlas__card:focus-visible {
+  outline: 2px solid var(--accent-bright); outline-offset: 2px;
+}
 
+.catlas__hint {
+  font-size: var(--text-xs); color: var(--text-muted);
+  margin-top: var(--space-4);
+}
 .catlas__legend {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-4);
-  margin-top: var(--space-5);
+  margin-top: var(--space-3);
   padding-top: var(--space-4);
   border-top: 1px solid var(--border);
 }
@@ -255,12 +293,12 @@
   position: relative;
   overflow-x: auto;
   background: var(--dbh-edge);
-  clip-path: polygon(10px 0, 100% 0, 100% 100%, 0 100%, 0 10px);
-  box-shadow: 0 16px 38px rgba(2,6,23,.45);
+  clip-path: var(--plate-poly);
+  filter: drop-shadow(0 16px 30px rgba(2,6,23,.5));
 }
 .catlas__matrix-wrap::before {
   content: ""; position: absolute; inset: 1px; z-index: 0;
-  background: var(--dbh-panel); clip-path: polygon(10px 0, 100% 0, 100% 100%, 0 100%, 0 10px);
+  background: var(--surface-raise); clip-path: var(--plate-poly);
   pointer-events: none;
 }
 

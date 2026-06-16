@@ -54,7 +54,7 @@ export function countdownFor(deadline) {
 function slide(b, i) {
   const cd = countdownFor(b.deadline);
   return `
-    <button type="button" class="banner banner--${b.accent} fbevel ${i === index ? 'is-active' : ''}"
+    <button type="button" class="banner banner--${b.accent} ${i === index ? 'is-active' : ''}"
       data-banner="${b.id}" role="tabpanel" aria-hidden="${i === index ? 'false' : 'true'}"
       ${i === index ? '' : 'tabindex="-1"'}>
       <span class="banner__bg" aria-hidden="true">${icon(b.icon, 132)}</span>

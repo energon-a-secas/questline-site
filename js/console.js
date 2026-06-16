@@ -143,7 +143,7 @@ function statBlock(s) {
         <span class="cstat__label">Rank</span>
         <span class="cstat__value">${escHtml(rank.name)}</span>
       </div>
-      <div class="cstat__bar"><div style="transform:scaleX(${pct / 100})"></div></div>
+      <div class="cstat__bar"><div style="--pct:${pct / 100}"></div></div>
       <div class="cstat__row">
         <span class="cstat__pct">${pct}% onboarded</span>
         <span class="cstat__blurb">${escHtml(rank.blurb)}</span>
@@ -222,7 +222,7 @@ export function renderChapters(s, selectedId) {
         </span>
         <span class="cchapter__title">${escHtml(b.title)}</span>
         <span class="cchapter__tagline">${escHtml(b.tagline)}</span>
-        <span class="cchapter__bar"><span style="transform:scaleX(${pct / 100})"></span></span>
+        <span class="cchapter__bar"><span style="--pct:${pct / 100}"></span></span>
         <span class="cchapter__foot">
           <span class="cchapter__count">${locked ? lockNote : `${done}/${total} sections`}</span>
           <span class="cchapter__go">${locked ? '' : `Read ${icon('caret-right', 13)}`}</span>
@@ -396,6 +396,7 @@ export function renderSystem(s) {
   const splashOn = splashPref() === 'always';
   const keyOn = s.prefs.keyboardNav;
   const mapOn = s.prefs.showFullMap;
+  const sheetsOn = s.prefs.showClassSheets;
   const body = `
     ${screenTitle('System', 'Save & About')}
     <div class="csystem">
@@ -427,11 +428,21 @@ export function renderSystem(s) {
               <span class="ctoggle__state">${mapOn ? 'Show full map' : 'Reveal as you go'}</span>
             </button>
           </li>
+          <li>
+            <span id="classSheetsToggleLabel">Certification ladders</span>
+            <button type="button" class="ctoggle ${sheetsOn ? 'is-on' : ''}" id="classSheetsToggle"
+              role="switch" aria-checked="${sheetsOn}" aria-labelledby="classSheetsToggleLabel">
+              <span class="ctoggle__track"><span class="ctoggle__thumb"></span></span>
+              <span class="ctoggle__state">${sheetsOn ? 'Visible' : 'Hidden'}</span>
+            </button>
+          </li>
         </ul>
         <p class="csys__danger">
+          <button type="button" class="clink-danger" id="resetClassBtn">Reset class choices</button>
+          <span class="csys__sep" aria-hidden="true">·</span>
           <button type="button" class="clink-danger" id="resetBtn">Reset save data</button>
         </p>
-        <div style="margin-top:var(--space-4)">
+        <div class="mt-4">
           <button type="button" class="btn btn--ghost btn--sm" id="shareBtn">Share progress</button>
         </div>
       </section>
@@ -471,8 +482,7 @@ function siteCard(site, active) {
   const domain = domainFromUrl(site.url);
   return `
     <button type="button" class="csite-card ${active ? 'csite-card--active' : ''}"
-      data-site="${escHtml(site.id)}" aria-expanded="${active}"
-      style="--csite-accent:${escHtml(site.accent)}">
+      data-site="${escHtml(site.id)}" aria-expanded="${active}">
       <span class="csite-card__accent" aria-hidden="true"></span>
       <span class="csite-card__icon">${siteLogo(site, 40)}</span>
       <span class="csite-card__main">
@@ -492,7 +502,7 @@ function siteDetailAccordion(s, sel) {
   const group = SITE_GROUPS.find(g => g.id === sel.group);
 
   return `
-    <div class="csite-detail" style="--csite-accent:${escHtml(sel.accent)}">
+    <div class="csite-detail" data-site="${escHtml(sel.id)}">
       <div class="csite-detail__head">
         ${siteLogo(sel, 44)}
         <div>

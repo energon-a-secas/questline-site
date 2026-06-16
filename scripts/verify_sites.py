@@ -12,7 +12,7 @@ with sync_playwright() as p:
         localStorage.setItem('questline-splash', 'off');
         localStorage.setItem('questline-coached-v1', '1');
         const e = JSON.parse(localStorage.getItem('questline-engagement') || '{}');
-        e.dispatchShownDate = new Date().toISOString().slice(0, 10);
+        e.dispatchShownDate = new Date().toLocaleDateString('en-CA');
         localStorage.setItem('questline-engagement', JSON.stringify(e));
     """)
     page.goto(url, wait_until='networkidle')
@@ -25,11 +25,11 @@ with sync_playwright() as p:
     page.screenshot(path=os.path.join(out_dir, 'sites-landing.png'), full_page=True)
     print('Saved scripts/.verify/sites-landing.png')
 
-    # Select a site and verify the detail panel appears.
+    # Select a site and verify the detail accordion appears.
     page.locator('[data-site="github"]').click()
     page.wait_for_timeout(300)
-    detail = page.locator('#sitesDetail')
-    assert detail.is_visible(), 'Sites detail panel should be visible'
+    detail = page.locator('.csite-detail')
+    assert detail.is_visible(), 'Sites detail accordion should be visible'
     assert detail.locator('text=Open site').is_visible(), 'Open site button should be visible'
     page.screenshot(path=os.path.join(out_dir, 'sites-detail.png'), full_page=True)
     print('Saved scripts/.verify/sites-detail.png')

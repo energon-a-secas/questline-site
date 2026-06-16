@@ -9,10 +9,10 @@
 }
 
 /* ── Tab bar ────────────────────────────────────────────────── */
-.ctabs-wrap { display: flex; flex-direction: column; gap: var(--space-2); }
+.ctabs-wrap { display: flex; flex-direction: row; align-items: center; gap: var(--space-2); }
 .ctabs {
   display: flex; align-items: stretch; gap: var(--space-1);
-  flex-wrap: wrap;
+  flex-wrap: wrap; flex: 1;
   padding-left: var(--space-4); position: relative;
 }
 .ctabs__rail {
@@ -98,7 +98,7 @@
   position: relative; z-index: 1; display: inline-block;
 }
 .ctitle__sub {
-  margin-left: 10px; font-size: var(--text-sm); color: var(--accent);
+  margin-left: 10px; font-family: var(--font-mono); font-size: var(--text-sm); color: var(--accent);
   letter-spacing: .14em; text-transform: uppercase; vertical-align: middle;
 }
 /* True offset shadow: identical metrics to .ctitle so it sits cleanly
@@ -112,36 +112,40 @@
 }
 
 /* ── Panels ─────────────────────────────────────────────────── */
-/* Faceted top-left corner is the panel identity; the cyan accent is a
-   small notch at that corner, not a full-height side-stripe (which read
-   as decorative and diluted the "cyan = active" signal). */
-/* Closed-bevel panel: a single faceted top-left corner, fully stroked. The
-   cyan identity is a small corner tick (::after), not a side-stripe. The
-   bevel ring mechanism is folded in here so existing .cpanel markup needs
-   no class change. */
+/* Faceted bevel corners (top-left + bottom-right) are the panel identity —
+   the same NieR/Detroit signature as the tab bar, now carried onto every
+   plate. The element background is the 1px rim; an inset ::before re-fills
+   the interior with the lit elevation gradient (top highlight + deep shadow)
+   so the plate reads as a physical HUD surface rather than a flat form panel.
+   drop-shadow (not box-shadow) casts a shadow that follows the bevel. */
 .cpanel {
-  --poly: polygon(var(--bevel) 0, 100% 0, 100% 100%, 0 100%, 0 var(--bevel));
   position: relative;
   background: var(--dbh-edge);
-  clip-path: var(--poly);
+  clip-path: var(--plate-poly);
+  filter: drop-shadow(0 16px 30px rgba(2,6,23,.55));
   padding: var(--space-5, 20px) var(--space-6);
-  box-shadow: 0 16px 38px rgba(2,6,23,.45);
-  transition: transform var(--dur-fast) var(--ease-out-quint), box-shadow var(--dur);
+  transition: transform var(--dur-fast) var(--ease-out-quint), filter var(--dur);
 }
 .cpanel::before {
   content: ""; position: absolute; inset: 1px; z-index: 0;
-  background: var(--dbh-panel); clip-path: var(--poly);
+  background: var(--surface-raise);
+  box-shadow: var(--surface-raise-hi);
+  clip-path: var(--plate-poly);
   pointer-events: none;
 }
 .cpanel > * { position: relative; z-index: 1; }
+/* Accent tick rides the cut top-left bevel (a short diagonal stroke), keeping
+   the "cyan = active" signal without colliding with the clipped corner. */
 .cpanel::after {
-  content: ""; position: absolute; left: 0; top: 0; z-index: 2;
-  width: var(--bevel); height: var(--bevel);
-  background: linear-gradient(135deg, var(--accent) 0 1.5px, transparent 1.5px);
-  filter: drop-shadow(0 0 6px var(--accent-glow));
+  content: ""; position: absolute; left: -1px; top: var(--bevel); z-index: 2;
+  width: 1px; height: calc(var(--bevel) * 1.42);
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent-glow);
+  transform-origin: top left; transform: rotate(-45deg);
   pointer-events: none;
 }
 .cpanel__h {
+  font-family: var(--font-mono);
   font-size: var(--text-sm); text-transform: uppercase; letter-spacing: .12em;
   color: var(--accent); margin-bottom: var(--space-3);
   padding-bottom: var(--space-2);
@@ -167,13 +171,25 @@
 
 .cstat { margin-top: var(--space-4); }
 .cstat__row { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3); }
-.cstat__label { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .2em; color: var(--dbh-cyan); }
-.cstat__value { font-size: var(--text-xl); font-weight: 700; color: #fff; letter-spacing: .01em; }
-.cstat__bar { height: 6px; margin: 8px 0; background: rgba(255,255,255,.08);
-  clip-path: polygon(0 0,100% 0,calc(100% - 4px) 100%,0 100%); overflow: hidden; }
-.cstat__bar div { height: 100%; width: 100%; background: var(--qprog-fill);
-  box-shadow: 0 0 10px var(--accent-glow);
-  transform-origin: left center; transition: transform .45s var(--ease-out-quint); }
+.cstat__label { font-family: var(--font-mono); font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .2em; color: var(--dbh-cyan); }
+.cstat__value { font-family: var(--font-mono); font-size: var(--text-xl); font-weight: 700; color: #fff; letter-spacing: .01em; font-variant-numeric: tabular-nums; }
+/* XP-style meter: a grooved track with notch ticks, a glossy fill, and a
+   bright leading-edge glow — reads as a game gauge, not a web progress bar. */
+.cstat__bar { position: relative; height: 8px; margin: 8px 0;
+  background:
+    repeating-linear-gradient(90deg, transparent 0 13px, rgba(2,6,23,.55) 13px 15px),
+    rgba(255,255,255,.07);
+  box-shadow: inset 0 1px 2px rgba(2,6,23,.6);
+  border-radius: 3px; overflow: hidden; }
+.cstat__bar div { position: relative; height: 100%; width: 100%;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.35) 0%, transparent 45%),
+    var(--qprog-fill);
+  box-shadow: 0 0 10px var(--accent-glow), inset 0 0 0 1px rgba(255,255,255,.12);
+  transform: scaleX(var(--pct, 0)); transform-origin: left center; transition: transform .45s var(--ease-out-quint); }
+.cstat__bar div::after {
+  content: ""; position: absolute; top: 0; right: 0; bottom: 0; width: 2px;
+  background: #fff; box-shadow: 0 0 8px 1px var(--accent-bright); opacity: .85; }
 .cstat__pct { font-size: var(--text-xs); color: var(--text-secondary); font-variant-numeric: tabular-nums; }
 .cstat__blurb { font-size: var(--text-xs); color: var(--text-muted); }
 
@@ -181,17 +197,16 @@
    the text lives in the focused reading popup, not inline. */
 .cshiftbox { display: flex; align-items: flex-start; gap: var(--space-3); margin-top: var(--space-3); }
 .cshiftbox__check {
-  --sc-poly: polygon(5px 0, 100% 0, 100% calc(100% - 5px), calc(100% - 5px) 100%, 0 100%, 0 5px);
   --sc-rim: var(--border-strong);
   position: relative; flex-shrink: 0; width: 28px; height: 28px; cursor: pointer;
   display: inline-flex; align-items: center; justify-content: center;
   color: transparent; background: var(--sc-rim);
-  clip-path: var(--sc-poly);
+  border-radius: 6px;
   transition: background var(--dur), color var(--dur), box-shadow var(--dur);
 }
 .cshiftbox__check::before {
   content: ""; position: absolute; inset: 1.5px; z-index: 0;
-  background: var(--dbh-panel); clip-path: var(--sc-poly);
+  background: var(--dbh-panel); border-radius: 5px;
   transition: background var(--dur);
 }
 .cshiftbox__check > svg { position: relative; z-index: 1; }
@@ -221,18 +236,21 @@
   display: flex; flex-direction: column; justify-content: flex-end;
   padding: var(--space-8) var(--space-8) var(--space-6);
   font-family: inherit; color: var(--text-primary); overflow: hidden;
-  /* Closed-bevel ring frame. */
-  --poly: polygon(20px 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%, 0 20px);
-  --bevel-line: var(--banner-rim, var(--accent));
-  --bevel-fill: #0b1626; --bevel-w: 1px;
+  background: var(--banner-rim, var(--accent));
+  border-radius: var(--radius-lg);
   opacity: 0; pointer-events: none;
   transition: opacity .55s var(--ease-out-quint);
 }
 .banner.is-active { opacity: 1; pointer-events: auto; }
+.banner::before {
+  content: ""; position: absolute; inset: 1px; z-index: 0;
+  background: var(--banner-fill, #0b1626); border-radius: calc(var(--radius-lg) - 1px);
+  pointer-events: none;
+}
 /* Gradient fallback backdrop: a wash plus an oversized ghosted glyph. */
 .banner__bg {
   position: absolute; inset: 1px; z-index: 0; pointer-events: none;
-  clip-path: var(--poly);
+  border-radius: calc(var(--radius-lg) - 1px);
   display: flex; align-items: center; justify-content: flex-end;
   padding-right: 4%;
   color: var(--banner-rim, var(--accent));
@@ -248,18 +266,19 @@
 /* Real image backdrop. */
 .banner__img {
   position: absolute; inset: 1px; z-index: 0; pointer-events: none;
-  clip-path: var(--poly);
+  border-radius: calc(var(--radius-lg) - 1px);
   background-size: cover; background-position: center;
 }
 /* Scrim lifts the copy off either backdrop for AA contrast. */
 .banner__scrim {
   position: absolute; inset: 1px; z-index: 1; pointer-events: none;
-  clip-path: var(--poly);
+  border-radius: calc(var(--radius-lg) - 1px);
   background: linear-gradient(90deg, rgba(5,10,20,.9) 0%, rgba(5,10,20,.6) 45%, rgba(5,10,20,.15) 100%);
 }
 .banner__body { position: relative; z-index: 2; max-width: 60ch; display: flex; flex-direction: column; gap: 6px; }
 .banner__topline { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; }
 .banner__kicker {
+  font-family: var(--font-mono);
   font-size: var(--text-xs); font-weight: 700; text-transform: uppercase; letter-spacing: .24em;
   color: var(--banner-rim, var(--accent));
 }
@@ -267,11 +286,12 @@
    nears, and pulses in the final day. */
 .banner__timer {
   display: inline-flex; align-items: center; gap: 5px;
+  font-family: var(--font-mono);
   font-size: 11px; font-weight: 700; letter-spacing: .08em; font-variant-numeric: tabular-nums;
   text-transform: uppercase; color: var(--banner-rim, var(--accent));
   padding: 3px 9px; background: rgba(5,10,20,.55);
   border: 1px solid var(--banner-rim, var(--accent));
-  clip-path: polygon(5px 0, 100% 0, 100% calc(100% - 5px), calc(100% - 5px) 100%, 0 100%, 0 5px);
+  border-radius: var(--radius-sm);
 }
 .banner__timer svg { width: 13px; height: 13px; }
 .banner__timer--soon { color: var(--gold); border-color: var(--gold); }
@@ -290,6 +310,7 @@
 .banner__blurb { font-size: var(--text-base); color: var(--text-secondary); line-height: 1.55; }
 .banner__foot { display: flex; align-items: center; gap: var(--space-4); margin-top: 6px; }
 .banner__date {
+  font-family: var(--font-mono);
   font-size: var(--text-xs); color: var(--text-muted); font-variant-numeric: tabular-nums;
   text-transform: uppercase; letter-spacing: .1em;
 }
@@ -311,12 +332,13 @@
   margin-top: var(--space-3);
 }
 .banner__dot {
-  width: 26px; height: 4px; cursor: pointer; padding: 16px 4px; border: none;
-  background: var(--border-strong); background-clip: content-box;
+  width: 26px; height: 4px; cursor: pointer; padding: 20px 4px; border: none;
+  background: rgba(140,190,235,.5); background-clip: content-box;
   transition: background var(--dur);
 }
-.banner__dot.is-active { background: var(--accent); box-shadow: 0 0 8px var(--accent-glow); }
-.banner__dot:hover { background: var(--accent-bright); }
+.banner__dot.is-active { background: var(--accent); background-clip: content-box; box-shadow: 0 0 8px var(--accent-glow); }
+.banner__dot:hover { background: var(--accent-bright); background-clip: content-box; }
+.banner__dot:focus-visible { outline: 2px solid var(--accent-bright); outline-offset: 3px; }
 .banner__pause {
   display: inline-flex; align-items: center; justify-content: center;
   width: 32px; height: 32px; padding: 0; margin-left: 2px;
@@ -397,8 +419,8 @@
 .cscope {
   font-family: inherit; font-size: 10px; font-weight: 700; text-transform: uppercase;
   letter-spacing: .1em; color: var(--text-muted); cursor: pointer;
-  padding: 5px 10px; background: var(--surface-1); border: 1px solid var(--dbh-edge);
-  clip-path: polygon(5px 0, 100% 0, 100% calc(100% - 5px), calc(100% - 5px) 100%, 0 100%, 0 5px);
+  padding: 5px 12px; background: var(--surface-1); border: 1px solid var(--dbh-edge);
+  border-radius: 999px;
   transition: background var(--dur), color var(--dur), border-color var(--dur);
 }
 .cscope:hover { color: #fff; border-color: var(--accent); }
@@ -441,11 +463,11 @@
 .ctags { display: flex; flex-wrap: wrap; gap: var(--space-2); }
 .ctag {
   display: inline-flex; align-items: center; gap: 6px;
-  padding: 6px 12px; font-family: inherit; font-size: var(--text-xs);
+  padding: 6px 13px; font-family: inherit; font-size: var(--text-xs);
   font-weight: 600; text-transform: uppercase; letter-spacing: .08em;
   color: var(--text-secondary); text-decoration: none; cursor: pointer;
   background: var(--surface-1); border: 1px solid var(--dbh-edge);
-  clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
+  border-radius: 999px;
   transition: background var(--dur), color var(--dur), border-color var(--dur);
 }
 .ctag:hover { background: var(--surface-2); color: #fff; border-color: var(--accent); }
@@ -545,21 +567,33 @@
 .cbands { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
 .cband {
   position: relative; padding: var(--space-4);
-  --cband-poly: polygon(10px 0,100% 0,100% 100%,0 100%,0 10px);
   --cband-rim: var(--dbh-edge);
-  background: var(--cband-rim); clip-path: var(--cband-poly);
+  background: var(--cband-rim); clip-path: var(--plate-poly);
 }
 .cband::before {
   content: ""; position: absolute; inset: 1px; z-index: 0;
-  /* Opaque panel fill (not the near-transparent --surface-1) so the accent
-     rim stays a 1px edge instead of bleeding through as a solid block — keeps
-     the band text on dark navy and AA-legible, like every other faceted panel. */
-  background: var(--dbh-panel); clip-path: var(--cband-poly); pointer-events: none;
+  /* Lit elevation fill + a faint HUD grid in the band's own tint, so the
+     otherwise-empty right half reads as instrumented panel rather than void. */
+  background:
+    linear-gradient(90deg, transparent 50%, color-mix(in srgb, var(--cband-rim) 8%, transparent) 100%),
+    repeating-linear-gradient(0deg, transparent 0 17px, rgba(140,190,235,.04) 17px 18px),
+    var(--surface-raise);
+  box-shadow: var(--surface-raise-hi);
+  clip-path: var(--plate-poly); pointer-events: none;
 }
 .cband > * { position: relative; z-index: 1; }
+/* Ambient corner-bracket + ID watermark — the cheap "AAA HUD" negative-space
+   filler. The bracket is a clipped ring in the band's tint; the code sits top-
+   right in mono. */
+.cband::after {
+  content: ""; position: absolute; right: 12px; bottom: 10px; z-index: 0;
+  width: 26px; height: 26px; pointer-events: none;
+  border-right: 2px solid var(--cband-rim); border-bottom: 2px solid var(--cband-rim);
+  opacity: .35;
+}
 .cband--active { --cband-rim: var(--accent); }
 .cband--backlog { --cband-rim: var(--text-muted); opacity: .92; }
-.cband__range { font-size: var(--text-xs); font-weight: 700; letter-spacing: .1em; color: var(--dbh-cyan); }
+.cband__range { font-family: var(--font-mono); font-size: var(--text-xs); font-weight: 700; letter-spacing: .1em; color: var(--dbh-cyan); }
 .cband__label { font-size: var(--text-lg); font-weight: 700; letter-spacing: .01em; margin: 2px 0 6px; }
 .cband__blurb { font-size: var(--text-sm); color: var(--text-secondary); line-height: 1.55; }
 
@@ -628,7 +662,8 @@
 
 /* Quiet, low-contrast destructive link — deliberately not a loud red button.
    It only warms to danger on hover/focus, so a reset is a considered act. */
-.csys__danger { margin-top: var(--space-6); }
+.csys__danger { margin-top: var(--space-6); display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; }
+.csys__sep { color: var(--text-muted); }
 .clink-danger {
   background: none; border: none; padding: 2px 0; cursor: pointer;
   font-family: inherit; font-size: var(--text-sm); color: var(--text-muted);
@@ -961,7 +996,7 @@
 .ccredform__field input, .ccredform__field select, .ccredform__field textarea {
   width: 100%; font-family: inherit; font-size: var(--text-sm); color: var(--text-primary);
   background: var(--surface-1); border: 1px solid var(--dbh-edge); padding: 8px 10px;
-  clip-path: polygon(5px 0, 100% 0, 100% calc(100% - 5px), calc(100% - 5px) 100%, 0 100%, 0 5px);
+  border-radius: var(--radius-sm);
   transition: border-color var(--dur), background var(--dur);
   resize: vertical;
 }
@@ -987,7 +1022,7 @@
 .crow__pbbar span {
   display: block; height: 100%; width: 100%;
   background: var(--qprog-fill); box-shadow: 0 0 8px var(--accent-glow);
-  transform-origin: left center; transition: transform .4s var(--ease-out-quint);
+  transform: scaleX(var(--pct, 0)); transform-origin: left center; transition: transform .4s var(--ease-out-quint);
 }
 .crow__pbbadge {
   flex-shrink: 0; min-width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center;
@@ -1008,8 +1043,8 @@
   letter-spacing: .1em; color: var(--text-muted); font-variant-numeric: tabular-nums;
 }
 .cplaybook__tag {
-  color: var(--accent); background: var(--accent-soft); padding: 2px 8px;
-  clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);
+  color: var(--accent); background: var(--accent-soft); padding: 2px 10px;
+  border-radius: 999px;
 }
 .cplaybook__head .cdone { margin-left: auto; }
 .cplaybook__head .cseal { margin-left: auto; }
@@ -1073,48 +1108,53 @@
 /* ── Chapters: big cards ────────────────────────────────────── */
 .cchapters__lead { max-width: 72ch; margin-bottom: var(--space-6); }
 .cchapters {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--card-min), 1fr));
   gap: var(--space-4);
 }
 .cchapter {
   position: relative; display: flex; flex-direction: column; gap: 8px;
   text-align: left; cursor: pointer; font-family: inherit;
   padding: var(--space-4) var(--space-5, 20px) var(--space-4);
-  color: var(--text-secondary); background: var(--dbh-edge);
-  --poly: polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px);
-  clip-path: var(--poly);
-  transition: transform var(--dur) var(--ease-out-quint), color var(--dur), box-shadow var(--dur);
-  box-shadow: 0 10px 24px rgba(2,6,23,.35);
+  color: var(--text-secondary);
+  /* Element background = the 1px rim; per-state cards tint it via --cch-rim. */
+  background: var(--cch-rim, var(--dbh-edge));
+  clip-path: var(--plate-poly);
+  filter: drop-shadow(0 10px 20px rgba(2,6,23,.45));
+  transition: transform var(--dur) var(--ease-out-quint), color var(--dur), filter var(--dur);
 }
 .cchapter::before {
   content: ""; position: absolute; inset: 1px; z-index: 0;
-  background: var(--dbh-panel); clip-path: var(--poly);
+  background: var(--surface-raise);
+  box-shadow: var(--surface-raise-hi);
+  clip-path: var(--plate-poly);
   transition: background var(--dur), filter var(--dur);
 }
 .cchapter > * { position: relative; z-index: 1; }
-/* Corner tick echoes the panel identity; warms to the status accent. */
+/* Status accent tick rides the cut top-left bevel (short diagonal stroke). */
 .cchapter::after {
-  content: ""; position: absolute; left: 0; top: 0; z-index: 2;
-  width: 14px; height: 14px; pointer-events: none;
-  background: linear-gradient(135deg, var(--cch-accent, var(--accent)) 0 1.6px, transparent 1.6px);
-  filter: drop-shadow(0 0 6px var(--cch-accent-glow, var(--accent-glow)));
+  content: ""; position: absolute; left: -1px; top: var(--bevel); z-index: 2;
+  width: 2px; height: calc(var(--bevel) * 1.42);
+  background: var(--cch-accent, var(--accent));
+  box-shadow: 0 0 8px var(--cch-accent-glow, var(--accent-glow));
+  transform-origin: top left; transform: rotate(-45deg);
+  pointer-events: none;
 }
-.cchapter:hover, .cchapter:focus-visible { transform: translateY(-3px); color: #fff; }
+.cchapter:hover, .cchapter:focus-visible {
+  transform: translateY(-3px); color: #fff;
+  filter: drop-shadow(0 18px 30px rgba(2,6,23,.6)) drop-shadow(0 0 16px var(--cch-accent-glow, var(--accent-glow)));
+}
 .cchapter:hover::before, .cchapter:focus-visible::before { background: var(--surface-2); }
 .cchapter.is-cursor { outline: 2px solid var(--accent-bright); outline-offset: 2px; }
-.cchapter--available { --cch-accent: var(--accent); --cch-accent-glow: var(--accent-glow);
-  box-shadow: 0 0 0 1px var(--accent-soft), 0 14px 34px rgba(2,6,23,.55); }
-.cchapter--in-progress { --cch-accent: var(--accent-bright); --cch-accent-glow: var(--accent-glow);
-  box-shadow: 0 0 0 1px var(--accent-soft), 0 14px 34px rgba(2,6,23,.55); }
-.cchapter--complete { --cch-accent: var(--dbh-done); --cch-accent-glow: rgba(52,211,153,.5);
-  box-shadow: 0 0 0 1px rgba(52,211,153,.25), 0 12px 28px rgba(2,6,23,.45); }
-.cchapter--locked { --cch-accent: var(--text-muted); --cch-accent-glow: transparent; opacity: .6; filter: grayscale(.55);
-  box-shadow: none; }
-.cchapter--locked:hover { transform: none; }
-.cchapter--locked:hover::before { background: var(--dbh-panel); }
+.cchapter--available { --cch-accent: var(--accent); --cch-accent-glow: var(--accent-glow); --cch-rim: var(--accent-soft); }
+.cchapter--in-progress { --cch-accent: var(--accent-bright); --cch-accent-glow: var(--accent-glow); --cch-rim: var(--accent-soft); }
+.cchapter--complete { --cch-accent: var(--dbh-done); --cch-accent-glow: rgba(52,211,153,.5); --cch-rim: rgba(52,211,153,.28); }
+.cchapter--locked { --cch-accent: var(--text-muted); --cch-accent-glow: transparent; opacity: .6; filter: grayscale(.55) drop-shadow(0 6px 14px rgba(2,6,23,.4)); }
+.cchapter--locked:hover { transform: none; filter: grayscale(.55) drop-shadow(0 6px 14px rgba(2,6,23,.4)); }
+.cchapter--locked:hover::before { background: var(--surface-raise); }
 .cchapter__top { display: flex; align-items: center; gap: 10px; }
 .cchapter__icon { display: inline-flex; color: var(--cch-accent, var(--accent)); }
 .cchapter__no {
+  font-family: var(--font-mono);
   font-size: var(--text-xs); font-variant-numeric: tabular-nums; color: var(--text-muted);
   font-weight: 700; letter-spacing: .1em;
 }
@@ -1123,17 +1163,25 @@
 .cchapter__title { font-size: var(--text-lg); font-weight: 700; letter-spacing: .01em; color: var(--text-primary); }
 .cchapter__tagline { font-size: var(--text-sm); color: var(--text-muted); line-height: 1.4; flex: 1; }
 .cchapter__bar {
-  display: block; height: 5px; margin-top: 4px; background: rgba(255,255,255,.08);
+  position: relative; display: block; height: 6px; margin-top: 4px;
+  background:
+    repeating-linear-gradient(90deg, transparent 0 11px, rgba(2,6,23,.5) 11px 13px),
+    rgba(255,255,255,.08);
+  box-shadow: inset 0 1px 2px rgba(2,6,23,.5);
   clip-path: polygon(0 0,100% 0,calc(100% - 3px) 100%,0 100%); overflow: hidden;
 }
 .cchapter__bar span {
-  display: block; height: 100%; width: 100%; background: var(--cch-accent, var(--accent));
-  transform-origin: left center; transition: transform .4s var(--ease-out-quint);
+  display: block; height: 100%; width: 100%;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.32) 0%, transparent 50%),
+    var(--cch-accent, var(--accent));
+  box-shadow: 0 0 8px var(--cch-accent-glow, var(--accent-glow));
+  transform: scaleX(var(--pct, 0)); transform-origin: left center; transition: transform .4s var(--ease-out-quint);
 }
 .cchapter__foot { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
-.cchapter__count { font-size: var(--text-xs); color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.cchapter__count { font-family: var(--font-mono); font-size: var(--text-xs); color: var(--text-muted); font-variant-numeric: tabular-nums; }
 .cchapter__go {
-  display: inline-flex; align-items: center; gap: 4px; font-size: var(--text-xs); font-weight: 700;
+  display: inline-flex; align-items: center; gap: 4px; font-family: var(--font-mono); font-size: var(--text-xs); font-weight: 700;
   text-transform: uppercase; letter-spacing: .08em; color: var(--accent);
 }
 .cchapter:hover .cchapter__go, .cchapter:focus-visible .cchapter__go { color: var(--accent-bright); }
@@ -1235,12 +1283,12 @@
 .creader__jumptag { font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: var(--text-muted); }
 .creader__empty { padding: var(--space-3); font-size: var(--text-sm); color: var(--text-muted); }
 
-/* ── Search icon below the tab boxes ────────────────────────── */
+/* ── Search icon aligned with the tab buttons ───────────────── */
 .search-fab {
-  align-self: flex-start;
+  align-self: center;
   display: inline-flex; align-items: center; justify-content: center;
   width: 40px; height: 40px;
-  margin-left: var(--space-4);
+  margin-left: auto;
   color: var(--accent); background: var(--surface-1);
   border: 1px solid var(--dbh-edge);
   border-radius: var(--radius-sm);
@@ -1320,22 +1368,30 @@
   .cbrief, .cmaster, .csystem, .cbands { grid-template-columns: 1fr; }
   .cbrief__lead { grid-row: auto; }
   /* Tabs become a horizontally scrollable rail; labels stay visible but tiny
-     and stacked under the icon so the icon+label pair remains readable. */
+     and stacked under the icon so the icon+label pair remains readable. A
+     right-edge fade signals there is more to scroll; scroll-snap settles each
+     tab cleanly under the thumb. */
   .ctabs {
     flex-wrap: nowrap;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
     padding-bottom: 2px;
+    scroll-snap-type: x proximity;
+    scroll-padding-left: var(--space-4);
+    /* Fade only the trailing edge so the leading tab never looks ghosted. */
+    -webkit-mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 28px), transparent 100%);
+    mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 28px), transparent 100%);
   }
   .ctabs::-webkit-scrollbar { display: none; }
   .ctab {
     flex-direction: column;
     justify-content: center;
-    min-width: 52px;
-    min-height: 52px;
+    min-width: 56px;
+    min-height: 56px;        /* full 44px+ touch target, stacked icon+label */
     padding: 6px 10px;
     gap: 3px;
+    scroll-snap-align: start;
   }
   .ctab__label {
     display: block;
@@ -1390,10 +1446,30 @@
 
 .csite-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(var(--card-min), 1fr));
   gap: var(--space-4);
 }
 
+/* Site accent colors are set via data attributes so the JS never needs inline styles. */
+[data-site="figma"] { --csite-accent: #f472b6; }
+[data-site="notion"] { --csite-accent: #a78bfa; }
+[data-site="excalidraw"] { --csite-accent: #f472b6; }
+[data-site="linear"] { --csite-accent: #818cf8; }
+[data-site="github"] { --csite-accent: #38bdf8; }
+[data-site="vercel"] { --csite-accent: #e2e8f0; }
+[data-site="datadog"] { --csite-accent: #a78bfa; }
+[data-site="mdn"] { --csite-accent: #4ade80; }
+[data-site="slack"] { --csite-accent: #e879f9; }
+[data-site="confluence"] { --csite-accent: #38bdf8; }
+[data-site="pagerduty"] { --csite-accent: #34d399; }
+[data-site="canva"] { --csite-accent: #34d399; }
+[data-site="unsplash"] { --csite-accent: #fbbf24; }
+[data-site="loom"] { --csite-accent: #818cf8; }
+[data-site="awesome-sites"] { --csite-accent: #22d3ee; }
+
+/* Faceted plate, same language as the other cards. The accent rim is the
+   element background; an inset elevation fill re-fills the interior; a diagonal
+   tick marks the cut corner in the site's accent. */
 .csite-card {
   position: relative;
   display: flex;
@@ -1402,39 +1478,35 @@
   text-align: left;
   padding: var(--space-4);
   color: var(--text-secondary);
-  background: var(--surface-1);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
+  background: var(--csite-rim, var(--dbh-edge));
+  clip-path: var(--plate-poly);
   cursor: pointer;
-  overflow: hidden;
-  transition: transform var(--dur-fast), background var(--dur), border-color var(--dur), box-shadow var(--dur);
+  filter: drop-shadow(0 8px 18px rgba(2,6,23,.4));
+  transition: transform var(--dur-fast), color var(--dur), filter var(--dur);
 }
 .csite-card::before {
-  content: "";
-  position: absolute;
-  left: 0; top: 0; bottom: 0;
-  width: 4px;
+  content: ""; position: absolute; inset: 1px; z-index: 0;
+  background: var(--surface-raise); box-shadow: var(--surface-raise-hi);
+  clip-path: var(--plate-poly);
+  pointer-events: none;
+}
+.csite-card > * { position: relative; z-index: 1; }
+.csite-card::after {
+  content: ""; position: absolute; left: -1px; top: var(--bevel); z-index: 2;
+  width: 2px; height: calc(var(--bevel) * 1.42);
   background: var(--csite-accent, var(--accent));
-  opacity: .55;
-  transition: opacity var(--dur), width var(--dur);
+  box-shadow: 0 0 8px var(--csite-accent, var(--accent));
+  transform-origin: top left; transform: rotate(-45deg);
+  pointer-events: none;
 }
 .csite-card:hover,
 .csite-card:focus-visible {
-  background: var(--surface-2);
-  border-color: var(--accent-soft);
+  color: #fff;
   transform: translateY(-2px);
-  box-shadow: 0 12px 28px rgba(2,6,23,.45);
+  filter: drop-shadow(0 14px 26px rgba(2,6,23,.55)) drop-shadow(0 0 14px var(--csite-accent, var(--accent-glow)));
   outline: none;
 }
-.csite-card--active,
-.csite-card--active:hover,
-.csite-card--active:focus-visible {
-  border-color: var(--csite-accent, var(--accent));
-  box-shadow: 0 0 0 1px var(--csite-accent, var(--accent)), 0 14px 34px rgba(2,6,23,.55);
-}
-.csite-card--active::before,
-.csite-card:hover::before,
-.csite-card:focus-visible::before { opacity: 1; width: 5px; }
+.csite-card--active { --csite-rim: var(--csite-accent, var(--accent)); }
 
 .csite-card__accent { position: absolute; inset: 0; pointer-events: none; }
 .csite-card__icon {

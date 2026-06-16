@@ -62,13 +62,24 @@
   --gold: #ffce4d;
   --danger: #e11d48;
   --danger-hover: #f43f5e;
-  /* Bevel size for faceted boxes. One token so the closed-corner border
-     mechanism (see "Closed bevel" below) stays in sync with each clip-path. */
-  --bevel: 12px;
+  /* Bevel scale for faceted boxes. ONE shape language across the app:
+     plates are faceted (these tokens), controls are rounded (--radius-sm),
+     pills are round (999px), status glyphs are soft-square (--radius-sm).
+     --bevel dropped 12→10 so panels and cards share one corner size. */
+  --bevel-lg: 14px;   /* hero plates: banner, daily, command palette, modal */
+  --bevel: 10px;      /* standard plates: cpanel, cchapter, cband, crung, ccert, tnode, catlas card */
+  --bevel-sm: 6px;    /* small faceted controls where faceting is intentional */
+  --card-min: 240px;  /* one grid floor for cchapters / cclasses / csite-grid */
+  --radius-md: 12px;  /* relocated here from flow.css so the radius scale lives in one place */
   /* Soft, exponential page/tab transition curves — no bounce, no elastic. */
   --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
   --font: 'Avenir Next', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  /* Console readout face — numerics, timers, kickers, codes. A mono face is
+     what sells "game HUD" over "web copy" (the design-system pass called for
+     Share Tech Mono / Fira Code). System mono stack: zero network cost, and
+     the data already uses font-variant-numeric: tabular-nums. */
+  --font-mono: ui-monospace, 'SFMono-Regular', 'Cascadia Code', 'Source Code Pro', Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
   --text-xs: 0.75rem; --text-sm: 0.875rem; --text-base: 1rem;
   --text-lg: 1.125rem; --text-xl: 1.25rem; --text-2xl: 1.5rem;
   --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
@@ -132,6 +143,7 @@ main#main {
 }
 .stack--tight { gap: var(--space-4); }
 .stack--loose { gap: var(--space-8); }
+.mt-4 { margin-top: var(--space-4); }
 
 /* Page section: title row + body (replaces “card everything” for grouping) */
 .section {
@@ -247,7 +259,6 @@ nav {
 
 .header-home {
   display: flex; align-items: center; justify-content: center;
-  margin-left: auto;
   min-width: var(--control-height);
   min-height: var(--control-height);
   padding: var(--space-2);
@@ -258,6 +269,31 @@ nav {
 }
 .header-home:hover { color: #fff; background: rgba(255,255,255,0.12); }
 .header-home svg { width: 34px; height: 34px; display: block; }
+
+/* Notification bell: sits left of the home icon in the right cluster. */
+.header-bell {
+  position: relative;
+  display: flex; align-items: center; justify-content: center;
+  margin-left: auto;
+  min-width: var(--control-height);
+  min-height: var(--control-height);
+  padding: var(--space-2);
+  color: rgba(255,255,255,0.9); background: transparent;
+  border: none; border-radius: var(--radius-sm);
+  cursor: pointer; transition: color var(--dur), background var(--dur);
+  flex-shrink: 0;
+}
+.header-bell:hover { color: #fff; background: rgba(255,255,255,0.12); }
+.header-bell svg { width: 28px; height: 28px; display: block; }
+.header-bell__dot {
+  position: absolute; top: 10px; right: 10px;
+  width: 8px; height: 8px;
+  background: var(--danger); border-radius: 50%;
+  box-shadow: 0 0 8px var(--danger);
+  opacity: 0; transform: scale(0);
+  transition: opacity var(--dur), transform var(--dur);
+}
+.header-bell__dot.is-visible { opacity: 1; transform: scale(1); }
 
 /* Mobile-only quick-menu trigger. Hidden on wide screens; appears when the
    hold-Esc shortcut is impractical on touch/narrow viewports. */

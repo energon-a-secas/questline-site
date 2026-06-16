@@ -19,7 +19,7 @@ with sync_playwright() as p:
         localStorage.setItem('questline-splash', 'off');
         localStorage.setItem('questline-coached-v1', '1');
         const e = JSON.parse(localStorage.getItem('questline-engagement') || '{}');
-        e.dispatchShownDate = new Date().toISOString().slice(0, 10);
+        e.dispatchShownDate = new Date().toLocaleDateString('en-CA');
         localStorage.setItem('questline-engagement', JSON.stringify(e));
     """)
     page.goto(url, wait_until='networkidle')

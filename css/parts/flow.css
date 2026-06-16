@@ -14,6 +14,24 @@
   --dbh-done: #58e0a8;
   /* One progress-bar fill, used by every progress widget. */
   --qprog-fill: linear-gradient(90deg, var(--accent), var(--accent-bright));
+
+  /* ── Elevation ramp ────────────────────────────────────────
+     The old panels (rgba 14,28,52,.88) sat ~one shade above the #0a1424 bg,
+     so they read flat. A real ramp: each surface a touch lighter than the
+     last, lit by a 1px top inner-highlight and grounded by a deep shadow.
+     Reverse-elevation (lit edge on top) is what reads as "physical HUD
+     plate" rather than "form panel". */
+  --surface-raise: linear-gradient(180deg, #14274a 0%, #101f3a 60%, #0e1c34 100%);
+  --surface-raise-hi: inset 0 1px 0 rgba(150,200,255,.14);  /* top highlight */
+  /* --radius-md now lives in base.css :root (single radius scale). */
+  --shadow-plate: 0 18px 40px -14px rgba(2,6,23,.7), 0 4px 14px -8px rgba(2,6,23,.6);
+  --shadow-plate-hi: 0 26px 54px -16px rgba(2,6,23,.78), 0 6px 18px -8px rgba(2,6,23,.62);
+
+  /* Shared faceted-corner polygon for panels/cards — the NieR/Detroit
+     signature carried off the tab bar onto every plate. drop-shadow (not
+     box-shadow) is used to cast a shadow that follows the clipped silhouette. */
+  --plate-poly: polygon(var(--bevel) 0, 100% 0, 100% calc(100% - var(--bevel)),
+    calc(100% - var(--bevel)) 100%, 0 100%, 0 var(--bevel));
 }
 
 /* Faceted, slightly tilted background plates behind everything */
@@ -28,6 +46,27 @@ body::before {
   /* Promote to its own GPU layer so the fixed plate is not repainted on scroll. */
   transform: translateZ(0);
   will-change: transform;
+}
+
+/* Console-screen texture: a faint film grain over very soft scanlines. This is
+   the single cheapest "expensive" cue — it kills gradient banding on the dark
+   field and reads as a powered CRT/HUD surface. Kept under z-index:0 (behind
+   all content) and at low opacity so copy stays crisp; the SVG fractal-noise
+   data URI needs no network request. */
+body::after {
+  content: "";
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  opacity: .5;
+  background-image:
+    repeating-linear-gradient(0deg, rgba(255,255,255,.014) 0 1px, transparent 1px 3px),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+  background-size: auto, 160px 160px;
+  mix-blend-mode: soft-light;
+  transform: translateZ(0);
+}
+@media (prefers-reduced-motion: reduce) {
+  /* Texture is static so it stays, but drop blend cost on low-power requests. */
+  body::after { opacity: .32; }
 }
 main#main, .header-bar { position: relative; z-index: 1; }
 
@@ -65,18 +104,16 @@ main#main, .header-bar { position: relative; z-index: 1; }
   transition: transform var(--dur) var(--ease-out-quint), filter var(--dur);
 }
 .tnode__inner {
-  display: block; position: relative;
-  /* Closed bevel: the rim colour is the box background, an inset fill re-paints
-     the interior, so the sheared corners are fully stroked (not torn open). */
-  --tnode-poly: polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px);
+  display: block; position: relative; overflow: hidden;
   --tnode-rim: var(--dbh-edge);
   background: var(--tnode-rim);
-  clip-path: var(--tnode-poly);
+  clip-path: var(--plate-poly);
   transition: background var(--dur), box-shadow var(--dur);
 }
 .tnode__inner::before {
   content: ""; position: absolute; inset: 1px; z-index: 0;
-  background: var(--dbh-panel-2); clip-path: var(--tnode-poly);
+  background: var(--surface-raise); box-shadow: var(--surface-raise-hi);
+  clip-path: var(--plate-poly);
   pointer-events: none;
 }
 .tnode__frame, .tnode__bar { position: relative; z-index: 1; }
@@ -100,7 +137,7 @@ main#main, .header-bar { position: relative; z-index: 1; }
   position: absolute; top: 8px; right: 12px;
   display: inline-flex; align-items: center; justify-content: center;
   width: 22px; height: 22px; color: #04210f; background: var(--dbh-done);
-  clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);
+  border-radius: 4px;
   box-shadow: 0 0 10px rgba(52,211,153,.5);
 }
 .tnode__bar {
@@ -122,15 +159,18 @@ main#main, .header-bar { position: relative; z-index: 1; }
 }
 .tnode__lock svg { flex-shrink: 0; opacity: .75; }
 
-/* Node states */
+/* Node states. The faceted plate is clipped, so the hover lift glow rides the
+   parent .tnode via drop-shadow (which follows the bevel silhouette). */
 .tnode--available:hover,
 .tnode--in-progress:hover,
-.tnode--complete:hover { transform: translateY(-3px); }
+.tnode--complete:hover {
+  transform: translateY(-3px);
+  filter: drop-shadow(0 14px 26px rgba(2,6,23,.6)) drop-shadow(0 0 14px var(--dbh-cyan-glow));
+}
 .tnode--available:hover .tnode__inner,
 .tnode--in-progress:hover .tnode__inner,
 .tnode--complete:hover .tnode__inner {
   --tnode-rim: var(--dbh-cyan);
-  box-shadow: 0 0 0 1px var(--dbh-cyan-soft), 0 14px 34px rgba(2,6,23,.6);
 }
 
 /* State now reads from the bevel rim colour, not a side stripe. */
@@ -154,7 +194,7 @@ main#main, .header-bar { position: relative; z-index: 1; }
 .branch-progress { display: flex; align-items: center; gap: var(--space-3); }
 .branch-progress__bar {
   flex: 1; height: 6px; background: rgba(255,255,255,.07); overflow: hidden;
-  clip-path: polygon(0 0, 100% 0, calc(100% - 4px) 100%, 0 100%);
+  border-radius: 3px;
 }
 .branch-progress__bar div {
   height: 100%; width: 100%;
@@ -162,7 +202,7 @@ main#main, .header-bar { position: relative; z-index: 1; }
   box-shadow: 0 0 10px var(--accent-glow);
   /* Fill is full-width and scaled from the left, so the bar animates via
      transform (compositor) rather than width (layout). */
-  transform-origin: left center;
+  transform: scaleX(var(--pct, 0)); transform-origin: left center;
   transition: transform .4s var(--ease-out-quint);
 }
 .branch-progress__count {
@@ -173,17 +213,16 @@ main#main, .header-bar { position: relative; z-index: 1; }
 .skills { display: flex; flex-direction: column; gap: var(--space-3); }
 .skill {
   position: relative;
-  --skill-poly: polygon(10px 0, 100% 0, 100% 100%, 0 100%, 0 10px);
   --skill-rim: var(--dbh-edge);
   --skill-fill: var(--dbh-panel);
   display: flex; gap: var(--space-4); padding: var(--space-4);
   background: var(--skill-rim);
-  clip-path: var(--skill-poly);
+  border-radius: var(--radius-sm);
   transition: background var(--dur);
 }
 .skill::before {
   content: ""; position: absolute; inset: 1px; z-index: 0;
-  background: var(--skill-fill); clip-path: var(--skill-poly);
+  background: var(--skill-fill); border-radius: calc(var(--radius-sm) - 1px);
   pointer-events: none; transition: background var(--dur);
 }
 .skill > * { position: relative; z-index: 1; }
@@ -196,18 +235,17 @@ main#main, .header-bar { position: relative; z-index: 1; }
    so the faceted corners are fully stroked (a border + clip leaves the
    diagonal torn). The interior fill matches the card behind it when empty. */
 .skill__check {
-  --check-poly: polygon(5px 0, 100% 0, 100% calc(100% - 5px), calc(100% - 5px) 100%, 0 100%, 0 5px);
   flex-shrink: 0; width: 34px; height: 34px;
   display: inline-flex; align-items: center; justify-content: center;
   cursor: pointer; color: transparent; position: relative;
   background: var(--border-strong);
-  clip-path: var(--check-poly);
+  border-radius: 6px;
   transition: background var(--dur),
     color var(--dur), box-shadow var(--dur), transform var(--dur-fast) var(--ease-out-quint);
 }
 .skill__check::before {
   content: ""; position: absolute; inset: 1.5px; z-index: 0;
-  background: var(--dbh-panel); clip-path: var(--check-poly);
+  background: var(--dbh-panel); border-radius: 5px;
   transition: background var(--dur);
 }
 .skill__check > svg { position: relative; z-index: 1; }
@@ -225,72 +263,24 @@ main#main, .header-bar { position: relative; z-index: 1; }
 .skill__title { font-weight: 600; font-size: var(--text-lg); letter-spacing: .01em; }
 .skill__tag {
   font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .14em;
-  color: var(--dbh-cyan); padding: 3px 9px; background: var(--dbh-cyan-soft);
-  clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);
+  color: var(--dbh-cyan); padding: 3px 10px; background: var(--dbh-cyan-soft);
+  border-radius: 999px;
 }
 .skill__body { margin-top: 6px; color: var(--text-secondary); font-size: var(--text-base); line-height: 1.6; }
 .skill__list { margin: 8px 0 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 6px; }
 .skill__list li {
-  font-size: var(--text-sm); color: var(--text-secondary); padding: 4px 11px;
+  font-size: var(--text-sm); color: var(--text-secondary); padding: 4px 12px;
   background: rgba(255,255,255,.05); border: 1px solid var(--dbh-edge);
+  border-radius: 999px;
 }
 
 .branch-actions { display: flex; flex-wrap: wrap; gap: var(--space-3); }
 
-/* ── Floating map D-pad ─────────────────────────────────────── */
-.flowpad {
-  position: sticky;
-  bottom: var(--space-4);
-  z-index: 10;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  margin: var(--space-6) auto 0;
-  width: max-content;
-  padding: 10px;
-  background: var(--dbh-panel-2);
-  border: 1px solid var(--dbh-edge);
-  border-radius: 14px;
-  box-shadow: 0 12px 34px rgba(2,6,23,.55), inset 0 1px 0 rgba(255,255,255,.08);
-  backdrop-filter: blur(6px);
-}
-.flowpad__mid { display: flex; align-items: center; gap: 6px; }
-.flowpad__btn {
-  width: 44px;
-  height: 44px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-  line-height: 1;
-  color: var(--text-secondary);
-  background: rgba(255,255,255,.06);
-  border: 1px solid var(--dbh-edge);
-  border-radius: 10px;
-  cursor: pointer;
-  transition: color .15s, background .15s, transform .08s, box-shadow .15s;
-}
-.flowpad__btn:hover,
-.flowpad__btn:focus-visible {
-  color: #fff;
-  background: rgba(255,255,255,.14);
-  box-shadow: 0 0 14px var(--accent-glow);
-  outline: none;
-}
-.flowpad__btn:active { transform: scale(.94); }
-.flowpad__btn--center {
-  width: 52px;
-  height: 52px;
-  color: var(--accent-bright);
-  background: rgba(47,217,255,.12);
-  border-color: var(--accent);
-  font-size: 22px;
-}
-.flowpad__btn--center:hover,
-.flowpad__btn--center:focus-visible {
-  background: rgba(47,217,255,.22);
-  box-shadow: 0 0 18px var(--accent-glow);
+/* Orientation line above the map — how to move on keyboard and touch. */
+.tree__howto {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  margin-bottom: var(--space-4);
 }
 
 /* ── Responsive ────────────────────────────────────────────── */
@@ -300,14 +290,5 @@ main#main, .header-bar { position: relative; z-index: 1; }
   .tree__rows { gap: 40px; }
   .tree__row { gap: var(--space-4); }
   .tree__wires { display: none; }      /* stacked layout, wires would be noise */
-  .flowpad {
-    bottom: var(--space-3);
-    padding: 8px;
-    border-radius: 12px;
-    gap: 4px;
-  }
-  .flowpad__mid { gap: 4px; }
-  .flowpad__btn { width: 40px; height: 40px; font-size: 16px; border-radius: 8px; }
-  .flowpad__btn--center { width: 46px; height: 46px; font-size: 18px; }
 }
 

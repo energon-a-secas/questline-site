@@ -85,10 +85,10 @@ function renderMap(teams) {
   const svg = renderEdgesSvg(teams, byId, maxLane);
 
   const lanesHtml = laneOrder.map(topo => {
-    const items = (lanes[topo] || []).map((t, i) => renderTeamCard(t, i)).join('');
+    const items = (lanes[topo] || []).map((t, i) => renderTeamCard(t, i, byId)).join('');
     return `
-      <div class="catlas__lane catlas__lane--${topo.replace(/\s+/g, '-')}">
-        <h4 class="catlas__lane-h" style="--lane-color:${TOPOLOGY_COLOR[topo]}">
+      <div class="catlas__lane catlas__lane--${topo.replace(/\s+/g, '-')}" data-topology="${topo}">
+        <h4 class="catlas__lane-h">
           ${escHtml(TOPOLOGY_LABEL[topo])}
         </h4>
         <div class="catlas__lane-items">${items || '<span class="catlas__empty">No team</span>'}</div>
@@ -100,6 +100,7 @@ function renderMap(teams) {
       ${svg}
       <div class="catlas__lanes">${lanesHtml}</div>
     </div>
+    <p class="catlas__hint">Hover or focus a team to trace its connections.</p>
     <div class="catlas__legend">
       ${Object.entries(MODE_LABEL).map(([mode, label]) => `
         <span class="catlas__legend-item catlas__legend-item--${mode}">
@@ -116,22 +117,25 @@ function groupByTopology(teams) {
   }, {});
 }
 
-function renderTeamCard(t, i) {
+function renderTeamCard(t, i, byId = {}) {
   const needs = (t.needs || []).slice(0, 3).map(n => {
     const need = CUSTOMER_NEEDS.find(x => x.id === n);
     return `<span class="ctag ctag--sm">${escHtml(need?.label || n)}</span>`;
   }).join('');
+  const links = (t.edges || []).map(e => {
+    const target = byId[e.to]?.name || e.to;
+    return `<li class="catlas__link"><span class="catlas__link-dot catlas__link-dot--${e.mode}" aria-hidden="true"></span>${escHtml(MODE_LABEL[e.mode] || e.mode)} → ${escHtml(target)}</li>`;
+  }).join('');
   return `
-    <article class="catlas__card" data-team="${t.id}" style="--team-color:${TOPOLOGY_COLOR[t.topology]}">
+    <article class="catlas__card" data-team="${t.id}" data-topology="${t.topology}"
+      tabindex="0" aria-label="${escHtml(t.name)}, ${escHtml(TOPOLOGY_LABEL[t.topology] || t.topology)}${t.edges?.length ? `, ${t.edges.length} cross-team link${t.edges.length > 1 ? 's' : ''}` : ''}">
       <header class="catlas__card-head">
         <span class="catlas__card-dot" aria-hidden="true"></span>
         <h5 class="catlas__card-title">${escHtml(t.name)}</h5>
       </header>
       <div class="catlas__card-needs">${needs || '<span class="catlas__muted">No needs listed</span>'}</div>
       ${t.edges?.length ? `
-        <div class="catlas__card-edges">
-          ${t.edges.length} cross-team link${t.edges.length > 1 ? 's' : ''}
-        </div>` : ''}
+        <ul class="catlas__card-links">${links}</ul>` : ''}
     </article>`;
 }
 
@@ -200,7 +204,7 @@ function renderMatrix(teams, needs) {
     return `
       <tr class="catlas__tr">
         <th class="catlas__row-h" scope="row">
-          <span class="catlas__row-dot" style="--team-color:${TOPOLOGY_COLOR[t.topology]}"></span>
+          <span class="catlas__row-dot" data-topology="${t.topology}"></span>
           ${escHtml(t.name)}
         </th>
         ${cells}
@@ -314,10 +318,7 @@ export function validateAtlasJson(json) {
 export function bindAtlasEvents(s, container) {
   const map = container?.querySelector('.catlas__map');
   if (map) {
-    map.addEventListener('mouseenter', (e) => {
-      const card = e.target.closest('.catlas__card');
-      if (!card) return;
-      const teamId = card.dataset.team;
+    const highlight = (teamId) => {
       const teams = getTeams(s);
       const team = teams.find(t => t.id === teamId);
       const connected = team ? connectedTeamIds(team) : new Set([teamId]);
@@ -326,18 +327,31 @@ export function bindAtlasEvents(s, container) {
         c.classList.toggle('is-dimmed', !connected.has(c.dataset.team));
       });
       map.querySelectorAll('.catlas__edge').forEach(edge => {
-        const from = edge.dataset.from;
-        const to = edge.dataset.to;
-        const active = from === teamId || to === teamId;
+        const active = edge.dataset.from === teamId || edge.dataset.to === teamId;
         edge.classList.toggle('is-dimmed', !active);
         edge.classList.toggle('is-focused', active);
       });
-    }, true);
-    map.addEventListener('mouseleave', () => {
+    };
+    const clear = () => {
       delete map.dataset.highlightTeam;
       map.querySelectorAll('.catlas__card').forEach(c => c.classList.remove('is-dimmed'));
       map.querySelectorAll('.catlas__edge').forEach(e => e.classList.remove('is-dimmed', 'is-focused'));
+    };
+    // Mouse and keyboard both trace a team's links; focusin/out makes the
+    // reveal reachable without a pointer. Tap on touch focuses the card, which
+    // fires focusin, so touch is covered too.
+    map.addEventListener('mouseenter', (e) => {
+      const card = e.target.closest('.catlas__card');
+      if (card) highlight(card.dataset.team);
     }, true);
+    map.addEventListener('mouseleave', clear, true);
+    map.addEventListener('focusin', (e) => {
+      const card = e.target.closest('.catlas__card');
+      if (card) highlight(card.dataset.team);
+    });
+    map.addEventListener('focusout', (e) => {
+      if (!map.contains(e.relatedTarget)) clear();
+    });
   }
 
   container?.addEventListener('click', (e) => {

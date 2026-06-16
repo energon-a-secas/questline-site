@@ -5,16 +5,15 @@
 import { render, rerenderActive, drawWires } from './render.js';
 import { showToast, showActionToast, debounce } from './utils.js';
 import {
-  state, viewFromHash, intelFromHash, flowFocusFromHash, isBranchView,
+  state, viewFromHash, intelFromHash, flowFocusFromHash, profileSelectFromHash, isBranchView,
   resetProgress, resetAll, restoreProgress,
-  setKeyboardNav, setShiftsRead, setShowFullMap,
-  setClass, setCredential, clearCredential,
+  setKeyboardNav, setShiftsRead, setShowFullMap, setShowClassSheets,
+  setClass, clearClasses, setCredential, clearCredential,
   addPlaybook, updatePlaybook, deletePlaybook, addStep, updateStep, deleteStep, moveStep,
   setAtlasTeams,
-  visibleFlowOrder, focusOrder, isBranchUnlocked, wrapIndex,
 } from './state.js';
-import { INTEL, INTEL_BY_ID, SITES, SITES_BY_ID, siteMatches } from './data.js';
-import { openConfirm } from './modal.js';
+import { INTEL, INTEL_BY_ID, SITES, SITES_BY_ID, siteMatches, CLASS_BY_ID } from './data.js';
+import { openConfirm, openReader } from './modal.js';
 import { openChapterReader } from './chapterReader.js';
 import { openSearch } from './search.js';
 import { setSplashPref, splashPref } from './splash.js';
@@ -37,6 +36,8 @@ export function bindEvents(s) {
     s.view = viewFromHash();
     s.ui.intelSel = intelFromHash() || s.ui.intelSel;
     s.ui.flowFocus = s.view === 'flow' ? flowFocusFromHash() : null;
+    // Deep links / back-forward to #profile/select drive the class-select mode.
+    if (s.view === 'profile') s.ui.classSelecting = profileSelectFromHash();
     // Staying on the Intel tab and only changing the selected term: patch the
     // detail panel in place rather than re-rendering the whole view (which
     // would scroll the term list back to the top). patchIntel already did the
@@ -107,6 +108,19 @@ export function bindEvents(s) {
     const reset = e.target.closest('#resetBtn');
     if (reset) { onReset(s); return; }
 
+    const resetClass = e.target.closest('#resetClassBtn');
+    if (resetClass) {
+      if (confirm('Clear your class choices and credential records?')) {
+        clearClasses(s);
+        s.profile.creds = {};
+        s.ui.credEditing = null;
+        s.ui.classSelecting = false;
+        rerenderActive(s);
+        showToast('Class choices reset');
+      }
+      return;
+    }
+
     const splashToggle = e.target.closest('#splashToggle');
     if (splashToggle) { onToggleSplash(s); return; }
 
@@ -117,6 +131,9 @@ export function bindEvents(s) {
     // preference; the inline one re-renders Flow in place to reveal/hide nodes.
     const fullMapToggle = e.target.closest('#fullMapToggle, #flowMapToggle');
     if (fullMapToggle) { setShowFullMap(s, !s.prefs.showFullMap); rerenderActive(s); return; }
+
+    const classSheetsToggle = e.target.closest('#classSheetsToggle');
+    if (classSheetsToggle) { setShowClassSheets(s, !s.prefs.showClassSheets); rerenderActive(s); return; }
 
     // Six key shifts: open the focused reading popup (also marks them read);
     // the read-check toggles the read state on its own.
@@ -144,9 +161,9 @@ export function bindEvents(s) {
     const gloss = e.target.closest('.gloss');
     if (gloss) { hideGlossPopover(); location.hash = `#intel/${gloss.dataset.intel}`; return; }
 
-    // Intel scope filter chip: re-render the list/detail for the new scope.
+    // Intel scope filter chip: patch the list/detail for the new scope.
     const scopeBtn = e.target.closest('[data-intel-scope]');
-    if (scopeBtn) { s.ui.intelScope = scopeBtn.dataset.intelScope; rerenderActive(s); return; }
+    if (scopeBtn) { onIntelScope(s, scopeBtn.dataset.intelScope); return; }
 
     // Atlas view switcher.
     const atlasViewBtn = e.target.closest('[data-atlas-view]');
@@ -209,20 +226,6 @@ export function bindEvents(s) {
       }
       return;
     }
-
-    // Flow map D-pad: move cursor or focus the selected chapter.
-    const flowDir = e.target.closest('[data-flow-dir]');
-    if (flowDir) {
-      e.preventDefault();
-      onFlowMove(s, flowDir.dataset.flowDir);
-      return;
-    }
-    const flowAction = e.target.closest('[data-flow-action="focus"]');
-    if (flowAction) {
-      e.preventDefault();
-      onFlowActivate(s);
-      return;
-    }
   });
 
   // Glossary search: filter the term list live, patching only the list (and,
@@ -232,10 +235,18 @@ export function bindEvents(s) {
     if (box) onIntelSearch(s, box.value);
   });
 
-  // Sites search: filter the site grid live.
+  // Sites search: filter the site grid live; clear a selected site if it
+  // no longer matches so the detail accordion does not survive the filter.
   app.addEventListener('input', (e) => {
     const box = e.target.closest('#sitesSearch');
-    if (box) { s.ui.sitesQuery = box.value; rerenderActive(s); }
+    if (box) {
+      s.ui.sitesQuery = box.value;
+      const matches = siteMatches(s.ui.sitesQuery, s.ui.sitesGroup);
+      if (s.ui.sitesSel && !matches.some(site => site.id === s.ui.sitesSel)) {
+        s.ui.sitesSel = null;
+      }
+      rerenderActive(s);
+    }
   });
 
   // Cert row keyboard support (now a focusable div so the issuer link can nest).
@@ -333,44 +344,31 @@ function onIntelSearch(s, value) {
   }
 }
 
-// ── Flow map D-pad helpers ───────────────────────────────────
-
-function onFlowMove(s, dir) {
-  if (s.ui.flowFocus) {
-    const order = focusOrder(s.ui.flowFocus);
-    if (!order.length) return;
-    const delta = (dir === 'up' || dir === 'left') ? -1 : 1;
-    s.ui.flowCursor = wrapIndex(s.ui.flowCursor + delta, order.length);
-    rerenderActive(s);
-    scrollFlowCursorIntoView();
-    return;
+/**
+ * Change the Intel scope filter without a full render. Updates the active
+ * chip, rebuilds the list rows, and re-points selection if it falls out.
+ */
+function onIntelScope(s, scope) {
+  s.ui.intelScope = scope;
+  const app = document.getElementById('app');
+  const rows = app?.querySelector('#intelRows');
+  if (rows) rows.innerHTML = intelListItems(s, s.ui.intelSel);
+  app?.querySelectorAll('[data-intel-scope]').forEach(btn => {
+    const active = btn.dataset.intelScope === scope;
+    btn.classList.toggle('is-active', active);
+    btn.setAttribute('aria-pressed', String(active));
+  });
+  const matches = intelMatches(s.ui.intelQuery, scope);
+  if (matches.length) {
+    if (!matches.some(t => t.id === s.ui.intelSel)) {
+      patchIntel(s, matches[0].id);
+    } else {
+      s.ui.rowCursor = matches.findIndex(t => t.id === s.ui.intelSel);
+    }
+  } else {
+    s.ui.rowCursor = 0;
   }
-  const order = visibleFlowOrder(s);
-  if (!order.length) return;
-  const delta = (dir === 'up' || dir === 'left') ? -1 : 1;
-  s.ui.flowCursor = wrapIndex(s.ui.flowCursor + delta, order.length);
-  rerenderActive(s);
-  scrollFlowCursorIntoView();
-}
-
-function scrollFlowCursorIntoView() {
-  const cursor = document.querySelector('.tnode.is-cursor');
-  if (!cursor) return;
-  cursor.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
-}
-
-function onFlowActivate(s) {
-  if (s.ui.flowFocus) {
-    const order = focusOrder(s.ui.flowFocus);
-    const id = order[s.ui.flowCursor];
-    if (!id) return;
-    if (id === s.ui.flowFocus && isBranchUnlocked(s, id)) location.hash = `#${id}`;
-    else location.hash = `#flow/${id}`;
-    return;
-  }
-  const order = visibleFlowOrder(s);
-  const id = order[s.ui.flowCursor];
-  if (id) location.hash = `#flow/${id}`;
+  markGlossary(app);
 }
 
 /**
@@ -400,18 +398,69 @@ function hideDangerVignette() {
 
 /** Class pick + credential open/cancel/clear. Returns true if handled. */
 function handleProfileClick(s, e) {
-  const classBtn = e.target.closest('[data-class]');
-  if (classBtn) {
-    setClass(s, classBtn.dataset.class);
+  const confirmBtn = e.target.closest('[data-class-confirm]');
+  if (confirmBtn) {
+    e.preventDefault();
+    if (confirmBtn.classList.contains('is-disabled')) {
+      showToast('Select at least one class first.');
+      return true;
+    }
+    s.ui.classSelecting = false;
+    if (location.hash === '#profile/select') { location.hash = '#profile'; }
+    else { rerenderActive(s); }
+    return true;
+  }
+  const changeBtn = e.target.closest('[data-class-change]');
+  if (changeBtn) {
+    e.preventDefault();
+    s.ui.classSelecting = true;
     s.ui.credEditing = null;
     rerenderActive(s);
     return true;
   }
+  const classCancelBtn = e.target.closest('[data-class-cancel]');
+  if (classCancelBtn) {
+    e.preventDefault();
+    s.ui.classSelecting = false;
+    rerenderActive(s);
+    return true;
+  }
+  const classBtn = e.target.closest('[data-class]');
+  if (classBtn) {
+    const id = classBtn.dataset.class;
+    const ids = s.profile.classIds || [];
+    const already = ids.includes(id);
+    if (!already && ids.length >= 2) {
+      showToast('You can pick up to two classes. Deselect one first.');
+      return true;
+    }
+    setClass(s, id);
+    s.ui.credEditing = null;
+    // Toggling a crest only happens on the select screen; stay there until the
+    // player explicitly Confirms, so the first pick does not jump to the sheet.
+    s.ui.classSelecting = true;
+    rerenderActive(s);
+    return true;
+  }
+  const rulesBtn = e.target.closest('[data-ladder-rules]');
+  if (rulesBtn) {
+    openLadderRules(rulesBtn.dataset.ladderRules);
+    return true;
+  }
   // Let the cert issuer external link open in a new tab without flipping edit.
   if (e.target.closest('.ccert__issuer--link')) return false;
+  // Form fields should not toggle the row.
+  if (e.target.closest('.ccredform')) return false;
   const editBtn = e.target.closest('[data-cred-edit]');
   if (editBtn) {
     const id = editBtn.dataset.credEdit;
+    s.ui.credEditing = s.ui.credEditing === id ? null : id;
+    rerenderActive(s);
+    return true;
+  }
+  const certRow = e.target.closest('[data-cert-row]');
+  if (certRow) {
+    const id = certRow.dataset.certRow;
     s.ui.credEditing = s.ui.credEditing === id ? null : id;
     rerenderActive(s);
     return true;
@@ -429,20 +478,47 @@ function handleProfileClick(s, e) {
   return false;
 }
 
-/** Persist a credential form's fields against its cert. */
+/** Open a reader explaining how this class's certification ladder works. */
+function openLadderRules(classId) {
+  const cls = CLASS_BY_ID[classId];
+  if (!cls) return;
+  const rungs = cls.rungs.map(r => {
+    const groups = [...new Set(r.certs.map(c => c.group).filter(Boolean))].join(', ');
+    return {
+      heading: `${r.tier} — ${r.required || r.certs.length} of ${r.certs.length}`,
+      body: `${r.blurb} Groups in this tier: ${groups}.`,
+    };
+  });
+  openReader({
+    title: `${cls.title} ladder rules`,
+    kicker: 'Certification progression',
+    sub: 'Earn the required number of certs in each tier. Mix groups freely — for example, any cloud cert plus a Kubernetes cert can satisfy Intermediate.',
+    accent: 'azure',
+    sections: [
+      { heading: 'How completion works', body: 'A tier turns complete once you have earned the required number of certs, regardless of which groups they come from. For Entry, Intermediate, and Advanced you need two certs each; for Referent, one is enough.' },
+      ...rungs,
+    ],
+  });
+}
+
+/** Persist a credential form's fields against its cert.
+ *  If a credential ID is provided the status becomes earned (validated);
+ *  otherwise we keep the user's selected status for "in progress" tracking. */
 function onSaveCredential(s, form) {
   const certId = form.dataset.credForm;
   const data = new FormData(form);
+  const credId = (data.get('id') || '').trim();
+  const status = data.get('status') || 'in-progress';
   setCredential(s, certId, {
-    id: (data.get('id') || '').trim(),
+    id: credId,
     issuer: (data.get('issuer') || '').trim(),
     issued: data.get('issued') || '',
     expires: data.get('expires') || '',
-    status: data.get('status') || 'in-progress',
+    status: credId ? 'earned' : status,
   });
   s.ui.credEditing = null;
   rerenderActive(s);
-  showToast('Credential saved');
+  showToast(credId ? 'Credential validated' : 'Credential saved');
 }
 
 // ── Playbook handlers ──────────────────────────────────────
@@ -543,8 +619,23 @@ function onSaveStep(s, form) {
   const stepId = form.dataset.stepForm;
   const playbookId = form.dataset.pb;
   const data = new FormData(form);
-  const linkUrl = (data.get('linkUrl') || '').trim();
+  let linkUrl = (data.get('linkUrl') || '').trim();
   const linkLabel = (data.get('linkLabel') || '').trim();
+
+  // Reject non-http(s) URLs so stored user input cannot become a javascript: vector.
+  if (linkUrl) {
+    try {
+      const parsed = new URL(linkUrl);
+      if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+        showToast('Step link must use http:// or https://');
+        return;
+      }
+    } catch {
+      showToast('Step link must be a valid URL');
+      return;
+    }
+  }
+
   updateStep(s, playbookId, stepId, {
     title: (data.get('title') || '').trim() || 'Untitled step',
     body: (data.get('body') || '').trim(),

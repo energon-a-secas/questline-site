@@ -210,7 +210,7 @@ export function focusWidgetHtml(s) {
     ? `<span class="focus__streak">${e.streak}-day streak</span>`
     : '';
   return `
-    <div class="focus__card fbevel" id="todaysFocus">
+    <div class="focus__card" id="todaysFocus">
       <span class="focus__glyph" aria-hidden="true">${FOCUS_GLYPH}</span>
       <div class="focus__main">
         <div class="focus__head">

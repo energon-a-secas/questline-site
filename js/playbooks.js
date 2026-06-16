@@ -48,7 +48,7 @@ function playbookRow(p, i, s) {
       <span class="crow__pbicon">${icon(p.icon || 'route', 18)}</span>
       <span class="crow__col">
         <span class="crow__name">${escHtml(p.title)}</span>
-        <span class="crow__pbbar"><span style="transform:scaleX(${pct / 100})"></span></span>
+        <span class="crow__pbbar"><span style="--pct:${pct / 100}"></span></span>
       </span>
       <span class="crow__pbbadge">${total}</span>
     </button>`;

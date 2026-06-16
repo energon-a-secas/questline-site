@@ -13,7 +13,7 @@
 import {
   BRANCHES, TABS, INTEL, CLASSES, TEAM_TOPOLOGY, CUSTOMER_NEEDS,
 } from './data.js';
-import { state, setClass } from './state.js';
+import { state, setClass, getPlaybooksVersion } from './state.js';
 import { escHtml } from './utils.js';
 import { icon } from './console.js';
 import { openChapterReader } from './chapterReader.js';
@@ -120,8 +120,12 @@ function buildIndex() {
 }
 
 let INDEX = null;
-/** Rebuilt lazily so user-added playbooks are always represented. */
+let _indexVersion = -1;
+/** Rebuilt lazily and invalidated only when playbooks change. */
 function index() {
+  const v = getPlaybooksVersion();
+  if (INDEX && _indexVersion === v) return INDEX;
+  _indexVersion = v;
   INDEX = buildIndex();
   return INDEX;
 }

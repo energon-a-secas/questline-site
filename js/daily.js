@@ -84,20 +84,23 @@ function mount() {
     <div class="daily fbevel" role="dialog" aria-modal="true" aria-label="Daily dispatch">
       <header class="daily__head">
         <span class="daily__kicker">Operator's Log</span>
-        <h2 class="daily__title">Upcoming events</h2>
-        <p class="daily__sub">${banners.length} active dispatch${banners.length === 1 ? '' : 'es'} · auto-rotating</p>
+        <h2 class="daily__title">Today's dispatch</h2>
         <button type="button" class="daily__close" data-daily-close aria-label="Close dispatch">${icon('x', 16)}</button>
       </header>
       <div class="daily__stage" aria-live="polite" aria-atomic="true">
         ${banners.map(slide).join('')}
       </div>
-      <div class="daily__dots" role="tablist" aria-label="Choose an event">
-        ${banners.map((b, i) => `
-          <button type="button" class="daily__dot ${i === index ? 'is-active' : ''}"
-            data-daily-dot="${i}" aria-label="Show: ${escHtml(b.title)}"
-            aria-current="${i === index ? 'true' : 'false'}"></button>
-        `).join('')}
-      </div>
+      ${banners.length > 1 ? `
+      <div class="daily__pager">
+        <div class="daily__dots" role="tablist" aria-label="Choose an event">
+          ${banners.map((b, i) => `
+            <button type="button" class="daily__dot ${i === index ? 'is-active' : ''}"
+              data-daily-dot="${i}" aria-label="Show: ${escHtml(b.title)}"
+              aria-current="${i === index ? 'true' : 'false'}"></button>
+          `).join('')}
+        </div>
+        <span class="daily__count">${index + 1} / ${banners.length}</span>
+      </div>` : ''}
       <footer class="daily__foot">
         <button type="button" class="btn btn--ghost btn--sm" data-daily-dismiss>Hide this event</button>
         <div class="daily__foot-right">
@@ -120,6 +123,12 @@ function mount() {
   updateBellDot();
   sync();
   startAuto();
+
+  // Land focus on the close button — stable header chrome that never becomes
+  // aria-hidden. Focusing the active card instead would retain focus on a slide
+  // that auto-rotation marks aria-hidden, which AT flags. The card stays
+  // reachable by Tab.
+  root.querySelector('[data-daily-close]')?.focus();
 }
 
 function slide(b, i) {
@@ -211,19 +220,28 @@ function sync() {
     d.classList.toggle('is-active', on);
     d.setAttribute('aria-current', String(on));
   });
+  const count = root.querySelector('.daily__count');
+  if (count) count.textContent = `${index + 1} / ${banners.length}`;
 }
 
 function refresh() {
   if (!root) return;
   const stage = root.querySelector('.daily__stage');
   if (stage) stage.innerHTML = banners.map(slide).join('');
-  const dots = root.querySelector('.daily__dots');
-  if (dots) {
-    dots.innerHTML = banners.map((b, i) => `
-      <button type="button" class="daily__dot ${i === index ? 'is-active' : ''}"
-        data-daily-dot="${i}" aria-label="Show: ${escHtml(b.title)}"
-        aria-current="${i === index ? 'true' : 'false'}"></button>
-    `).join('');
+  const pager = root.querySelector('.daily__pager');
+  if (pager) {
+    if (banners.length < 2) {
+      pager.remove();
+    } else {
+      const dots = pager.querySelector('.daily__dots');
+      if (dots) {
+        dots.innerHTML = banners.map((b, i) => `
+          <button type="button" class="daily__dot ${i === index ? 'is-active' : ''}"
+            data-daily-dot="${i}" aria-label="Show: ${escHtml(b.title)}"
+            aria-current="${i === index ? 'true' : 'false'}"></button>
+        `).join('');
+      }
+    }
   }
   sync();
 }

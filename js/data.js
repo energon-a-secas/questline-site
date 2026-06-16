@@ -599,8 +599,11 @@ export function intelForChapter(branchId) {
  * Engineer "classes," like RPG specializations. Each class carries a
  * certification ladder of four rungs — Entry, Intermediate, Advanced,
  * Referent — where Referent is the recognized go-to expert others consult.
- * Certs use real, current credentials with accurate issuers; a few top-tier
- * markers use issuer 'Recognition' where no formal exam fits.
+ *
+ * Every rung has a `required` count: earn that many of its certs to complete
+ * the tier. Groups (Cloud, Kubernetes, Security, Automation, ...) show which
+ * kind of credential each one is, so you can mix-and-match — for example,
+ * any two cloud certs at Intermediate, or a CKA instead of a second cloud cert.
  */
 export const CLASSES = [
   {
@@ -611,27 +614,29 @@ export const CLASSES = [
     blurb: 'The architect-engineer who shapes cloud terrain, provisions worlds as code, and keeps the platform humming under any load.',
     crest: { symbol: 'I', color: '#2aa8ff' },
     rungs: [
-      { tier: 'Entry', blurb: 'You can navigate a cloud console, read infrastructure code, and stand up basic resources under supervision.', certs: [
-        { id: 'aws-ccp', name: 'AWS Certified Cloud Practitioner', issuer: 'Amazon Web Services', logo: 'aws', url: 'https://aws.amazon.com/certification/' },
-        { id: 'terraform-associate', name: 'HashiCorp Certified: Terraform Associate', issuer: 'HashiCorp', logo: 'hashicorp', url: 'https://www.hashicorp.com/certification' },
-        { id: 'kcna', name: 'Kubernetes and Cloud Native Associate (KCNA)', issuer: 'The Linux Foundation / CNCF', logo: 'kubernetes', url: 'https://www.cncf.io/certification/' },
+      { tier: 'Entry', required: 2, blurb: 'You can navigate a cloud console, read infrastructure code, and stand up basic resources under supervision.', certs: [
+        { id: 'aws-ccp', name: 'AWS Certified Cloud Practitioner', issuer: 'Amazon Web Services', group: 'Cloud', url: 'https://aws.amazon.com/certification/' },
+        { id: 'terraform-associate', name: 'HashiCorp Certified: Terraform Associate', issuer: 'HashiCorp', group: 'Automation', url: 'https://www.hashicorp.com/certification' },
+        { id: 'kcna', name: 'Kubernetes and Cloud Native Associate (KCNA)', issuer: 'The Linux Foundation / CNCF', group: 'Kubernetes', url: 'https://www.cncf.io/certification/' },
+        { id: 'docker-infra', name: 'Docker Certified Associate', issuer: 'Docker', group: 'DevOps', url: 'https://www.docker.com/certification/' },
       ]},
-      { tier: 'Intermediate', blurb: 'You design and operate production-grade infrastructure independently, automate provisioning, and run real clusters.', certs: [
-        { id: 'aws-saa', name: 'AWS Certified Solutions Architect – Associate', issuer: 'Amazon Web Services', logo: 'aws', url: 'https://aws.amazon.com/certification/' },
-        { id: 'cka', name: 'Certified Kubernetes Administrator (CKA)', issuer: 'The Linux Foundation / CNCF', logo: 'kubernetes', url: 'https://www.cncf.io/certification/' },
-        { id: 'az-104', name: 'Microsoft Certified: Azure Administrator Associate (AZ-104)', issuer: 'Microsoft', logo: 'azure', url: 'https://learn.microsoft.com/en-us/credentials/certifications/' },
-        { id: 'gcp-ace', name: 'Google Cloud Associate Cloud Engineer', issuer: 'Google Cloud', logo: 'gcp', url: 'https://cloud.google.com/learn/certification' },
+      { tier: 'Intermediate', required: 2, blurb: 'You design and operate production-grade infrastructure independently, automate provisioning, and run real clusters.', certs: [
+        { id: 'aws-saa', name: 'AWS Certified Solutions Architect – Associate', issuer: 'Amazon Web Services', group: 'Cloud', url: 'https://aws.amazon.com/certification/' },
+        { id: 'az-104', name: 'Microsoft Certified: Azure Administrator Associate (AZ-104)', issuer: 'Microsoft', group: 'Cloud', url: 'https://learn.microsoft.com/en-us/credentials/certifications/' },
+        { id: 'gcp-ace', name: 'Google Cloud Associate Cloud Engineer', issuer: 'Google Cloud', group: 'Cloud', url: 'https://cloud.google.com/learn/certification' },
+        { id: 'terraform-authoring', name: 'HashiCorp Certified: Terraform Authoring and Operations Professional', issuer: 'HashiCorp', group: 'Automation', url: 'https://www.hashicorp.com/certification' },
+        { id: 'github-actions-infra', name: 'GitHub Actions Certification', issuer: 'GitHub', group: 'DevOps', url: 'https://resources.github.com/learn/certifications/' },
       ]},
-      { tier: 'Advanced', blurb: 'You own multi-account, multi-region architecture, harden clusters, and design platforms others depend on.', certs: [
-        { id: 'aws-sap', name: 'AWS Certified Solutions Architect – Professional', issuer: 'Amazon Web Services', logo: 'aws', url: 'https://aws.amazon.com/certification/' },
-        { id: 'aws-devops-pro', name: 'AWS Certified DevOps Engineer – Professional', issuer: 'Amazon Web Services', logo: 'aws', url: 'https://aws.amazon.com/certification/' },
-        { id: 'cks', name: 'Certified Kubernetes Security Specialist (CKS)', issuer: 'The Linux Foundation / CNCF', logo: 'kubernetes', url: 'https://www.cncf.io/certification/' },
-        { id: 'terraform-authoring', name: 'HashiCorp Certified: Terraform Authoring and Operations Professional', issuer: 'HashiCorp', logo: 'hashicorp', url: 'https://www.hashicorp.com/certification' },
+      { tier: 'Advanced', required: 2, blurb: 'You own multi-account, multi-region architecture, harden clusters, and design platforms others depend on.', certs: [
+        { id: 'aws-sap', name: 'AWS Certified Solutions Architect – Professional', issuer: 'Amazon Web Services', group: 'Cloud', url: 'https://aws.amazon.com/certification/' },
+        { id: 'aws-devops-pro', name: 'AWS Certified DevOps Engineer – Professional', issuer: 'Amazon Web Services', group: 'Cloud', url: 'https://aws.amazon.com/certification/' },
+        { id: 'cka', name: 'Certified Kubernetes Administrator (CKA)', issuer: 'The Linux Foundation / CNCF', group: 'Kubernetes', url: 'https://www.cncf.io/certification/' },
+        { id: 'gcp-pca', name: 'Google Cloud Professional Cloud Architect', issuer: 'Google Cloud', group: 'Cloud', url: 'https://cloud.google.com/learn/certification' },
       ]},
-      { tier: 'Referent', blurb: 'The recognized platform authority — the SME teams consult on architecture and a contributor to the wider ecosystem.', certs: [
-        { id: 'gcp-pca', name: 'Google Cloud Professional Cloud Architect', issuer: 'Google Cloud', logo: 'gcp', url: 'https://cloud.google.com/learn/certification' },
-        { id: 'cncf-maintainer', name: 'Open-source maintainer (Terraform module / Kubernetes operator)', issuer: 'Recognition', logo: 'recognition', url: '' },
-        { id: 'platform-arb', name: 'Internal Platform Architecture Review Board', issuer: 'Recognition', logo: 'recognition', url: '' },
+      { tier: 'Referent', required: 1, blurb: 'The recognized platform authority — the SME teams consult on architecture and a contributor to the wider ecosystem.', certs: [
+        { id: 'cks', name: 'Certified Kubernetes Security Specialist (CKS)', issuer: 'The Linux Foundation / CNCF', group: 'Security', url: 'https://www.cncf.io/certification/' },
+        { id: 'cncf-maintainer', name: 'Open-source maintainer (Terraform module / Kubernetes operator)', issuer: 'Recognition', group: 'Recognition', url: '' },
+        { id: 'platform-arb', name: 'Internal Platform Architecture Review Board', issuer: 'Recognition', group: 'Recognition', url: '' },
       ]},
     ],
   },
@@ -643,26 +648,27 @@ export const CLASSES = [
     blurb: 'The guardian who watches every signal, answers the page at 3am, and trades toil for automation so the system never goes dark.',
     crest: { symbol: 'S', color: '#34d399' },
     rungs: [
-      { tier: 'Entry', blurb: 'You understand reliability fundamentals, can read dashboards, and follow runbooks during an incident.', certs: [
-        { id: 'pca-prometheus', name: 'Prometheus Certified Associate (PCA)', issuer: 'The Linux Foundation / CNCF', logo: 'kubernetes', url: 'https://www.cncf.io/certification/' },
-        { id: 'kcna-sre', name: 'Kubernetes and Cloud Native Associate (KCNA)', issuer: 'The Linux Foundation / CNCF', logo: 'kubernetes', url: 'https://www.cncf.io/certification/' },
-        { id: 'datadog-fundamentals', name: 'Datadog Fundamentals', issuer: 'Datadog', logo: 'datadog', url: 'https://www.datadoghq.com/training/' },
+      { tier: 'Entry', required: 2, blurb: 'You understand reliability fundamentals, can read dashboards, and follow runbooks during an incident.', certs: [
+        { id: 'pca-prometheus', name: 'Prometheus Certified Associate (PCA)', issuer: 'The Linux Foundation / CNCF', group: 'Observability', url: 'https://www.cncf.io/certification/' },
+        { id: 'kcna-sre', name: 'Kubernetes and Cloud Native Associate (KCNA)', issuer: 'The Linux Foundation / CNCF', group: 'Kubernetes', url: 'https://www.cncf.io/certification/' },
+        { id: 'datadog-fundamentals', name: 'Datadog Fundamentals', issuer: 'Datadog', group: 'Observability', url: 'https://www.datadoghq.com/training/' },
+        { id: 'docker-sre', name: 'Docker Certified Associate', issuer: 'Docker', group: 'DevOps', url: 'https://www.docker.com/certification/' },
       ]},
-      { tier: 'Intermediate', blurb: 'You build CI/CD pipelines, instrument services with metrics and traces, and take primary on-call rotations.', certs: [
-        { id: 'gitlab-cicd', name: 'GitLab Certified CI/CD Associate', issuer: 'GitLab', logo: 'gitlab', url: 'https://about.gitlab.com/services/education/' },
-        { id: 'cka-sre', name: 'Certified Kubernetes Administrator (CKA)', issuer: 'The Linux Foundation / CNCF', logo: 'kubernetes', url: 'https://www.cncf.io/certification/' },
-        { id: 'aws-sysops', name: 'AWS Certified SysOps Administrator – Associate', issuer: 'Amazon Web Services', logo: 'aws', url: 'https://aws.amazon.com/certification/' },
-        { id: 'github-actions', name: 'GitHub Actions Certification', issuer: 'GitHub', logo: 'github', url: 'https://resources.github.com/learn/certifications/' },
+      { tier: 'Intermediate', required: 2, blurb: 'You build CI/CD pipelines, instrument services with metrics and traces, and take primary on-call rotations.', certs: [
+        { id: 'gitlab-cicd', name: 'GitLab Certified CI/CD Associate', issuer: 'GitLab', group: 'DevOps', url: 'https://about.gitlab.com/services/education/' },
+        { id: 'aws-sysops', name: 'AWS Certified SysOps Administrator – Associate', issuer: 'Amazon Web Services', group: 'Cloud', url: 'https://aws.amazon.com/certification/' },
+        { id: 'github-actions', name: 'GitHub Actions Certification', issuer: 'GitHub', group: 'DevOps', url: 'https://resources.github.com/learn/certifications/' },
+        { id: 'docker-sre-intermediate', name: 'Docker Certified Associate', issuer: 'Docker', group: 'DevOps', url: 'https://www.docker.com/certification/' },
       ]},
-      { tier: 'Advanced', blurb: 'You define SLOs and error budgets, lead incident command, and engineer resilience through chaos testing.', certs: [
-        { id: 'aws-devops-pro-sre', name: 'AWS Certified DevOps Engineer – Professional', issuer: 'Amazon Web Services', logo: 'aws', url: 'https://aws.amazon.com/certification/' },
-        { id: 'gremlin-cep', name: 'Gremlin Certified Chaos Engineering Practitioner', issuer: 'Gremlin', logo: 'gremlin', url: 'https://www.gremlin.com/certification' },
-        { id: 'cka-otel', name: 'Certified Kubernetes Administrator (CKA)', issuer: 'The Linux Foundation / CNCF', logo: 'kubernetes', url: 'https://www.cncf.io/certification/' },
+      { tier: 'Advanced', required: 2, blurb: 'You define SLOs and error budgets, lead incident command, and engineer resilience through chaos testing.', certs: [
+        { id: 'aws-devops-pro-sre', name: 'AWS Certified DevOps Engineer – Professional', issuer: 'Amazon Web Services', group: 'Cloud', url: 'https://aws.amazon.com/certification/' },
+        { id: 'gremlin-cep', name: 'Gremlin Certified Chaos Engineering Practitioner', issuer: 'Gremlin', group: 'Reliability', url: 'https://www.gremlin.com/certification' },
+        { id: 'cka-sre', name: 'Certified Kubernetes Administrator (CKA)', issuer: 'The Linux Foundation / CNCF', group: 'Kubernetes', url: 'https://www.cncf.io/certification/' },
       ]},
-      { tier: 'Referent', blurb: 'The reliability authority who sets org-wide observability strategy, mentors incident commanders, and shares hard-won lessons.', certs: [
-        { id: 'sre-conference-speaker', name: 'Conference speaker (SREcon / Monitorama)', issuer: 'Recognition', logo: 'recognition', url: '' },
-        { id: 'incident-command-lead', name: 'Org-wide Incident Command program lead', issuer: 'Recognition', logo: 'recognition', url: '' },
-        { id: 'reliability-arb', name: 'Internal Reliability Review Board', issuer: 'Recognition', logo: 'recognition', url: '' },
+      { tier: 'Referent', required: 1, blurb: 'The reliability authority who sets org-wide observability strategy, mentors incident commanders, and shares hard-won lessons.', certs: [
+        { id: 'sre-conference-speaker', name: 'Conference speaker (SREcon / Monitorama)', issuer: 'Recognition', group: 'Recognition', url: '' },
+        { id: 'incident-command-lead', name: 'Org-wide Incident Command program lead', issuer: 'Recognition', group: 'Recognition', url: '' },
+        { id: 'reliability-arb', name: 'Internal Reliability Review Board', issuer: 'Recognition', group: 'Recognition', url: '' },
       ]},
     ],
   },
@@ -674,26 +680,26 @@ export const CLASSES = [
     blurb: 'The sentinel who breaks systems to harden them and shepherds data through pipelines, balancing offense, defense, and governance.',
     crest: { symbol: 'X', color: '#b08cff' },
     rungs: [
-      { tier: 'Entry', blurb: 'You grasp security and data fundamentals, recognize common threats, and handle data responsibly.', certs: [
-        { id: 'comptia-security-plus', name: 'CompTIA Security+', issuer: 'CompTIA', logo: 'comptia', url: 'https://www.comptia.org/certifications/' },
-        { id: 'kcsa', name: 'Kubernetes and Cloud Native Security Associate (KCSA)', issuer: 'The Linux Foundation / CNCF', logo: 'kubernetes', url: 'https://www.cncf.io/certification/' },
-        { id: 'databricks-de-associate', name: 'Databricks Certified Data Engineer Associate', issuer: 'Databricks', logo: 'databricks', url: 'https://www.databricks.com/learn/certification' },
+      { tier: 'Entry', required: 2, blurb: 'You grasp security and data fundamentals, recognize common threats, and handle data responsibly.', certs: [
+        { id: 'comptia-security-plus', name: 'CompTIA Security+', issuer: 'CompTIA', group: 'Security', url: 'https://www.comptia.org/certifications/' },
+        { id: 'kcsa', name: 'Kubernetes and Cloud Native Security Associate (KCSA)', issuer: 'The Linux Foundation / CNCF', group: 'Security', url: 'https://www.cncf.io/certification/' },
+        { id: 'databricks-de-associate', name: 'Databricks Certified Data Engineer Associate', issuer: 'Databricks', group: 'Data', url: 'https://www.databricks.com/learn/certification' },
       ]},
-      { tier: 'Intermediate', blurb: 'You secure cloud workloads, run guided penetration tests, and build reliable data pipelines and warehouses.', certs: [
-        { id: 'aws-security-specialty', name: 'AWS Certified Security – Specialty', issuer: 'Amazon Web Services', logo: 'aws', url: 'https://aws.amazon.com/certification/' },
-        { id: 'dbt-analytics-engineer', name: 'dbt Analytics Engineering Certification', issuer: 'dbt Labs', logo: 'dbt', url: 'https://www.getdbt.com/dbt-certification' },
-        { id: 'databricks-de-pro', name: 'Databricks Certified Data Engineer Professional', issuer: 'Databricks', logo: 'databricks', url: 'https://www.databricks.com/learn/certification' },
-        { id: 'comptia-pentest-plus', name: 'CompTIA PenTest+', issuer: 'CompTIA', logo: 'comptia', url: 'https://www.comptia.org/certifications/' },
+      { tier: 'Intermediate', required: 2, blurb: 'You secure cloud workloads, run guided penetration tests, and build reliable data pipelines and warehouses.', certs: [
+        { id: 'aws-security-specialty', name: 'AWS Certified Security – Specialty', issuer: 'Amazon Web Services', group: 'Security', url: 'https://aws.amazon.com/certification/' },
+        { id: 'dbt-analytics-engineer', name: 'dbt Analytics Engineering Certification', issuer: 'dbt Labs', group: 'Data', url: 'https://www.getdbt.com/dbt-certification' },
+        { id: 'databricks-de-pro', name: 'Databricks Certified Data Engineer Professional', issuer: 'Databricks', group: 'Data', url: 'https://www.databricks.com/learn/certification' },
+        { id: 'comptia-pentest-plus', name: 'CompTIA PenTest+', issuer: 'CompTIA', group: 'Security', url: 'https://www.comptia.org/certifications/' },
       ]},
-      { tier: 'Advanced', blurb: 'You perform exploit-driven offensive testing, architect governed ML/data platforms, and lead security reviews.', certs: [
-        { id: 'oscp', name: 'Offensive Security Certified Professional (OSCP)', issuer: 'OffSec', logo: 'offsec', url: 'https://www.offsec.com/courses/' },
-        { id: 'aws-ml-specialty', name: 'AWS Certified Machine Learning – Specialty', issuer: 'Amazon Web Services', logo: 'aws', url: 'https://aws.amazon.com/certification/' },
-        { id: 'cks-security', name: 'Certified Kubernetes Security Specialist (CKS)', issuer: 'The Linux Foundation / CNCF', logo: 'kubernetes', url: 'https://www.cncf.io/certification/' },
+      { tier: 'Advanced', required: 2, blurb: 'You perform exploit-driven offensive testing, architect governed ML/data platforms, and lead security reviews.', certs: [
+        { id: 'oscp', name: 'Offensive Security Certified Professional (OSCP)', issuer: 'OffSec', group: 'Security', url: 'https://www.offsec.com/courses/' },
+        { id: 'aws-ml-specialty', name: 'AWS Certified Machine Learning – Specialty', issuer: 'Amazon Web Services', group: 'Cloud', url: 'https://aws.amazon.com/certification/' },
+        { id: 'cks-security', name: 'Certified Kubernetes Security Specialist (CKS)', issuer: 'The Linux Foundation / CNCF', group: 'Security', url: 'https://www.cncf.io/certification/' },
       ]},
-      { tier: 'Referent', blurb: 'The trusted security and data authority — the org’s top advisor on governance, threat modeling, and offensive capability.', certs: [
-        { id: 'cissp', name: 'Certified Information Systems Security Professional (CISSP)', issuer: 'ISC2', logo: 'isc2', url: 'https://www.isc2.org/certifications/' },
-        { id: 'osep', name: 'Offensive Security Experienced Penetrator (OSEP)', issuer: 'OffSec', logo: 'offsec', url: 'https://www.offsec.com/courses/' },
-        { id: 'security-governance-board', name: 'Data Governance & Security Council lead', issuer: 'Recognition', logo: 'recognition', url: '' },
+      { tier: 'Referent', required: 1, blurb: 'The trusted security and data authority — the org’s top advisor on governance, threat modeling, and offensive capability.', certs: [
+        { id: 'cissp', name: 'Certified Information Systems Security Professional (CISSP)', issuer: 'ISC2', group: 'Security', url: 'https://www.isc2.org/certifications/' },
+        { id: 'osep', name: 'Offensive Security Experienced Penetrator (OSEP)', issuer: 'OffSec', group: 'Security', url: 'https://www.offsec.com/courses/' },
+        { id: 'security-governance-board', name: 'Data Governance & Security Council lead', issuer: 'Recognition', group: 'Recognition', url: '' },
       ]},
     ],
   },
@@ -705,26 +711,28 @@ export const CLASSES = [
     blurb: 'The craftsperson who wields languages and frameworks to build resilient APIs, model data, and design distributed systems that scale.',
     crest: { symbol: 'B', color: '#ffce4d' },
     rungs: [
-      { tier: 'Entry', blurb: 'You ship features in a primary language, write clean APIs, and work confidently with a relational database.', certs: [
-        { id: 'oracle-java-foundations', name: 'Oracle Certified Foundations Associate, Java', issuer: 'Oracle', logo: 'oracle', url: 'https://education.oracle.com/oracle-certification' },
-        { id: 'mongodb-associate-developer', name: 'MongoDB Associate Developer', issuer: 'MongoDB', logo: 'mongodb', url: 'https://www.mongodb.com/university/certification' },
-        { id: 'az-900', name: 'Microsoft Certified: Azure Fundamentals (AZ-900)', issuer: 'Microsoft', logo: 'azure', url: 'https://learn.microsoft.com/en-us/credentials/certifications/' },
+      { tier: 'Entry', required: 2, blurb: 'You ship features in a primary language, write clean APIs, and work confidently with a relational database.', certs: [
+        { id: 'oracle-java-foundations', name: 'Oracle Certified Foundations Associate, Java', issuer: 'Oracle', group: 'Language', url: 'https://education.oracle.com/oracle-certification' },
+        { id: 'mongodb-associate-developer', name: 'MongoDB Associate Developer', issuer: 'MongoDB', group: 'Database', url: 'https://www.mongodb.com/university/certification' },
+        { id: 'az-900', name: 'Microsoft Certified: Azure Fundamentals (AZ-900)', issuer: 'Microsoft', group: 'Cloud', url: 'https://learn.microsoft.com/en-us/credentials/certifications/' },
       ]},
-      { tier: 'Intermediate', blurb: 'You design robust APIs, optimize databases, and build cloud-native services that handle real production traffic.', certs: [
-        { id: 'aws-developer-associate', name: 'AWS Certified Developer – Associate', issuer: 'Amazon Web Services', logo: 'aws', url: 'https://aws.amazon.com/certification/' },
-        { id: 'oracle-java-se-pro', name: 'Oracle Certified Professional: Java SE Developer', issuer: 'Oracle', logo: 'oracle', url: 'https://education.oracle.com/oracle-certification' },
-        { id: 'postgresql-associate', name: 'PostgreSQL Associate Certification', issuer: 'EnterpriseDB', logo: 'enterprisedb', url: 'https://www.enterprisedb.com/training/certification' },
-        { id: 'gcp-professional-developer', name: 'Google Cloud Professional Cloud Developer', issuer: 'Google Cloud', logo: 'gcp', url: 'https://cloud.google.com/learn/certification' },
+      { tier: 'Intermediate', required: 2, blurb: 'You design robust APIs, optimize databases, and build cloud-native services that handle real production traffic.', certs: [
+        { id: 'aws-developer-associate', name: 'AWS Certified Developer – Associate', issuer: 'Amazon Web Services', group: 'Cloud', url: 'https://aws.amazon.com/certification/' },
+        { id: 'oracle-java-se-pro', name: 'Oracle Certified Professional: Java SE Developer', issuer: 'Oracle', group: 'Language', url: 'https://education.oracle.com/oracle-certification' },
+        { id: 'postgresql-associate', name: 'PostgreSQL Associate Certification', issuer: 'EnterpriseDB', group: 'Database', url: 'https://www.enterprisedb.com/training/certification' },
+        { id: 'gcp-professional-developer', name: 'Google Cloud Professional Cloud Developer', issuer: 'Google Cloud', group: 'Cloud', url: 'https://cloud.google.com/learn/certification' },
+        { id: 'docker-backend', name: 'Docker Certified Associate', issuer: 'Docker', group: 'DevOps', url: 'https://www.docker.com/certification/' },
+        { id: 'github-actions-backend', name: 'GitHub Actions Certification', issuer: 'GitHub', group: 'DevOps', url: 'https://resources.github.com/learn/certifications/' },
       ]},
-      { tier: 'Advanced', blurb: 'You architect distributed systems, lead system-design decisions, and own the reliability and data model of major services.', certs: [
-        { id: 'aws-sap-backend', name: 'AWS Certified Solutions Architect – Professional', issuer: 'Amazon Web Services', logo: 'aws', url: 'https://aws.amazon.com/certification/' },
-        { id: 'confluent-ccdak', name: 'Confluent Certified Developer for Apache Kafka (CCDAK)', issuer: 'Confluent', logo: 'confluent', url: 'https://www.confluent.io/certification/' },
-        { id: 'mongodb-associate-dba', name: 'MongoDB Associate Database Administrator', issuer: 'MongoDB', logo: 'mongodb', url: 'https://www.mongodb.com/university/certification' },
+      { tier: 'Advanced', required: 2, blurb: 'You architect distributed systems, lead system-design decisions, and own the reliability and data model of major services.', certs: [
+        { id: 'aws-sap-backend', name: 'AWS Certified Solutions Architect – Professional', issuer: 'Amazon Web Services', group: 'Cloud', url: 'https://aws.amazon.com/certification/' },
+        { id: 'confluent-ccdak', name: 'Confluent Certified Developer for Apache Kafka (CCDAK)', issuer: 'Confluent', group: 'Data', url: 'https://www.confluent.io/certification/' },
+        { id: 'mongodb-associate-dba', name: 'MongoDB Associate Database Administrator', issuer: 'MongoDB', group: 'Database', url: 'https://www.mongodb.com/university/certification' },
+        { id: 'gcp-pca-backend', name: 'Google Cloud Professional Cloud Architect', issuer: 'Google Cloud', group: 'Cloud', url: 'https://cloud.google.com/learn/certification' },
       ]},
-      { tier: 'Referent', blurb: 'The go-to system-design authority who sets backend standards, reviews critical architecture, and shapes the engineering community.', certs: [
-        { id: 'gcp-pca-backend', name: 'Google Cloud Professional Cloud Architect', issuer: 'Google Cloud', logo: 'gcp', url: 'https://cloud.google.com/learn/certification' },
-        { id: 'oss-framework-maintainer', name: 'Open-source maintainer (framework / library)', issuer: 'Recognition', logo: 'recognition', url: '' },
-        { id: 'backend-arb', name: 'Internal Architecture Review Board', issuer: 'Recognition', logo: 'recognition', url: '' },
+      { tier: 'Referent', required: 1, blurb: 'The go-to system-design authority who sets backend standards, reviews critical architecture, and shapes the engineering community.', certs: [
+        { id: 'oss-framework-maintainer', name: 'Open-source maintainer (framework / library)', issuer: 'Recognition', group: 'Recognition', url: '' },
+        { id: 'backend-arb', name: 'Internal Architecture Review Board', issuer: 'Recognition', group: 'Recognition', url: '' },
       ]},
     ],
   },

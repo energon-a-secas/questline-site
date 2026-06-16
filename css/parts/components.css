@@ -469,9 +469,6 @@ a, .btn, .nav-link, .ctab, .crow, .cscope, .ctag {
  * and a single action. No plain borders — the closed bevel carries the shape.
  */
 .focus__card {
-  --poly: polygon(16px 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%, 0 16px);
-  --bevel-line: var(--accent);
-  --bevel-fill: #0b1626;
   position: relative;
   display: grid;
   grid-template-columns: auto 1fr auto;
@@ -479,8 +476,15 @@ a, .btn, .nav-link, .ctab, .crow, .cscope, .ctag {
   align-items: center;
   margin-bottom: var(--space-6);
   padding: var(--space-6);
+  background: var(--accent);
+  border-radius: var(--radius-lg);
   box-shadow: 0 0 32px -10px var(--accent-glow), var(--shadow-card);
   animation: focusEnter 0.55s var(--ease-out-expo) both;
+}
+.focus__card::before {
+  content: ""; position: absolute; inset: 1px; z-index: 0;
+  background: #0b1626; border-radius: calc(var(--radius-lg) - 1px);
+  pointer-events: none;
 }
 @keyframes focusEnter {
   from { opacity: 0; transform: translateY(10px) scale(0.995); }
@@ -489,20 +493,22 @@ a, .btn, .nav-link, .ctab, .crow, .cscope, .ctag {
 /* Corner notch accent (same idiom as .cpanel::after). */
 .focus__card::after {
   content: ""; position: absolute; left: 0; top: 0; z-index: 2;
-  width: 16px; height: 16px;
-  background: linear-gradient(135deg, var(--accent) 0 2px, transparent 2px);
-  filter: drop-shadow(0 0 6px var(--accent-glow));
+  width: 10px; height: 10px; border-radius: 2px;
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent-glow);
   pointer-events: none;
 }
 .focus__glyph {
+  position: relative; z-index: 1;
   display: inline-flex; align-items: center; justify-content: center;
   width: 56px; height: 56px; flex-shrink: 0;
   color: var(--accent); background: var(--accent-soft);
-  clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+  border-radius: var(--radius-md);
 }
 .focus__glyph svg { filter: drop-shadow(0 0 6px var(--accent-glow)); }
-.focus__main { min-width: 0; }
+.focus__main { position: relative; z-index: 1; min-width: 0; }
 .focus__head {
+  position: relative; z-index: 1;
   display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-2);
 }
 .focus__kicker {
@@ -513,7 +519,7 @@ a, .btn, .nav-link, .ctab, .crow, .cscope, .ctag {
   font-size: var(--text-xs); font-weight: 700; text-transform: uppercase;
   letter-spacing: .1em; color: var(--gold);
   padding: 3px 10px; background: rgba(255,206,77,.12);
-  clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);
+  border-radius: var(--radius-sm);
 }
 .focus__title {
   font-size: var(--text-xl); font-weight: 600; color: #fff; letter-spacing: .01em;
@@ -541,25 +547,25 @@ a, .btn, .nav-link, .ctab, .crow, .cscope, .ctag {
  * the main dashboard but still reads as part of the game UI.
  */
 .tip__card {
-  --tip-poly: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
   position: relative;
   display: flex; align-items: flex-start; gap: var(--space-4);
   background: var(--surface-1); border: 1px solid var(--border);
-  clip-path: var(--tip-poly);
+  border-radius: var(--radius-md);
   padding: var(--space-4) var(--space-5);
   margin-bottom: var(--space-6);
   animation: fadeIn 0.45s var(--ease-out-expo) both;
 }
 .tip__card::before {
   content: ""; position: absolute; left: 0; top: 0; z-index: 2;
-  width: 10px; height: 10px;
-  background: linear-gradient(135deg, var(--accent) 0 1.5px, transparent 1.5px);
+  width: 8px; height: 8px; border-radius: 2px;
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent-glow);
   pointer-events: none;
 }
 .tip__icon {
   flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center;
   width: 32px; height: 32px; color: var(--accent); background: var(--accent-soft);
-  clip-path: polygon(5px 0, 100% 0, 100% calc(100% - 5px), calc(100% - 5px) 100%, 0 100%, 0 5px);
+  border-radius: var(--radius-sm);
 }
 .tip__main { flex: 1; min-width: 0; }
 .tip__kicker {

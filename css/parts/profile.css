@@ -4,7 +4,99 @@
 
 .cprofile { display: flex; flex-direction: column; gap: var(--space-4); }
 
-/* ── Class picker ───────────────────────────────────────────── */
+/* ── Candidate level banner ─────────────────────────────────── */
+.cprofile__level {
+  display: flex; align-items: center; gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: linear-gradient(90deg, rgba(47,217,255,.12), transparent);
+  border: 1px solid var(--accent-soft);
+  border-radius: var(--radius-md);
+}
+.cprofile__level-label {
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  color: var(--text-muted);
+}
+.cprofile__level-name {
+  font-weight: 700;
+  font-size: var(--text-base);
+  color: var(--accent-bright);
+}
+.cprofile__level-pips {
+  margin-left: auto;
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--accent);
+}
+
+/* ── Dedicated class-select screen ──────────────────────────── */
+/* Character-creation style: a grid of large faceted crest plates, one per
+   class, that toggle selection (up to two), then a Confirm bar. */
+.cclass-select__lead {
+  font-size: var(--text-sm); color: var(--text-secondary); line-height: 1.6;
+  max-width: 60ch; margin-bottom: var(--space-5, 20px);
+}
+.cclass-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-4);
+}
+.cclass-card {
+  position: relative;
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: var(--space-6) var(--space-4) var(--space-4);
+  cursor: pointer; font-family: inherit; text-align: center;
+  color: var(--text-secondary);
+  background:
+    radial-gradient(120% 80% at 50% 0%, color-mix(in srgb, var(--crest-color, var(--accent)) 14%, transparent) 0%, transparent 60%),
+    var(--surface-raise);
+  border: 1px solid var(--dbh-edge);
+  border-radius: var(--radius-md);
+  box-shadow: var(--surface-raise-hi), 0 10px 22px -12px rgba(2,6,23,.6);
+  transition: transform var(--dur) var(--ease-out-quint), border-color var(--dur), box-shadow var(--dur), color var(--dur);
+}
+.cclass-card:hover {
+  transform: translateY(-3px); color: #fff;
+  border-color: var(--crest-color, var(--accent));
+  box-shadow: var(--surface-raise-hi), 0 18px 30px -12px rgba(2,6,23,.7), 0 0 22px -6px var(--crest-color, var(--accent));
+}
+.cclass-card:focus-visible { outline: 2px solid var(--accent-bright); outline-offset: 2px; }
+.cclass-card.is-active {
+  color: #fff;
+  border-color: var(--crest-color, var(--accent));
+  box-shadow: inset 0 0 0 1px var(--crest-color, var(--accent)), 0 0 26px -4px var(--crest-color, var(--accent));
+}
+.cclass-card.is-full { opacity: .55; }
+.cclass-card.is-full:hover { transform: none; }
+.cclass-card__pick {
+  position: absolute; top: 10px; right: 10px;
+  width: 22px; height: 22px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  color: #06121f; background: transparent;
+  transition: background var(--dur);
+}
+.cclass-card.is-active .cclass-card__pick { background: var(--crest-color, var(--accent)); }
+.cclass-card__title { font-weight: 700; font-size: var(--text-base); letter-spacing: .01em; margin-top: var(--space-2); }
+.cclass-card__tagline { font-size: var(--text-xs); color: var(--text-muted); line-height: 1.4; max-width: 24ch; }
+.cclass-card__count { font-family: var(--font-mono); font-size: var(--text-xs); color: var(--crest-color, var(--accent)); font-variant-numeric: tabular-nums; margin-top: 2px; }
+
+.cclass-actions {
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--space-3);
+  margin-top: var(--space-5, 20px);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border-subtle);
+}
+.cclass-actions__count { font-family: var(--font-mono); font-size: var(--text-sm); color: var(--text-secondary); font-variant-numeric: tabular-nums; letter-spacing: .04em; }
+.cclass-actions__btns { display: flex; gap: var(--space-2); }
+.btn.is-disabled { opacity: .45; cursor: not-allowed; }
+
+.cprofile__changebar {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--space-3);
+}
+.cprofile__changelabel { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .12em; color: var(--text-muted); }
+
+/* ── Class picker (legacy inline; superseded by the select screen) ─── */
 /* Capped at 3 columns so ultra-wide screens do not spread 4 cards too thin. */
 .cclasses {
   display: grid;
@@ -18,24 +110,38 @@
 .cclass {
   display: flex; align-items: center; gap: var(--space-3); text-align: left;
   padding: var(--space-3) var(--space-4); cursor: pointer; font-family: inherit;
-  color: var(--text-secondary); background: var(--surface-1); border: 1px solid var(--dbh-edge);
-  clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
-  transition: background var(--dur), color var(--dur), border-color var(--dur), transform var(--dur) var(--ease-out-quint);
+  color: var(--text-secondary); border: 1px solid var(--dbh-edge);
+  border-radius: 10px;
+  /* Elevation ramp + a faint left-edge wash in the class's own colour, so each
+     crest's identity bleeds into its whole card rather than only the chip. */
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--crest-color, var(--accent)) 14%, transparent) 0%, transparent 38%),
+    var(--surface-raise);
+  box-shadow: var(--surface-raise-hi), 0 10px 22px -12px rgba(2,6,23,.6);
+  transition: background var(--dur), color var(--dur), border-color var(--dur),
+    border-radius var(--dur) var(--ease-out-expo), transform var(--dur) var(--ease-out-quint),
+    box-shadow var(--dur);
 }
-.cclass:hover { border-color: var(--accent); color: #fff; transform: translateY(-2px); }
+.cclass:hover { border-color: var(--crest-color, var(--accent)); color: #fff; transform: translateY(-2px);
+  box-shadow: var(--surface-raise-hi), 0 16px 30px -12px rgba(2,6,23,.7), 0 0 18px -6px var(--crest-color, var(--accent)); }
 .cclass.is-active {
-  border-color: var(--accent); background: var(--accent-soft); color: #fff;
-  box-shadow: inset 0 0 0 1px var(--accent), 0 0 20px -6px var(--accent-glow);
+  border-color: var(--crest-color, var(--accent)); color: #fff;
+  border-radius: 999px;
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--crest-color, var(--accent)) 26%, transparent) 0%, transparent 55%),
+    var(--surface-raise);
+  box-shadow: inset 0 0 0 1px var(--crest-color, var(--accent)), 0 0 24px -4px var(--crest-color, var(--accent));
 }
 .cclass__main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .cclass__title { font-weight: 700; letter-spacing: .01em; font-size: var(--text-base); }
 .cclass__tagline { font-size: var(--text-xs); color: var(--text-muted); }
 .cclass__count {
-  flex-shrink: 0; font-size: var(--text-sm); font-weight: 700; color: var(--accent);
+  flex-shrink: 0; font-family: var(--font-mono); font-size: var(--text-sm); font-weight: 700;
+  color: var(--crest-color, var(--accent));
   font-variant-numeric: tabular-nums;
 }
 
-/* Faceted class crest plate (48–64 px). */
+/* Class crest: square when unselected, animates to a glowing circle when active. */
 .cclass__crest, .cprofile__crest {
   position: relative; flex-shrink: 0;
   width: var(--crest-size, 56px); height: var(--crest-size, 56px);
@@ -43,12 +149,21 @@
   color: var(--crest-color, var(--accent));
   background: rgba(255,255,255,.08);
   border: 1px solid var(--crest-color, var(--accent));
-  clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+  border-radius: 10px;
+  transition: border-radius var(--dur) var(--ease-out-expo),
+    transform var(--dur) var(--ease-out-expo),
+    box-shadow var(--dur), background var(--dur);
+}
+.cclass.is-active .cclass__crest {
+  border-radius: 50%;
+  transform: scale(1.08);
+  background: rgba(255,255,255,.18);
+  box-shadow: 0 0 22px var(--crest-color, var(--accent));
 }
 .cclass__crest::before, .cprofile__crest::before {
   content: ""; position: absolute; inset: 1px; z-index: 0;
   background: rgba(0,0,0,.25);
-  clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+  border-radius: inherit;
 }
 .cclass__crest-symbol, .cprofile__crest-symbol {
   position: relative; z-index: 1;
@@ -56,40 +171,74 @@
   font-weight: 700; line-height: 1;
 }
 
-/* Empty-state crest illustration. */
-.cprofile__empty { display: flex; flex-direction: column; align-items: center; gap: var(--space-3); text-align: center; padding: var(--space-8) var(--space-6); }
+/* Empty-state crest illustration. Ambient HUD framing fills the otherwise-vast
+   empty panel: a faint dotted grid + a soft radial halo behind the crest, so it
+   reads as a "no selection" console state rather than an unfinished screen. */
+.cprofile__empty {
+  position: relative; overflow: hidden;
+  display: flex; flex-direction: column; align-items: center; gap: var(--space-3);
+  text-align: center; padding: clamp(var(--space-8), 7vw, 64px) var(--space-6);
+}
+.cprofile__empty::after {
+  content: ""; position: absolute; inset: 1px; z-index: 0; pointer-events: none;
+  border-radius: inherit;
+  background:
+    radial-gradient(46% 60% at 50% 32%, var(--accent-soft) 0%, transparent 62%),
+    radial-gradient(circle, rgba(140,190,235,.07) 1px, transparent 1.4px);
+  background-size: auto, 22px 22px;
+  -webkit-mask-image: radial-gradient(70% 70% at 50% 40%, #000 0%, transparent 78%);
+  mask-image: radial-gradient(70% 70% at 50% 40%, #000 0%, transparent 78%);
+}
+.cprofile__empty > * { position: relative; z-index: 1; }
 .cprofile__empty .clead { max-width: 56ch; }
 .cprofile__emptycta {
-  margin-top: var(--space-2);
+  margin-top: var(--space-2); font-family: var(--font-mono);
   font-size: var(--text-sm); color: var(--accent); letter-spacing: .08em; text-transform: uppercase;
 }
 .cprofile__crest { --crest-size: 88px; --crest-color: var(--accent); }
+/* When the crest holds an SVG icon (not a text glyph), centre + size it. */
+.cprofile__crest-icon { display: inline-flex; align-items: center; justify-content: center; color: var(--crest-color, var(--accent)); }
+.cprofile__crest-icon svg { width: 40px; height: 40px; }
 
 /* Class sheet header. */
 .cprofile__head { display: flex; align-items: flex-start; gap: var(--space-4); margin-bottom: var(--space-4); }
 .cprofile__heading { flex: 1; min-width: 0; }
+.crules-btn {
+  flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; padding: 0;
+  color: var(--text-muted); background: transparent; border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm); cursor: pointer;
+  transition: color var(--dur), background var(--dur), border-color var(--dur);
+}
+.crules-btn:hover { color: var(--accent-bright); background: var(--accent-soft); border-color: var(--accent); }
 
 /* ── Certification ladder ───────────────────────────────────── */
 .cladder-rungs { display: flex; flex-direction: column; gap: var(--space-4); margin-top: var(--space-5, 20px); }
 
-/* Closed-bevel faceted rung panel with a colored corner tick. */
+/* Faceted rung plate with a diagonal accent tick on the cut corner — same
+   plate language as cpanel/cchapter, one bevel size smaller. */
 .crung {
-  --poly: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
   position: relative;
+  --rung-bevel: var(--bevel-sm);
   background: var(--rung-rim, var(--dbh-edge));
-  clip-path: var(--poly);
+  clip-path: polygon(var(--rung-bevel) 0, 100% 0, 100% calc(100% - var(--rung-bevel)),
+    calc(100% - var(--rung-bevel)) 100%, 0 100%, 0 var(--rung-bevel));
   padding: var(--space-4);
 }
 .crung::before {
   content: ""; position: absolute; inset: 1px; z-index: 0;
-  background: var(--dbh-panel); clip-path: var(--poly); pointer-events: none;
+  background: var(--surface-raise); box-shadow: var(--surface-raise-hi);
+  clip-path: polygon(var(--rung-bevel) 0, 100% 0, 100% calc(100% - var(--rung-bevel)),
+    calc(100% - var(--rung-bevel)) 100%, 0 100%, 0 var(--rung-bevel));
+  pointer-events: none;
 }
 .crung > * { position: relative; z-index: 1; }
 .crung::after {
-  content: ""; position: absolute; left: 0; top: 0; z-index: 2;
-  width: 10px; height: 10px;
-  background: linear-gradient(135deg, var(--rung-accent, var(--accent)) 0 1.5px, transparent 1.5px);
-  filter: drop-shadow(0 0 6px var(--rung-accent, var(--accent)));
+  content: ""; position: absolute; left: -1px; top: var(--rung-bevel); z-index: 2;
+  width: 2px; height: calc(var(--rung-bevel) * 1.42);
+  background: var(--rung-accent, var(--accent));
+  box-shadow: 0 0 8px var(--rung-accent, var(--accent));
+  transform-origin: top left; transform: rotate(-45deg);
   pointer-events: none;
 }
 .crung--entry { --rung-accent: #8fd0ff; }
@@ -104,6 +253,11 @@
   color: var(--rung-accent, var(--accent));
 }
 .crung__blurb { flex: 1; min-width: 200px; font-size: var(--text-sm); color: var(--text-muted); line-height: 1.5; }
+.crung__meta {
+  margin-left: auto; font-size: var(--text-xs); font-weight: 600;
+  color: var(--text-muted); letter-spacing: .06em; text-transform: uppercase;
+}
+.crung.is-complete .crung__meta { color: var(--dbh-done); }
 
 /* Tier-initial badge (E / I / A / R). */
 .crung__badge {
@@ -111,24 +265,24 @@
   display: inline-flex; align-items: center; justify-content: center;
   font-size: 10px; font-weight: 700; color: #04210f;
   background: var(--rung-accent, var(--accent));
-  clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);
+  border-radius: 4px;
 }
 
 /* ── Certification rows ─────────────────────────────────────── */
 .ccerts { display: flex; flex-direction: column; gap: var(--space-2); }
 .ccert {
-  --cert-poly: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
   position: relative;
   display: flex; align-items: stretch;
   background: var(--cert-rim, var(--border-subtle));
-  clip-path: var(--cert-poly);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
 }
 .ccert::before {
   content: ""; position: absolute; inset: 1px; z-index: 0;
-  background: var(--cert-fill, var(--dbh-panel)); clip-path: var(--cert-poly); pointer-events: none;
+  background: var(--cert-fill, var(--dbh-panel)); border-radius: calc(var(--radius-sm) - 1px); pointer-events: none;
 }
 .ccert > * { position: relative; z-index: 1; }
-.ccert.is-editing { --cert-rim: var(--accent); }
+.ccert.is-editing { --cert-rim: var(--accent); --cert-fill: rgba(5,10,20,.82); }
 .ccert--earned { --cert-rim: var(--dbh-done); }
 .ccert--in-progress { --cert-rim: var(--gold); }
 .ccert--expired { --cert-rim: var(--danger); }
@@ -138,6 +292,7 @@
   padding: 10px 12px; color: var(--text-secondary);
 }
 .ccert:hover { --cert-fill: var(--surface-2); }
+.ccert.is-editing:hover { --cert-fill: rgba(5,10,20,.85); }
 
 .ccert__edit {
   flex-shrink: 0; align-self: stretch;
@@ -150,25 +305,29 @@
 .ccert__edit:focus-visible { outline: 2px solid var(--accent-bright); outline-offset: -2px; }
 .ccert.is-editing .ccert__edit { color: var(--accent-bright); background: var(--accent-soft); }
 
-/* Issuer logo badge (28 px faceted plate). */
+/* Issuer logo badge (28 px rounded plate). */
 .ccert__badge {
   flex-shrink: 0; width: 28px; height: 28px;
   display: inline-flex; align-items: center; justify-content: center;
   color: var(--accent);
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  padding: 3px;
 }
-.ccert__badge svg { width: 100%; height: 100%; }
+.ccert__badge svg,
+.ccert__badge img { width: 100%; height: 100%; object-fit: contain; }
 
-/* Faceted checkbox-style status glyph. */
+/* Rounded checkbox-style status glyph. */
 .ccert__status-glyph {
-  --sg-poly: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);
   position: relative; flex-shrink: 0; width: 22px; height: 22px;
   display: inline-flex; align-items: center; justify-content: center;
   color: transparent; background: var(--border-strong);
-  clip-path: var(--sg-poly);
+  border-radius: 4px;
 }
 .ccert__status-glyph::before {
   content: ""; position: absolute; inset: 1.5px; z-index: 0;
-  background: var(--dbh-panel); clip-path: var(--sg-poly);
+  background: var(--dbh-panel); border-radius: 3px;
 }
 .ccert__status-glyph > svg { position: relative; z-index: 1; }
 .ccert--earned .ccert__status-glyph {
@@ -190,6 +349,15 @@
 }
 .ccert__issuer--link:hover { color: #fff; text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 2px; }
 .ccert__issuer--link svg { flex-shrink: 0; }
+.ccert__issuerline {
+  display: flex; align-items: center; gap: var(--space-2);
+  min-width: 0;
+}
+.ccert__group {
+  flex-shrink: 0; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em;
+  color: var(--accent); background: var(--accent-soft); padding: 1px 6px;
+  border-radius: 3px;
+}
 
 .ccert__status {
   flex-shrink: 0; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em;

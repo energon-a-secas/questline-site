@@ -48,10 +48,10 @@
 }
 
 /* Topology colors are driven by data attributes so the JS never needs inline styles. */
-[data-topology="stream-aligned"] { --lane-color: #f59e0b; --team-color: #f59e0b; }
-[data-topology="platform"] { --lane-color: #2aa8ff; --team-color: #2aa8ff; }
-[data-topology="enabling"] { --lane-color: #34d399; --team-color: #34d399; }
-[data-topology="complicated-subsystem"] { --lane-color: #b08cff; --team-color: #b08cff; }
+[data-topology="stream-aligned"] { --lane-color: var(--hue-amber); --team-color: var(--hue-amber); }
+[data-topology="platform"] { --lane-color: var(--hue-azure); --team-color: var(--hue-azure); }
+[data-topology="enabling"] { --lane-color: var(--hue-teal); --team-color: var(--hue-teal); }
+[data-topology="complicated-subsystem"] { --lane-color: var(--hue-violet); --team-color: var(--hue-violet); }
 
 /* ── Topology map ──────────────────────────────────────────── */
 
@@ -89,9 +89,9 @@
 }
 .catlas__map[data-highlight-team] .catlas__edge.is-focused { opacity: 1; }
 
-.catlas__edge--collaboration { stroke: #f59e0b; stroke-dasharray: .2 .15; }
-.catlas__edge--x-as-a-service { stroke: #2aa8ff; }
-.catlas__edge--facilitating { stroke: #34d399; stroke-dasharray: .08 .12; }
+.catlas__edge--collaboration { stroke: var(--hue-amber); stroke-dasharray: .2 .15; }
+.catlas__edge--x-as-a-service { stroke: var(--hue-azure); }
+.catlas__edge--facilitating { stroke: var(--hue-teal); stroke-dasharray: .08 .12; }
 
 .catlas__lanes {
   position: relative;
@@ -147,7 +147,7 @@
   background: var(--team-color, var(--dbh-edge));
   clip-path: var(--plate-poly);
   padding: var(--space-3);
-  filter: drop-shadow(0 10px 20px rgba(2,6,23,.4));
+  filter: drop-shadow(0 10px 20px var(--scrim-soft));
   transition: transform .12s, filter .12s, color .12s;
 }
 .catlas__card::before {
@@ -168,7 +168,7 @@
 
 .catlas__card:hover {
   transform: translateY(-2px);
-  filter: drop-shadow(0 16px 28px rgba(2,6,23,.55)) drop-shadow(0 0 14px var(--team-color, var(--accent-glow)));
+  filter: drop-shadow(0 16px 28px var(--scrim)) drop-shadow(0 0 14px var(--team-color, var(--accent-glow)));
 }
 
 .catlas__map[data-highlight-team] .catlas__card.is-dimmed {
@@ -238,9 +238,9 @@
   width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
   background: var(--text-muted);
 }
-.catlas__link-dot--collaboration { background: #f59e0b; }
-.catlas__link-dot--x-as-a-service { background: #2aa8ff; }
-.catlas__link-dot--facilitating { background: #34d399; }
+.catlas__link-dot--collaboration { background: var(--hue-amber); }
+.catlas__link-dot--x-as-a-service { background: var(--hue-azure); }
+.catlas__link-dot--facilitating { background: var(--hue-teal); }
 .catlas__card:focus-visible {
   outline: 2px solid var(--accent-bright); outline-offset: 2px;
 }
@@ -274,17 +274,17 @@
 }
 
 .catlas__legend-item--collaboration .catlas__legend-dot {
-  background: #f59e0b;
-  background-image: repeating-linear-gradient(90deg, #f59e0b 0 6px, transparent 6px 10px);
+  background: var(--hue-amber);
+  background-image: repeating-linear-gradient(90deg, var(--hue-amber) 0 6px, transparent 6px 10px);
 }
 
 .catlas__legend-item--x-as-a-service .catlas__legend-dot {
-  background: #2aa8ff;
+  background: var(--hue-azure);
 }
 
 .catlas__legend-item--facilitating .catlas__legend-dot {
-  background: #34d399;
-  background-image: repeating-linear-gradient(90deg, #34d399 0 4px, transparent 4px 8px);
+  background: var(--hue-teal);
+  background-image: repeating-linear-gradient(90deg, var(--hue-teal) 0 4px, transparent 4px 8px);
 }
 
 /* ── Customer-needs matrix ─────────────────────────────────── */
@@ -294,7 +294,7 @@
   overflow-x: auto;
   background: var(--dbh-edge);
   clip-path: var(--plate-poly);
-  filter: drop-shadow(0 16px 30px rgba(2,6,23,.5));
+  filter: drop-shadow(0 16px 30px var(--scrim));
 }
 .catlas__matrix-wrap::before {
   content: ""; position: absolute; inset: 1px; z-index: 0;
@@ -460,15 +460,15 @@
 }
 
 .catlas__result-box.is-success {
-  background: color-mix(in srgb, #34d399 14%, transparent);
-  border: 1px solid color-mix(in srgb, #34d399 45%, transparent);
-  color: #a7f3d0;
+  background: color-mix(in srgb, var(--hue-teal) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--hue-teal) 45%, transparent);
+  color: var(--hue-teal);
 }
 
 .catlas__result-box.is-error {
-  background: color-mix(in srgb, #f87171 14%, transparent);
-  border: 1px solid color-mix(in srgb, #f87171 45%, transparent);
-  color: #fecaca;
+  background: color-mix(in srgb, var(--hue-rose) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--hue-rose) 45%, transparent);
+  color: var(--hue-rose);
 }
 
 .catlas__result-box ul {

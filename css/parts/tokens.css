@@ -1,0 +1,258 @@
+/* ════════════════════════════════════════════════════════════
+   Questline — design tokens
+   ────────────────────────────────────────────────────────────
+   Single source of truth for color, type, spacing, shape.
+
+   Two first-class themes:
+     dark (default)  "Night console"  — deep navy, azure accent
+     light           "Day clinical"   — Detroit-style off-white
+
+   Components must consume these vars, never hardcoded colors.
+   Theme is set via <html data-theme="light|dark"> by js/theme-boot.js
+   ════════════════════════════════════════════════════════════ */
+
+:root {
+  color-scheme: dark;
+
+  /* ── Palette: Night console ─────────────────────────────── */
+  --bg: #0a1424;
+  --bg-wash-a: rgba(47, 217, 255, .045);   /* corner ambience, azure */
+  --bg-wash-b: rgba(176, 21, 176, .04);    /* corner ambience, violet */
+
+  --text-primary: #f0f6ff;
+  --text-secondary: #cbdaf0;
+  --text-muted: rgba(202, 222, 248, .68);
+  --text-faint: rgba(202, 222, 248, .44);  /* locked/disabled copy */
+
+  --accent: #2aa8ff;
+  --accent-bright: #6fd0ff;
+  --accent-soft: rgba(42, 168, 255, .16);
+  --accent-glow: rgba(42, 168, 255, .50);
+  --ink-on-accent: #06121f;                /* text on azure fills */
+
+  --gold: #ffce4d;                         /* limited-time events only */
+  --gold-soft: rgba(255, 206, 77, .16);
+  --gold-glow: rgba(255, 206, 77, .40);
+  --ink-on-gold: #1a1400;
+
+  --success: #34d399;
+  --success-soft: rgba(52, 211, 153, .35);
+  --success-glow: rgba(52, 211, 153, .5);
+  --ink-on-success: #04210f;
+  --violet: #b08cff;                       /* secondary category hue */
+  --violet-soft: rgba(176, 140, 255, .18);
+  --violet-glow: rgba(176, 140, 255, .40);
+  --danger: #e11d48;
+  --danger-hover: #f43f5e;
+  --danger-soft: rgba(225, 29, 72, .42);
+  --ink-on-danger: #ffffff;
+
+  /* Class hues (Profile) — categorical, not interactive accents */
+  --hue-azure: #2aa8ff;
+  --hue-teal: #34d399;
+  --hue-violet: #b08cff;
+  --hue-amber: #f59e0b;
+  --hue-rose: #f87171;
+
+  /* ── Surfaces & borders ─────────────────────────────────── */
+  --surface-1: rgba(140, 190, 235, .045);
+  --surface-2: rgba(140, 190, 235, .08);
+  --surface-3: rgba(140, 190, 235, .12);
+  --surface-toast: #122039;
+  --border-subtle: rgba(140, 190, 235, .10);
+  --border: rgba(140, 190, 235, .16);
+  --border-strong: rgba(140, 190, 235, .30);
+
+  /* Elevation ramp — physical HUD plates (lit top edge, deep base) */
+  --surface-raise: linear-gradient(180deg, #14274a 0%, #101f3a 60%, #0e1c34 100%);
+  --surface-raise-hi: inset 0 1px 0 rgba(150, 200, 255, .14);
+  --plate-edge: rgba(130, 180, 225, .28);
+
+  /* ── Scrims & shadows ───────────────────────────────────── */
+  --scrim-strong: rgba(2, 6, 23, .9);
+  --scrim-modal: rgba(2, 4, 12, .78);
+  --scrim: rgba(2, 6, 23, .6);
+  --scrim-soft: rgba(2, 6, 23, .4);
+  --shadow-card: 0 12px 28px rgba(2, 6, 23, .5);
+  --shadow-modal: 0 24px 48px rgba(2, 6, 23, .58);
+  --shadow-plate: 0 18px 40px -14px rgba(2, 6, 23, .7), 0 4px 14px -8px rgba(2, 6, 23, .6);
+  --shadow-plate-hi: 0 26px 54px -16px rgba(2, 6, 23, .78), 0 6px 18px -8px rgba(2, 6, 23, .62);
+
+  /* ── Header ─────────────────────────────────────────────── */
+  --header-bg:
+    radial-gradient(120% 180% at 0% -40%, rgba(176, 140, 255, .18) 0%, transparent 55%),
+    linear-gradient(135deg, #122a52 0%, #0c1c3c 48%, #070e1a 100%);
+  --header-text: #ffffff;
+  --header-text-dim: rgba(255, 255, 255, .85);
+  --header-hover: rgba(140, 190, 235, .14);
+  --header-logo-filter: brightness(0) invert(1);
+
+  /* ── Tabs ───────────────────────────────────────────────── */
+  --tab-active-bg: linear-gradient(180deg, #e8f4ff 0%, #c2e6ff 100%);
+  --tab-active-text: #06121f;
+  --tab-active-hi: inset 0 1px 0 rgba(255, 255, 255, .85);
+
+  /* ── Banner plates stay dark in BOTH themes (media plates) ─ */
+  --banner-fill: #0b1626;
+  --banner-fill-hi: #0d1a30;
+  --banner-text: #ffffff;
+  --banner-text-dim: rgba(230, 240, 252, .78);
+
+  /* Media-plate palette extension. Event banners, the daily dispatch, the
+     reader modal, and the focus card keep a dark navy fill in BOTH themes —
+     the themed accent/text vars above flip in light mode and would die on
+     the dark fill, so everything inside a media plate consumes these
+     plate-local vars instead. Deliberately NOT overridden in the light
+     block below. */
+  --banner-fill-deep: #070e1a;              /* reader / daily / modal plates */
+  --banner-text-faint: rgba(202, 222, 248, .5);
+  --banner-azure: #2aa8ff;
+  --banner-azure-bright: #6fd0ff;
+  --banner-azure-soft: rgba(42, 168, 255, .16);
+  --banner-azure-glow: rgba(42, 168, 255, .5);
+  --banner-gold: #ffce4d;
+  --banner-gold-soft: rgba(255, 206, 77, .14);
+  --banner-gold-glow: rgba(255, 206, 77, .4);
+  --banner-violet: #b08cff;
+  --banner-violet-soft: rgba(176, 140, 255, .18);
+  --banner-violet-glow: rgba(176, 140, 255, .4);
+  --banner-success: #34d399;
+  --banner-ink: #06121f;                    /* ink on azure fills */
+  --banner-ink-on-gold: #1a1400;
+  --banner-ink-on-success: #04210f;
+  --banner-border: rgba(140, 190, 235, .16);
+  --banner-surface: rgba(140, 190, 235, .08);
+
+  /* ── Typography: 3 roles, nothing else ────────────────────
+     display — page titles only (thin, wide-tracked, uppercase)
+     body    — all reading copy
+     mono    — kickers, labels, metadata, numerics             */
+  --font: 'Avenir Next', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  --font-mono: ui-monospace, 'SFMono-Regular', 'Cascadia Code', 'Source Code Pro', Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
+  --text-xs: 0.75rem; --text-sm: 0.875rem; --text-base: 1rem;
+  --text-lg: 1.125rem; --text-xl: 1.25rem; --text-2xl: 1.5rem;
+  --leading-body: 1.58;
+
+  /* Micro-label rhythm — kickers were over-tracked (.24em at 11px
+     reads as noise); .14em at 12px stays HUD without the squint. */
+  --micro-size: var(--text-xs);
+  --micro-track: .14em;
+
+  /* ── Spacing (4px grid) ─────────────────────────────────── */
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
+  --space-5: 20px; --space-6: 24px; --space-8: 32px;
+
+  /* ── Shape ────────────────────────────────────────────────
+     Plates are faceted (bevels), controls rounded, pills round. */
+  --bevel-lg: 14px;
+  --bevel: 10px;
+  --bevel-sm: 6px;
+  --radius-sm: 6px; --radius: 10px; --radius-md: 12px; --radius-lg: 15px;
+  --card-min: 240px;
+  --plate-poly: polygon(var(--bevel) 0, 100% 0, 100% calc(100% - var(--bevel)),
+    calc(100% - var(--bevel)) 100%, 0 100%, 0 var(--bevel));
+
+  /* ── Motion ─────────────────────────────────────────────── */
+  --ease-snap: cubic-bezier(0.34, 1.56, 0.64, 1);   /* brand logo hover only */
+  --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-fast: 120ms; --dur: 200ms;
+
+  /* ── Controls & layers ──────────────────────────────────── */
+  --control-height: 44px;
+  --control-height-sm: 36px;
+  --z-sticky-header: 200;
+  --z-modal: 400;
+  --z-toast: 500;
+
+  /* Aliases kept for view modules */
+  --dbh-cyan: var(--accent);
+  --dbh-cyan-soft: var(--accent-soft);
+  --dbh-cyan-glow: var(--accent-glow);
+  --dbh-panel: rgba(14, 28, 52, .88);
+  --dbh-panel-2: rgba(18, 34, 60, .92);
+  --dbh-edge: var(--plate-edge);
+  --dbh-done: var(--success);
+  --qprog-fill: linear-gradient(90deg, var(--accent), var(--accent-bright));
+}
+
+/* ════════════════════════════════════════════════════════════
+   Day clinical — Detroit-style light theme
+   ════════════════════════════════════════════════════════════ */
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --bg: #edf0f6;
+  --bg-wash-a: rgba(0, 114, 207, .05);
+  --bg-wash-b: rgba(0, 114, 207, .03);
+
+  --text-primary: #0f1a2e;
+  --text-secondary: #33445e;
+  --text-muted: rgba(15, 26, 46, .64);
+  --text-faint: rgba(15, 26, 46, .42);
+
+  --accent: #0072cf;
+  --accent-bright: #0090e8;
+  --accent-soft: rgba(0, 114, 207, .10);
+  --accent-glow: rgba(0, 114, 207, .30);
+  --ink-on-accent: #ffffff;
+
+  --gold: #a87708;
+  --gold-soft: rgba(168, 119, 8, .12);
+  --gold-glow: rgba(168, 119, 8, .28);
+  --ink-on-gold: #ffffff;
+
+  --success: #0c9a67;
+  --success-soft: rgba(12, 154, 103, .22);
+  --success-glow: rgba(12, 154, 103, .35);
+  --ink-on-success: #ffffff;
+  --violet: #7c5cd6;
+  --violet-soft: rgba(124, 92, 214, .12);
+  --violet-glow: rgba(124, 92, 214, .28);
+  --danger: #d61f4b;
+  --danger-hover: #b8173e;
+  --danger-soft: rgba(214, 31, 75, .25);
+  --ink-on-danger: #ffffff;
+
+  --hue-azure: #0072cf;
+  --hue-teal: #0c9a67;
+  --hue-violet: #7c5cd6;
+  --hue-amber: #a87708;
+  --hue-rose: #d64550;
+
+  --surface-1: rgba(15, 42, 84, .04);
+  --surface-2: rgba(15, 42, 84, .07);
+  --surface-3: rgba(15, 42, 84, .11);
+  --surface-toast: #0f1a2e;
+  --border-subtle: rgba(15, 42, 84, .10);
+  --border: rgba(15, 42, 84, .16);
+  --border-strong: rgba(15, 42, 84, .30);
+
+  --surface-raise: linear-gradient(180deg, #ffffff 0%, #f4f7fc 60%, #eef2f9 100%);
+  --surface-raise-hi: inset 0 1px 0 rgba(255, 255, 255, .9);
+  --plate-edge: rgba(15, 42, 84, .22);
+
+  --scrim-strong: rgba(15, 26, 46, .88);
+  --scrim-modal: rgba(15, 26, 46, .62);
+  --scrim: rgba(15, 26, 46, .5);
+  --scrim-soft: rgba(15, 26, 46, .3);
+  --shadow-card: 0 10px 24px rgba(15, 26, 46, .10);
+  --shadow-modal: 0 24px 48px rgba(15, 26, 46, .22);
+  --shadow-plate: 0 14px 32px -14px rgba(15, 26, 46, .18), 0 3px 10px -6px rgba(15, 26, 46, .10);
+  --shadow-plate-hi: 0 20px 44px -16px rgba(15, 26, 46, .22), 0 5px 14px -7px rgba(15, 26, 46, .12);
+
+  --header-bg:
+    radial-gradient(120% 180% at 0% -40%, rgba(0, 114, 207, .08) 0%, transparent 55%),
+    linear-gradient(135deg, #ffffff 0%, #eef2f9 52%, #e2e9f4 100%);
+  --header-text: #0f1a2e;
+  --header-text-dim: rgba(15, 26, 46, .72);
+  --header-hover: rgba(15, 42, 84, .08);
+  --header-logo-filter: brightness(0);
+
+  --tab-active-bg: linear-gradient(180deg, #16263f 0%, #0f1a2e 100%);
+  --tab-active-text: #ffffff;
+  --tab-active-hi: inset 0 1px 0 rgba(255, 255, 255, .18);
+
+  --dbh-panel: rgba(255, 255, 255, .9);
+  --dbh-panel-2: rgba(244, 247, 252, .94);
+}

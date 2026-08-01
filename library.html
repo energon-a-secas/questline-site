@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; form-action 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; worker-src 'self'">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <title>Component Library | Questline</title>
+  <meta name="description" content="Questline design system — tokens and every component variant, rendered live with copyable markup">
+  <meta name="robots" content="noindex">
+  <link rel="icon" type="image/x-icon" href="favicon.ico" />
+  <!-- Same stylesheets the app loads — specimens render with production CSS -->
+  <link rel="stylesheet" href="css/parts/tokens.css">
+  <link rel="stylesheet" href="css/parts/base.css">
+  <link rel="stylesheet" href="css/parts/components.css">
+  <link rel="stylesheet" href="css/parts/flow.css">
+  <link rel="stylesheet" href="css/parts/console.css">
+  <link rel="stylesheet" href="css/parts/profile.css">
+  <link rel="stylesheet" href="css/parts/daily.css">
+  <link rel="stylesheet" href="css/parts/atlas.css">
+  <link rel="stylesheet" href="css/parts/library.css">
+  <!-- Theme must be set before first paint; CSP forbids inline scripts -->
+  <script src="js/theme-boot.js"></script>
+</head>
+<body class="lib">
+
+  <a class="skip-link" href="#libContent">Skip to content</a>
+
+  <header class="header-bar">
+    <div class="header-logo">
+      <a href="https://neorgon.com/" target="_blank" rel="noopener noreferrer">
+        <img src="energon-classic-logo.png" class="header-logo-img" alt="Neorgon home">
+      </a>
+      <a href="./" class="header-title-link">
+        <h1>Questline</h1>
+        <div class="header-subtitle">Component library</div>
+      </a>
+    </div>
+
+    <button type="button" class="header-theme" id="themeToggle" aria-label="Switch theme" title="Switch theme"></button>
+
+    <a class="header-home" href="./" title="Back to Questline" aria-label="Back to Questline">
+      <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+        <path d="M11.6 4.4 4.8 11.2l6.8 6.8 1.4-1.4-4.4-4.4H20v-2H8.6l4.4-4.4z"/>
+      </svg>
+    </a>
+  </header>
+
+  <main class="lib__main">
+    <nav class="lib__nav" id="libNav" aria-label="Library sections"></nav>
+    <div class="lib__content" id="libContent"></div>
+  </main>
+
+  <footer class="info-footer">
+    <a class="footer-link" href="./">&larr; Back to the console</a> &middot;
+    Every specimen uses the production stylesheets &middot;
+    Part of <a class="footer-link" href="https://neorgon.com/">Neorgon</a>
+  </footer>
+
+  <script type="module" src="js/library.js"></script>
+</body>
+</html>

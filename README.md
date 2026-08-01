@@ -32,16 +32,22 @@ Map your operating model as a skill tree
 
 Questline turns a roadmap and prioritization operating model into a video-game console. A NieR-style interface with tabbed sections, master and detail panels, and a hold-Esc quick menu lets people onboard by exploring instead of reading a wall of text. A Detroit-style chapter flowchart shows the unlock map. Progress saves on the device.
 
-**Live:** questline.neorgon.com
+The whole interface is a small design system: every panel, plate, and control is built from shared tokens, ships in two themes (Night console dark, Day clinical light), and is catalogued on a component library page (`library.html`) with copyable markup — the repo doubles as the demo site.
+
+**Live:** questline.neorgon.com · **Library:** questline.neorgon.com/library.html
 
 ---
 
 ## Console sections
 
 - **Brief** -- a featured news hero, rank, the six key shifts, and the ceremonies, at a glance
-- **Chapters** -- master/detail list of the seven onboarding chapters with skill toggles
+- **Chapters** -- big-card field manual; each chapter opens a navigable section reader
+- **Playbooks** -- editable workflows: step lists with durations, tags, and linked resources
 - **Priority** -- priority bands, the ranked initiative list, and your rank ladder
 - **Intel** -- a searchable field glossary of every key term, master/detail
+- **Sites** -- a curated directory of useful pages and tools, grouped by team
+- **Atlas** -- team topology map: value streams, platform teams, and customer-needs coverage
+- **Profile** -- engineer classes with certification ladders (Entry to Referent)
 - **Flow** -- a living chapter map that reveals as you clear work; click any node to focus its local plan
 - **System** -- save management, toggles for the title screen, keyboard controls, and the Flow map reveal, an about panel, and a hidden friend
 
@@ -80,7 +86,9 @@ Questline turns a roadmap and prioritization operating model into a video-game c
 - **Considered reset** -- a quiet link, not a loud button; clicking it tints the screen corners red and asks first, then offers an Undo right after
 - **Progress that sticks** -- completed skills and rank persist in localStorage
 - **Rank ladder** -- climb from Recruit to Architect as you clear chapters
-- **Modern Disney theme** -- deep navy with one azure accent and gold, readable sans throughout, with fully closed faceted panels
+- **Two themes, one token system** -- Night console (deep navy, azure accent) and Day clinical (Detroit-style paper white), switched from the header and persisted; both are driven by the same custom-property tokens in `css/parts/tokens.css`, so a component written against the tokens works in either theme
+- **Component library** -- `library.html` renders every token and component variant live on the production stylesheets, in both themes, with copyable markup snippets: swatches, type scale, spacing, bevels, buttons, cards, tabs, badges, banners, forms, and every overlay
+- **Media plates stay dark** -- banners, the reader, toasts, the command palette, and the focus card keep their dark navy fill in both themes; their interiors consume plate-local `--banner-*` tokens instead of themed text colors
 - **Easter egg** -- a kiwi is hiding in System
 
 ---
@@ -107,7 +115,7 @@ ES modules require an HTTP server (not `file://`):
 python3 -m http.server 8832
 ```
 
-Then open http://localhost:8832/.
+Then open http://localhost:8832/. The component library is at http://localhost:8832/library.html.
 
 ---
 
@@ -118,20 +126,34 @@ Then open http://localhost:8832/.
 ```
 questline-site/
 ├── index.html          # App shell + quick-menu overlay + SEO head + JSON-LD
+├── library.html        # Component library showcase (same stylesheets, copyable markup)
 ├── css/
 │   ├── style.css       # Manifest: @imports the parts in cascade order
 │   └── parts/
-│       ├── base.css        # Reset, design tokens, layout, header, nav/auth, buttons
-│       ├── components.css  # Overlays (modal, reader, splash, coach), toast, closed-bevel ring
+│       ├── tokens.css      # Design tokens: palette, type, space, both themes (loads first)
+│       ├── base.css        # Reset, layout, header, tab rail, buttons, key-hint bar
+│       ├── components.css  # Cards, plates, badges, forms, overlays (modal, reader, toast)
 │       ├── flow.css        # Detroit-style chapter flowchart (Flow tab graph)
-│       └── console.css     # NieR console: tabs, panels, every tab view, controls
+│       ├── console.css     # Console views: Brief, Chapters, Priority, Intel, Sites, System, banners
+│       ├── profile.css     # Profile tab: class crests, certification ladders
+│       ├── daily.css       # Daily dispatch plate
+│       ├── atlas.css       # Atlas tab: topology map + customer-needs matrix
+│       └── library.css     # Library page chrome (specimens use the production parts above)
 ├── js/
 │   ├── app.js          # Entry point — wires modules together
 │   ├── data.js         # Chapters, skills, tabs, glossary, ranks, banners (the content model)
 │   ├── state.js        # Hash routing, progress + unlock logic, flow reveal/focus, cursor + search state, prefs (questline-prefs)
-│   ├── console.js      # NieR-style console tabs (Brief, Chapters, Priority, Intel, System); icon() resolves both icon sets
+│   ├── console.js      # Console tabs (Brief, Chapters, Priority, Intel, System); icon() resolves both icon sets
 │   ├── icons-fa.js     # Filled FontAwesome-style icon set, rendered with currentColor (extracted from svgs/)
 │   ├── banners.js      # Home news hero (markup + slow-rotate controller) and the six-shifts reader content
+│   ├── playbooks.js    # Playbooks tab: editable workflows
+│   ├── sites.js        # Sites tab: curated tools directory
+│   ├── atlas.js        # Atlas tab: team topology map
+│   ├── profile.js      # Profile tab: classes + certification ladders
+│   ├── daily.js        # Daily Dispatch: once-per-day event modal, header bell, snooze/dismiss
+│   ├── chapterReader.js# Chapter section reader modal
+│   ├── search.js       # Global command-palette search (every section, term, class)
+│   ├── engagement.js   # Daily visits, streaks, and the "Today's Focus" recommendation
 │   ├── flow.js         # The Flow tab: reveal-as-you-go full map + click-to-focus local map
 │   ├── render.js       # View dispatcher, entrance motion, banner mount, flow SVG connector wires
 │   ├── keynav.js       # Keyboard cursor: arrows, Enter, hold-Enter, Q/E tabs, / search; honors the System opt-out
@@ -141,6 +163,14 @@ questline-site/
 │   ├── glossary.js     # Jargon term tooltips for glossary terms in the copy
 │   ├── celebrate.js    # Rank-up plate, XP count-up, chapter-cleared toast
 │   ├── modal.js        # Confirm dialog + focused reading popup (openConfirm, openReader), shared focus trap
+│   ├── theme.js        # Theme toggle (initTheme, setTheme, currentTheme)
+│   ├── theme-boot.js   # Sets data-theme before first paint (external file: CSP forbids inline)
+│   ├── library.js      # Component library renderers (tokens, specimens, copy buttons, scroll-spy)
+│   ├── share.js        # Progress sharing: clipboard summary + native Web Share API
+│   ├── logos.js        # Stylized certification-issuer monogram badges (inline SVG)
+│   ├── particles.js    # Ambient background particles (reduced-motion aware, off on touch)
+│   ├── scrollProgress.js # Thin azure scroll-progress line at the top of the viewport
+│   ├── register-sw.js  # Service worker registration (index.html only)
 │   ├── kiwi.js         # The hidden kiwi easter egg
 │   ├── events.js       # Routing, delegated clicks, skill toggles, Intel search + surgical detail patch, reset+undo, prefs toggles
 │   └── utils.js        # escHtml, toast, action toast, helpers
@@ -148,6 +178,7 @@ questline-site/
 ├── docs/
 │   └── architecture.svg
 ├── CNAME               # questline.neorgon.com
+├── sw.js               # Service worker: network-first for code, stale-while-revalidate for assets
 ├── robots.txt
 └── sitemap.xml
 ```

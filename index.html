@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; script-src 'self' https://esm.sh cdn.jsdelivr.net cdnjs.cloudflare.com https://challenges.cloudflare.com https://www.googletagmanager.com https://www.google-analytics.com https://plausible.io; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://pub-b597cd281a384f98a47e1f043a6c4160.r2.dev; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://*.convex.cloud https://img.clerk.com https://pub-b597cd281a384f98a47e1f043a6c4160.r2.dev https://i.ytimg.com https://yt3.ggpht.com https://www.google-analytics.com; connect-src 'self' https://*.convex.cloud https://*.clerk.accounts.dev https://*.accounts.dev https://clerk-telemetry.com https://api.clerk.com https://challenges.cloudflare.com https://*.workers.dev https://www.google-analytics.com https://www.googletagmanager.com https://plausible.io; frame-src 'self' https://challenges.cloudflare.com https://*.clerk.accounts.dev https://*.accounts.dev https://www.youtube.com https://www.youtube-nocookie.com; worker-src 'self' blob:">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; form-action 'self'; script-src 'self' https://esm.sh cdn.jsdelivr.net cdnjs.cloudflare.com https://challenges.cloudflare.com https://www.googletagmanager.com https://www.google-analytics.com https://plausible.io; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.neorgon.org; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://*.convex.cloud https://img.clerk.com https://cdn.neorgon.org https://i.ytimg.com https://yt3.ggpht.com https://www.google-analytics.com; connect-src 'self' https://*.convex.cloud https://*.clerk.accounts.dev https://*.accounts.dev https://clerk-telemetry.com https://api.clerk.com https://challenges.cloudflare.com https://*.workers.dev https://www.google-analytics.com https://www.googletagmanager.com https://plausible.io; frame-src 'self' https://challenges.cloudflare.com https://*.clerk.accounts.dev https://*.accounts.dev https://www.youtube.com https://www.youtube-nocookie.com; worker-src 'self' blob:">
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <meta http-equiv="X-Content-Type-Options" content="nosniff">
   <title>Questline | Operating Model Skill Tree</title>
@@ -27,6 +27,7 @@
   <link rel="icon" type="image/x-icon" href="favicon.ico" />
   <link rel="manifest" href="manifest.json">
   <!-- Load CSS parts in parallel for faster first paint (was @import in style.css) -->
+  <link rel="stylesheet" href="css/parts/tokens.css">
   <link rel="stylesheet" href="css/parts/base.css">
   <link rel="stylesheet" href="css/parts/components.css">
   <link rel="stylesheet" href="css/parts/flow.css">
@@ -34,6 +35,8 @@
   <link rel="stylesheet" href="css/parts/profile.css">
   <link rel="stylesheet" href="css/parts/daily.css">
   <link rel="stylesheet" href="css/parts/atlas.css">
+  <!-- Apply stored theme before first paint -->
+  <script src="js/theme-boot.js"></script>
   <!-- Preload critical JS module -->
   <link rel="modulepreload" href="js/app.js">
   <script type="application/ld+json">
@@ -75,6 +78,8 @@
       <span class="header-bell__dot" id="dailyBellDot" aria-hidden="true"></span>
     </button>
 
+    <button type="button" class="header-theme" id="themeToggle" aria-label="Switch theme" title="Switch theme"></button>
+
     <a class="header-home" href="https://neorgon.com/" title="neorgon.com" aria-label="Neorgon home">
       <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
         <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
@@ -102,6 +107,7 @@
 
   <footer class="info-footer">
     <span class="info-footer__hint">Hold <kbd>Esc</kbd> for the quick menu &middot;</span>
+    <a class="footer-link" href="library.html">Component library</a> &middot;
     Part of <a class="footer-link" href="https://neorgon.com/">Neorgon</a>
   </footer>
 

@@ -6,7 +6,7 @@
 
 /* ── Daily Dispatch modal ──────────────────────────────────── */
 .modal--daily .modal__backdrop {
-  background: rgba(2, 4, 12, 0.78);
+  background: var(--scrim-modal);
   opacity: 0; transition: opacity .2s ease-out;
 }
 .modal--daily.is-visible .modal__backdrop { opacity: 1; }
@@ -15,7 +15,7 @@
   position: relative; z-index: 1;
   display: flex; flex-direction: column;
   width: min(620px, 94vw); max-height: min(90vh, 680px);
-  --daily-rim: var(--accent);
+  --daily-rim: var(--banner-azure);
   background: var(--daily-rim);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-modal);
@@ -27,7 +27,7 @@
 .modal--daily.is-out .modal__backdrop { opacity: 0; }
 .daily::before {
   content: ""; position: absolute; inset: 1px; z-index: 0;
-  background: #070e1a;
+  background: var(--banner-fill-deep);
   border-radius: calc(var(--radius-lg) - 1px);
   pointer-events: none;
 }
@@ -37,28 +37,28 @@
   position: relative;
   display: flex; flex-direction: column; gap: 2px;
   padding: 34px 24px 12px 32px;
-  border-bottom: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--banner-border);
 }
 .daily__kicker {
   font-size: var(--text-xs); font-weight: 700; text-transform: uppercase;
-  letter-spacing: .14em; color: var(--accent-bright);
+  letter-spacing: .14em; color: var(--banner-azure-bright);
 }
 .daily__title {
-  font-size: var(--text-xl); font-weight: 700; color: var(--text-primary);
+  font-size: var(--text-xl); font-weight: 700; color: var(--banner-text);
   margin: 0; line-height: 1.2;
 }
 .daily__sub {
-  font-size: var(--text-xs); color: var(--text-muted);
+  font-size: var(--text-xs); color: var(--banner-text-faint);
   text-transform: uppercase; letter-spacing: .08em;
 }
 .daily__close {
   position: absolute; top: calc(var(--space-4) + 2px); right: var(--space-4);
   display: inline-flex; align-items: center; justify-content: center;
   width: 32px; height: 32px; padding: 0;
-  color: var(--text-muted); background: transparent; border: none;
+  color: var(--banner-text-faint); background: transparent; border: none;
   cursor: pointer; transition: color var(--dur), background var(--dur);
 }
-.daily__close:hover { color: #fff; background: rgba(255,255,255,0.1); }
+.daily__close:hover { color: var(--banner-text); background: var(--banner-surface); }
 
 /* ── Carousel stage ────────────────────────────────────────── */
 .daily__stage {
@@ -92,32 +92,32 @@
   position: relative; flex: 1;
   display: flex; flex-direction: column; justify-content: center;
   padding: var(--space-6);
-  text-align: left; color: var(--text-secondary);
+  text-align: left; color: var(--banner-text-dim);
   background: transparent; border: none; cursor: pointer;
   overflow: hidden;
 }
 .daily__card::before {
   content: ""; position: absolute; inset: 0; z-index: 0;
   background:
-    linear-gradient(135deg, var(--daily-accent, var(--accent)) 0%, transparent 60%),
-    linear-gradient(to top, rgba(7,14,26,0.95) 0%, rgba(7,14,26,0.45) 60%, transparent 100%);
+    linear-gradient(135deg, var(--daily-accent, var(--banner-azure)) 0%, transparent 60%),
+    linear-gradient(to top, color-mix(in srgb, var(--banner-fill-deep) 95%, transparent) 0%, color-mix(in srgb, var(--banner-fill-deep) 45%, transparent) 60%, transparent 100%);
   opacity: .18;
   transition: opacity var(--dur);
 }
 .daily__card:hover::before { opacity: .28; }
-.daily__card--azure { --daily-accent: var(--accent); }
-.daily__card--gold { --daily-accent: var(--gold); }
-.daily__card--violet { --daily-accent: #b08cff; }
+.daily__card--azure { --daily-accent: var(--banner-azure); }
+.daily__card--gold { --daily-accent: var(--banner-gold); }
+.daily__card--violet { --daily-accent: var(--banner-violet); }
 
 .daily__bg {
   position: absolute; right: 16px; bottom: 16px; z-index: 0;
-  color: var(--daily-accent, var(--accent)); opacity: .08;
+  color: var(--daily-accent, var(--banner-azure)); opacity: .08;
   pointer-events: none;
 }
 .daily__bg svg { width: 120px; height: 120px; }
 .daily__scrim {
   position: absolute; inset: 0; z-index: 0;
-  background: linear-gradient(to top, #070e1a 0%, transparent 55%);
+  background: linear-gradient(to top, var(--banner-fill-deep) 0%, transparent 55%);
   pointer-events: none;
 }
 
@@ -130,31 +130,31 @@
 }
 .daily__kicker-inline {
   font-size: var(--text-xs); font-weight: 700; text-transform: uppercase;
-  letter-spacing: .12em; color: var(--daily-accent, var(--accent));
+  letter-spacing: .12em; color: var(--daily-accent, var(--banner-azure));
 }
 .daily__timer {
   display: inline-flex; align-items: center; gap: 4px;
   font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em;
-  padding: 2px 7px; color: #04210f;
+  padding: 2px 7px; color: var(--banner-ink);
   border-radius: 4px;
 }
-.daily__timer--open { background: var(--accent); }
-.daily__timer--soon { background: var(--gold); color: #1a1400; }
+.daily__timer--open { background: var(--banner-azure); }
+.daily__timer--soon { background: var(--banner-gold); color: var(--banner-ink-on-gold); }
 .daily__timer svg { width: 12px; height: 12px; }
 
 .daily__card-title {
-  font-size: var(--text-xl); font-weight: 700; color: var(--text-primary); line-height: 1.2;
+  font-size: var(--text-xl); font-weight: 700; color: var(--banner-text); line-height: 1.2;
 }
 .daily__blurb {
-  font-size: var(--text-sm); color: var(--text-secondary); line-height: 1.55; max-width: 46ch;
+  font-size: var(--text-sm); color: var(--banner-text-dim); line-height: 1.55; max-width: 46ch;
 }
 .daily__meta {
-  font-size: var(--text-xs); color: var(--text-muted); text-transform: uppercase; letter-spacing: .08em;
+  font-size: var(--text-xs); color: var(--banner-text-faint); text-transform: uppercase; letter-spacing: .08em;
 }
 .daily__cta {
   display: inline-flex; align-items: center; gap: 4px;
   margin-top: var(--space-1);
-  font-size: var(--text-sm); font-weight: 700; color: var(--daily-accent, var(--accent));
+  font-size: var(--text-sm); font-weight: 700; color: var(--daily-accent, var(--banner-azure));
 }
 .daily__cta svg { width: 12px; height: 12px; }
 
@@ -164,7 +164,7 @@
 .daily__pager {
   display: flex; align-items: center; justify-content: center; gap: var(--space-4);
   padding: var(--space-3) var(--space-4);
-  border-bottom: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--banner-border);
 }
 .daily__dots {
   display: flex; justify-content: center; align-items: center; gap: 6px;
@@ -174,11 +174,11 @@
   background: rgba(140,190,235,.5); background-clip: content-box;
   transition: background var(--dur);
 }
-.daily__dot:hover { background: var(--accent-bright); background-clip: content-box; }
-.daily__dot.is-active { background: var(--accent); background-clip: content-box; box-shadow: 0 0 8px var(--accent-glow); }
-.daily__dot:focus-visible { outline: 2px solid var(--accent-bright); outline-offset: 3px; }
+.daily__dot:hover { background: var(--banner-azure-bright); background-clip: content-box; }
+.daily__dot.is-active { background: var(--banner-azure); background-clip: content-box; box-shadow: 0 0 8px var(--banner-azure-glow); }
+.daily__dot:focus-visible { outline: 2px solid var(--banner-azure-bright); outline-offset: 3px; }
 .daily__count {
-  font-family: var(--font-mono); font-size: var(--text-xs); color: var(--text-muted);
+  font-family: var(--font-mono); font-size: var(--text-xs); color: var(--banner-text-faint);
   font-variant-numeric: tabular-nums; letter-spacing: .04em;
 }
 

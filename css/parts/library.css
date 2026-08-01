@@ -1,0 +1,153 @@
+/* ════════════════════════════════════════════════════════════
+   Component library — showcase page chrome
+   Specimens themselves use the production stylesheets; this file
+   only lays out the catalog around them.
+   ════════════════════════════════════════════════════════════ */
+
+.lib__main {
+  max-width: min(1200px, 94vw); margin: 0 auto;
+  padding: var(--space-6) 0 var(--space-8);
+  display: grid; grid-template-columns: 180px 1fr; gap: var(--space-6);
+  align-items: start;
+}
+
+/* ── Section nav (sticky rail) ─────────────────────────────── */
+.lib__nav {
+  position: sticky; top: calc(68px + var(--space-4));
+  display: flex; flex-direction: column; align-items: stretch; gap: 2px;
+}
+.lib__nav a {
+  display: flex; align-items: baseline; gap: var(--space-2);
+  padding: 7px var(--space-3);
+  font-family: var(--font-mono); font-size: var(--text-xs);
+  letter-spacing: var(--micro-track); text-transform: uppercase;
+  color: var(--text-muted); text-decoration: none;
+  border-left: 2px solid var(--border-subtle);
+  transition: color var(--dur), border-color var(--dur);
+}
+.lib__nav a:hover { color: var(--text-primary); border-left-color: var(--accent); }
+.lib__nav a.is-active { color: var(--accent); border-left-color: var(--accent); }
+.lib__nav a .lib__navno { color: var(--text-faint); font-size: 10px; }
+.lib__nav a.is-active .lib__navno { color: var(--accent); }
+
+/* ── Sections ──────────────────────────────────────────────── */
+.lib__content { min-width: 0; }
+.libsec { margin-bottom: var(--space-8); scroll-margin-top: calc(68px + var(--space-4)); }
+.libsec__head { margin-bottom: var(--space-4); }
+.libsec__no {
+  font-family: var(--font-mono); font-size: var(--micro-size); font-weight: 700;
+  letter-spacing: var(--micro-track); text-transform: uppercase; color: var(--accent);
+}
+.libsec__title {
+  font-weight: 300; text-transform: uppercase; letter-spacing: .22em;
+  font-size: clamp(1.4rem, 3vw, 2rem); color: var(--text-primary); margin: 4px 0 2px;
+}
+.libsec__lede { font-size: var(--text-sm); color: var(--text-muted); max-width: 64ch; line-height: var(--leading-body); }
+
+/* ── Specimen block ────────────────────────────────────────── */
+.spec { border-top: 1px dashed var(--border); padding: var(--space-4) 0 var(--space-5); }
+.spec__head {
+  display: flex; align-items: baseline; gap: var(--space-3); flex-wrap: wrap;
+  margin-bottom: var(--space-3);
+}
+.spec__name { font-weight: 600; font-size: var(--text-base); color: var(--text-primary); letter-spacing: .01em; }
+.spec__note { font-size: var(--text-xs); color: var(--text-muted); }
+.spec__classes {
+  margin-left: auto; font-family: var(--font-mono); font-size: 10px;
+  color: var(--text-faint); letter-spacing: .04em;
+}
+
+.spec__stage {
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3);
+  padding: var(--space-5);
+  border: 1px solid var(--border-subtle); border-radius: var(--radius-md);
+  background: var(--surface-1);
+  margin-bottom: var(--space-2);
+}
+.spec__stage--column { flex-direction: column; align-items: stretch; }
+.spec__stage--dark { background: var(--banner-fill); border-color: var(--banner-border); }
+
+.spec__code { position: relative; }
+.spec__code pre {
+  margin: 0; padding: var(--space-3) var(--space-4);
+  font-family: var(--font-mono); font-size: 11px; line-height: 1.55;
+  color: var(--text-secondary);
+  background: var(--surface-2); border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  overflow-x: auto; white-space: pre;
+}
+.libcopy {
+  position: absolute; top: 6px; right: 6px;
+  font-family: var(--font-mono); font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .08em;
+  color: var(--text-muted); background: var(--surface-3);
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  padding: 3px 9px; cursor: pointer;
+  transition: color var(--dur), border-color var(--dur);
+}
+.libcopy:hover { color: var(--accent); border-color: var(--accent); }
+.libcopy.is-copied { color: var(--success); border-color: var(--success); }
+
+/* ── Token swatches ────────────────────────────────────────── */
+.libsw { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--space-3); }
+.libsw__chip {
+  border: 1px solid var(--border-subtle); border-radius: var(--radius-sm);
+  overflow: hidden; background: var(--surface-1);
+}
+.libsw__color { height: 44px; border-bottom: 1px solid var(--border-subtle); }
+.libsw__meta { padding: 6px 8px; }
+.libsw__name { font-family: var(--font-mono); font-size: 10px; font-weight: 700; color: var(--text-primary); word-break: break-all; }
+.libsw__val { font-family: var(--font-mono); font-size: 9px; color: var(--text-faint); word-break: break-all; }
+
+/* ── Type scale rows ───────────────────────────────────────── */
+.libtype { display: flex; flex-direction: column; gap: var(--space-3); }
+.libtype__row { display: flex; align-items: baseline; gap: var(--space-4); border-bottom: 1px dashed var(--border-subtle); padding-bottom: var(--space-2); }
+.libtype__tag {
+  flex-shrink: 0; width: 150px;
+  font-family: var(--font-mono); font-size: 10px; color: var(--text-faint);
+  text-transform: uppercase; letter-spacing: .08em;
+}
+
+/* ── Spacing & bevel token demos ───────────────────────────── */
+.libspace { display: flex; flex-direction: column; gap: var(--space-2); }
+.libspace__row { display: flex; align-items: center; gap: var(--space-3); }
+.libspace__bar { height: 14px; background: var(--accent); border-radius: 2px; opacity: .75; }
+.libspace__name { font-family: var(--font-mono); font-size: 10px; color: var(--text-muted); width: 90px; }
+.libspace__val { font-family: var(--font-mono); font-size: 10px; color: var(--text-faint); }
+
+.libbevels { display: flex; gap: var(--space-4); flex-wrap: wrap; }
+.libbevel { text-align: center; }
+.libbevel__box {
+  width: 76px; height: 56px; margin-bottom: 6px;
+  background: var(--plate-edge); clip-path: var(--plate-poly);
+  position: relative;
+}
+.libbevel__box::before {
+  content: ""; position: absolute; inset: 1px;
+  background: var(--surface-raise); clip-path: var(--plate-poly);
+}
+.libbevel__name { font-family: var(--font-mono); font-size: 10px; color: var(--text-muted); }
+
+/* ── Overlay specimens: pull fixed/absolute shells inline ──── */
+.spec__stage .toast { position: static; opacity: 1; transform: none; pointer-events: auto; }
+.spec__stage .qm__wedge { position: static; opacity: 1; transform: none; }
+.spec__stage .reader { opacity: 1; transform: none; max-height: none; width: 100%; }
+.spec__stage .daily { opacity: 1; transform: none; max-height: none; width: 100%; }
+.spec__stage .cpalette { opacity: 1; transform: none; max-height: none; width: 100%; }
+.spec__stage .rankup__plate { transform: none; }
+.spec__stage .coach__card { transform: none; }
+.spec__stage .banner { position: relative; inset: auto; width: 100%; min-height: 250px; opacity: 1; pointer-events: auto; }
+.spec__stage .focus__card { width: 100%; }
+
+/* ── Responsive ────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .lib__main { grid-template-columns: 1fr; }
+  .lib__nav {
+    position: static; flex-direction: row; overflow-x: auto;
+    scrollbar-width: none; padding-bottom: var(--space-2);
+  }
+  .lib__nav::-webkit-scrollbar { display: none; }
+  .lib__nav a { white-space: nowrap; border-left: none; border-bottom: 2px solid var(--border-subtle); }
+  .lib__nav a.is-active { border-bottom-color: var(--accent); }
+  .libtype__tag { width: 110px; }
+}

@@ -1,8 +1,10 @@
 // Questline Service Worker — offline-first caching strategy
-const CACHE_NAME = 'questline-v6';
+const CACHE_NAME = 'questline-v7';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
+  '/library.html',
+  '/css/parts/tokens.css',
   '/css/parts/base.css',
   '/css/parts/components.css',
   '/css/parts/flow.css',
@@ -10,8 +12,12 @@ const STATIC_ASSETS = [
   '/css/parts/profile.css',
   '/css/parts/daily.css',
   '/css/parts/atlas.css',
+  '/css/parts/library.css',
   '/js/app.js',
   '/js/register-sw.js',
+  '/js/theme-boot.js',
+  '/js/theme.js',
+  '/js/library.js',
   '/js/data.js',
   '/js/sites.js',
   '/js/state.js',
@@ -102,7 +108,9 @@ self.addEventListener('fetch', (e) => {
 
   // Code assets — network-first so a stale cached module can never break the
   // import graph on deploy. Cache is updated on every successful fetch and
-  // used only as an offline fallback.
+  // used only as an offline fallback. cache: 'no-cache' forces revalidation —
+  // without it, the browser HTTP cache can serve heuristic-cached HTML to the
+  // SW's own fetch, defeating network-first entirely.
   const isCode = request.destination === 'script' ||
     request.destination === 'style' ||
     request.destination === 'document' ||
@@ -110,7 +118,7 @@ self.addEventListener('fetch', (e) => {
 
   if (isCode) {
     e.respondWith(
-      fetch(request).then((response) => {
+      fetch(request, { cache: 'no-cache' }).then((response) => {
         if (request.method === 'GET' && response.ok) {
           const clone = response.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));

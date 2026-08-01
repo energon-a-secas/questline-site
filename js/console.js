@@ -455,7 +455,7 @@ export function renderSystem(s) {
           <li><span>Sections</span><span>${TABS.length} tabs</span></li>
           <li><span>Search</span><span>Press / or the rail button</span></li>
           <li><span>Quick menu</span><span>Hold Esc, point, release</span></li>
-          <li><span>Theme</span><span>Modern Disney console</span></li>
+          <li><span>Theme</span><span>Night console · Day clinical</span></li>
         </ul>
         <button type="button" class="cegg" id="kiwiEgg" aria-label="A hidden friend" title="?">
           ${icon('kiwi', 18)}
@@ -489,8 +489,8 @@ function siteCard(site, active) {
         <span class="csite-card__name">${escHtml(site.name)}</span>
         <span class="csite-card__domain">${escHtml(domain)}</span>
         <span class="csite-card__desc">${escHtml(site.description)}</span>
+        <span class="csite-card__team">${escHtml(site.team)}</span>
       </span>
-      <span class="csite-card__team">${escHtml(site.team)}</span>
     </button>`;
 }
 

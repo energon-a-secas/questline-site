@@ -102,10 +102,29 @@ export function rerenderActive(s) {
  * tab bar wraps (no horizontal scroll) on wide screens, so this is a no-op
  * there — guard on the rail actually being scrollable.
  */
+let railFadeWired = false;
+
+/** The rail's trailing-edge fade means "more to scroll" — drop it at the end. */
+function updateRailFade(tabs) {
+  const atEnd = tabs.scrollWidth <= tabs.clientWidth + 4 ||
+                tabs.scrollLeft + tabs.clientWidth >= tabs.scrollWidth - 8;
+  tabs.classList.toggle('is-at-end', atEnd);
+}
+
+function wireRailFade(tabs) {
+  if (railFadeWired) return;
+  railFadeWired = true;
+  tabs.addEventListener('scroll', () => updateRailFade(tabs), { passive: true });
+  window.addEventListener('resize', () => updateRailFade(tabs));
+}
+
 function keepActiveTabInView() {
   const tabs = document.querySelector('.ctabs');
-  const activeTab = tabs?.querySelector('.ctab--active');
-  if (!tabs || !activeTab) return;
+  if (!tabs) return;
+  wireRailFade(tabs);
+  updateRailFade(tabs);
+  const activeTab = tabs.querySelector('.ctab--active');
+  if (!activeTab) return;
   if (tabs.scrollWidth <= tabs.clientWidth + 4) return;   // not scrollable
   activeTab.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
 }

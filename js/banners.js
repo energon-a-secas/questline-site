@@ -80,10 +80,12 @@ export function bannerStrip(s) {
   if (!BANNERS.length) return '';
   if (index >= BANNERS.length) index = 0;
   const slides = BANNERS.map(slide).join('');
-  const dots = BANNERS.map((b, i) =>
-    `<button type="button" class="banner__dot ${i === index ? 'is-active' : ''}"
+  const dots = BANNERS.map((b, i) => {
+    const cls = i === index ? 'is-active' : (i < index ? 'is-past' : '');
+    return `<button type="button" class="banner__dot ${cls}"
        data-banner-dot="${i}" aria-label="Show: ${escHtml(b.title)}"
-       aria-current="${i === index ? 'true' : 'false'}"></button>`).join('');
+       aria-current="${i === index ? 'true' : 'false'}"></button>`;
+  }).join('');
   const pauseBtn = `
     <button type="button" class="banner__pause" id="bannerPause"
       aria-label="${paused ? 'Play auto-advance' : 'Pause auto-advance'}"
@@ -165,6 +167,7 @@ function go(next, restart) {
   strip.querySelectorAll('.banner__dot').forEach((d, i) => {
     const on = i === index;
     d.classList.toggle('is-active', on);
+    d.classList.toggle('is-past', i < index);
     d.setAttribute('aria-current', String(on));
   });
   // A manual pick should restart the dwell timer so it does not jump instantly.

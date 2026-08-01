@@ -8,7 +8,7 @@
 .cprofile__level {
   display: flex; align-items: center; gap: var(--space-3);
   padding: var(--space-3) var(--space-4);
-  background: linear-gradient(90deg, rgba(47,217,255,.12), transparent);
+  background: linear-gradient(90deg, var(--accent-soft), transparent);
   border: 1px solid var(--accent-soft);
   border-radius: var(--radius-md);
 }
@@ -53,17 +53,17 @@
     var(--surface-raise);
   border: 1px solid var(--dbh-edge);
   border-radius: var(--radius-md);
-  box-shadow: var(--surface-raise-hi), 0 10px 22px -12px rgba(2,6,23,.6);
+  box-shadow: var(--surface-raise-hi), 0 10px 22px -12px var(--scrim);
   transition: transform var(--dur) var(--ease-out-quint), border-color var(--dur), box-shadow var(--dur), color var(--dur);
 }
 .cclass-card:hover {
-  transform: translateY(-3px); color: #fff;
+  transform: translateY(-3px); color: var(--text-primary);
   border-color: var(--crest-color, var(--accent));
-  box-shadow: var(--surface-raise-hi), 0 18px 30px -12px rgba(2,6,23,.7), 0 0 22px -6px var(--crest-color, var(--accent));
+  box-shadow: var(--surface-raise-hi), 0 18px 30px -12px var(--scrim), 0 0 22px -6px var(--crest-color, var(--accent));
 }
 .cclass-card:focus-visible { outline: 2px solid var(--accent-bright); outline-offset: 2px; }
 .cclass-card.is-active {
-  color: #fff;
+  color: var(--text-primary);
   border-color: var(--crest-color, var(--accent));
   box-shadow: inset 0 0 0 1px var(--crest-color, var(--accent)), 0 0 26px -4px var(--crest-color, var(--accent));
 }
@@ -73,7 +73,7 @@
   position: absolute; top: 10px; right: 10px;
   width: 22px; height: 22px; border-radius: 50%;
   display: inline-flex; align-items: center; justify-content: center;
-  color: #06121f; background: transparent;
+  color: var(--ink-on-accent); background: transparent;
   transition: background var(--dur);
 }
 .cclass-card.is-active .cclass-card__pick { background: var(--crest-color, var(--accent)); }
@@ -117,15 +117,15 @@
   background:
     linear-gradient(90deg, color-mix(in srgb, var(--crest-color, var(--accent)) 14%, transparent) 0%, transparent 38%),
     var(--surface-raise);
-  box-shadow: var(--surface-raise-hi), 0 10px 22px -12px rgba(2,6,23,.6);
+  box-shadow: var(--surface-raise-hi), 0 10px 22px -12px var(--scrim);
   transition: background var(--dur), color var(--dur), border-color var(--dur),
     border-radius var(--dur) var(--ease-out-expo), transform var(--dur) var(--ease-out-quint),
     box-shadow var(--dur);
 }
-.cclass:hover { border-color: var(--crest-color, var(--accent)); color: #fff; transform: translateY(-2px);
-  box-shadow: var(--surface-raise-hi), 0 16px 30px -12px rgba(2,6,23,.7), 0 0 18px -6px var(--crest-color, var(--accent)); }
+.cclass:hover { border-color: var(--crest-color, var(--accent)); color: var(--text-primary); transform: translateY(-2px);
+  box-shadow: var(--surface-raise-hi), 0 16px 30px -12px var(--scrim), 0 0 18px -6px var(--crest-color, var(--accent)); }
 .cclass.is-active {
-  border-color: var(--crest-color, var(--accent)); color: #fff;
+  border-color: var(--crest-color, var(--accent)); color: var(--text-primary);
   border-radius: 999px;
   background:
     linear-gradient(90deg, color-mix(in srgb, var(--crest-color, var(--accent)) 26%, transparent) 0%, transparent 55%),
@@ -147,7 +147,7 @@
   width: var(--crest-size, 56px); height: var(--crest-size, 56px);
   display: inline-flex; align-items: center; justify-content: center;
   color: var(--crest-color, var(--accent));
-  background: rgba(255,255,255,.08);
+  background: var(--surface-2);
   border: 1px solid var(--crest-color, var(--accent));
   border-radius: 10px;
   transition: border-radius var(--dur) var(--ease-out-expo),
@@ -157,12 +157,12 @@
 .cclass.is-active .cclass__crest {
   border-radius: 50%;
   transform: scale(1.08);
-  background: rgba(255,255,255,.18);
+  background: var(--surface-3);
   box-shadow: 0 0 22px var(--crest-color, var(--accent));
 }
 .cclass__crest::before, .cprofile__crest::before {
   content: ""; position: absolute; inset: 1px; z-index: 0;
-  background: rgba(0,0,0,.25);
+  background: var(--scrim-soft);
   border-radius: inherit;
 }
 .cclass__crest-symbol, .cprofile__crest-symbol {
@@ -184,7 +184,7 @@
   border-radius: inherit;
   background:
     radial-gradient(46% 60% at 50% 32%, var(--accent-soft) 0%, transparent 62%),
-    radial-gradient(circle, rgba(140,190,235,.07) 1px, transparent 1.4px);
+    radial-gradient(circle, var(--surface-2) 1px, transparent 1.4px);
   background-size: auto, 22px 22px;
   -webkit-mask-image: radial-gradient(70% 70% at 50% 40%, #000 0%, transparent 78%);
   mask-image: radial-gradient(70% 70% at 50% 40%, #000 0%, transparent 78%);
@@ -241,9 +241,9 @@
   transform-origin: top left; transform: rotate(-45deg);
   pointer-events: none;
 }
-.crung--entry { --rung-accent: #8fd0ff; }
+.crung--entry { --rung-accent: var(--accent-bright); }
 .crung--intermediate { --rung-accent: var(--accent); }
-.crung--advanced { --rung-accent: #b08cff; }
+.crung--advanced { --rung-accent: var(--hue-violet); }
 .crung--referent { --rung-accent: var(--gold); }
 
 .crung__head { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; margin-bottom: var(--space-3); }
@@ -263,7 +263,7 @@
 .crung__badge {
   flex-shrink: 0; width: 22px; height: 22px;
   display: inline-flex; align-items: center; justify-content: center;
-  font-size: 10px; font-weight: 700; color: #04210f;
+  font-size: 10px; font-weight: 700; color: var(--ink-on-accent);
   background: var(--rung-accent, var(--accent));
   border-radius: 4px;
 }
@@ -282,7 +282,7 @@
   background: var(--cert-fill, var(--dbh-panel)); border-radius: calc(var(--radius-sm) - 1px); pointer-events: none;
 }
 .ccert > * { position: relative; z-index: 1; }
-.ccert.is-editing { --cert-rim: var(--accent); --cert-fill: rgba(5,10,20,.82); }
+.ccert.is-editing { --cert-rim: var(--accent); --cert-fill: var(--dbh-panel-2); }
 .ccert--earned { --cert-rim: var(--dbh-done); }
 .ccert--in-progress { --cert-rim: var(--gold); }
 .ccert--expired { --cert-rim: var(--danger); }
@@ -292,7 +292,7 @@
   padding: 10px 12px; color: var(--text-secondary);
 }
 .ccert:hover { --cert-fill: var(--surface-2); }
-.ccert.is-editing:hover { --cert-fill: rgba(5,10,20,.85); }
+.ccert.is-editing:hover { --cert-fill: var(--dbh-panel-2); }
 
 .ccert__edit {
   flex-shrink: 0; align-self: stretch;
@@ -331,13 +331,13 @@
 }
 .ccert__status-glyph > svg { position: relative; z-index: 1; }
 .ccert--earned .ccert__status-glyph {
-  color: #04210f; background: var(--dbh-done);
-  box-shadow: 0 0 10px rgba(52,211,153,.4);
+  color: var(--ink-on-success); background: var(--dbh-done);
+  box-shadow: 0 0 10px var(--success-glow);
 }
 .ccert--earned .ccert__status-glyph::before { background: var(--dbh-done); }
-.ccert--in-progress .ccert__status-glyph { color: #04210f; background: var(--gold); }
+.ccert--in-progress .ccert__status-glyph { color: var(--ink-on-gold); background: var(--gold); }
 .ccert--in-progress .ccert__status-glyph::before { background: var(--gold); }
-.ccert--expired .ccert__status-glyph { color: #fff; background: var(--danger); }
+.ccert--expired .ccert__status-glyph { color: var(--ink-on-danger); background: var(--danger); }
 .ccert--expired .ccert__status-glyph::before { background: var(--danger); }
 
 .ccert__text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; overflow: hidden; }
@@ -347,7 +347,7 @@
   display: inline-flex; align-items: center; gap: 4px;
   color: var(--accent-bright); text-decoration: none;
 }
-.ccert__issuer--link:hover { color: #fff; text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 2px; }
+.ccert__issuer--link:hover { color: var(--text-primary); text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 2px; }
 .ccert__issuer--link svg { flex-shrink: 0; }
 .ccert__issuerline {
   display: flex; align-items: center; gap: var(--space-2);

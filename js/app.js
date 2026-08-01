@@ -15,9 +15,11 @@ import { showToast } from './utils.js';
 import { recordVisit, setEngagementState } from './engagement.js';
 import { initParticles } from './particles.js';
 import { initScrollProgress } from './scrollProgress.js';
+import { initTheme } from './theme.js';
 
 function init() {
   const loadError = loadSaved(state);
+  initTheme();
   initGlossary(state);
   render(state);
   bindEvents(state);

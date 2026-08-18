@@ -32,6 +32,10 @@ function toastEl() {
 export function showToast(msg) {
   const el = toastEl();
   el.classList.remove('toast--action');
+  // Announced by screen readers. Without these the toast is
+  // invisible to anyone not looking at that corner of the screen.
+  el.setAttribute('role', 'status');
+  el.setAttribute('aria-live', 'polite');
   el.textContent = msg;
   el.classList.add('visible');
   clearTimeout(_toastTimer);

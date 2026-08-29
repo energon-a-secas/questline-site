@@ -51,7 +51,7 @@ function tabBar(active) {
     const href = t.id === 'flow' ? '#flow' : `#${t.id}`;
     const isActive = t.id === active;
     // The tooltip + aria-label gloss the game label with plain language
-    // ("Intel — Field glossary") so the section's purpose is discoverable.
+    // ("Intel: Field glossary") so the section's purpose is discoverable.
     const aria = t.hint ? `${t.label}: ${t.hint}` : t.label;
     return `
       <a class="ctab ${isActive ? 'ctab--active' : ''}" href="${href}" data-tab="${t.id}"
@@ -233,7 +233,7 @@ export function renderChapters(s, selectedId) {
   const body = `
     ${screenTitle('Chapters', 'Field Manual')}
     <p class="cchapters__lead clead">A short, generic onboarding manual. Open a chapter to
-    read its sections one at a time — step through with ◀ ▶, jump to any section, or
+    read its sections one at a time: step through with ◀ ▶, jump to any section, or
     search across the whole manual. Mark a section complete to track your progress.</p>
     <div class="cchapters">${cards}</div>`;
   return shell('chapters', body, 'Open a chapter to read its sections in a focused view.',
@@ -314,7 +314,7 @@ export function renderIntel(s, selectedId) {
         <div class="cintel__search">
           <span class="cintel__search-icon" aria-hidden="true">${icon('search', 16)}</span>
           <input type="search" id="intelSearch" class="cintel__search-input"
-            placeholder="Search terms — press /" aria-label="Search glossary terms"
+            placeholder="Search terms: press /" aria-label="Search glossary terms"
             autocomplete="off" value="${escHtml(s.ui.intelQuery || '')}">
         </div>
         <div class="cscopes" role="group" aria-label="Filter glossary by scope">${scopes}</div>

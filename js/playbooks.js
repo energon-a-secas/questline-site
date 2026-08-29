@@ -59,7 +59,7 @@ function playbookEmpty() {
     <div class="cdetail__locked">
       <span class="cdetail__lockicon">${icon('route', 30)}</span>
       <h3>No playbook selected</h3>
-      <p>Add a workflow with the + button, then write its steps. Each step is short — link out to the wiki for the full detail.</p>
+      <p>Add a workflow with the + button, then write its steps. Each step is short, link out to the wiki for the full detail.</p>
     </div>`;
 }
 

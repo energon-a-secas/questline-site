@@ -169,7 +169,7 @@ export function todaysFocus(s) {
     return {
       title: b.title,
       blurb: nextNode
-        ? `${nextNode.title} — ${nextNode.body || nextNode.list?.[0] || 'Next skill to unlock'}`
+        ? `${nextNode.title}: ${nextNode.body || nextNode.list?.[0] || 'Next skill to unlock'}`
         : `${remaining} skill${remaining === 1 ? '' : 's'} left in this chapter`,
       cta: 'Continue',
       href: `#${b.id}`,
@@ -235,10 +235,10 @@ const TIPS = [
   { title: 'Keyboard shortcut', body: 'Press / from anywhere to open the global search.' },
   { title: 'Quick menu', body: 'Hold Esc and point with arrows to jump between tabs instantly.' },
   { title: 'Chapter reader', body: 'Open a chapter with Enter to read and mark sections complete.' },
-  { title: 'Deep links', body: 'Share any Intel term by copying its URL — every term has its own hash.' },
+  { title: 'Deep links', body: 'Share any Intel term by copying its URL: every term has its own hash.' },
   { title: 'Flow map', body: 'The Flow tab reveals chapters as you progress. Toggle the full map in System.' },
   { title: 'Profile classes', body: 'Pick an engineer class in Profile to see a certification ladder for your path.' },
-  { title: 'Playbooks', body: 'Add your own workflows in Playbooks — they persist and are fully editable.' },
+  { title: 'Playbooks', body: 'Add your own workflows in Playbooks: they persist and are fully editable.' },
   { title: 'Glossary hover', body: 'Hover underlined terms in any panel for an instant definition popover.' },
 ];
 
@@ -301,7 +301,7 @@ export function shareSnippet(s) {
   const rank = rankFor(pct);
   const e = loadEngagement();
   const lines = [
-    `Questline — ${rank.name}`,
+    `Questline: ${rank.name}`,
     `${pct}% complete · ${e.streak > 1 ? e.streak + '-day streak' : 'onboarding'}`,
     'https://questline.neorgon.com/',
   ];

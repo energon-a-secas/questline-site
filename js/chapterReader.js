@@ -96,7 +96,7 @@ function render() {
          <span class="creader__toggle-box">${icon('check', 15)}</span>
          <span>${done ? 'Completed' : 'Mark complete'}</span>
        </button>`
-    : `<span class="creader__locked">${icon('lock', 13)} Reading is open — clear earlier chapters to track this one.</span>`;
+    : `<span class="creader__locked">${icon('lock', 13)} Reading is open, clear earlier chapters to track this one.</span>`;
 
   root.innerHTML = `
     <div class="modal__backdrop" data-close></div>

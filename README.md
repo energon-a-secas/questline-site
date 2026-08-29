@@ -32,7 +32,7 @@ Map your operating model as a skill tree
 
 Questline turns a roadmap and prioritization operating model into a video-game console. A NieR-style interface with tabbed sections, master and detail panels, and a hold-Esc quick menu lets people onboard by exploring instead of reading a wall of text. A Detroit-style chapter flowchart shows the unlock map. Progress saves on the device.
 
-The whole interface is a small design system: every panel, plate, and control is built from shared tokens, ships in two themes (Night console dark, Day clinical light), and is catalogued on a component library page (`library.html`) with copyable markup — the repo doubles as the demo site.
+The whole interface is a small design system: every panel, plate, and control is built from shared tokens, ships in two themes (Night console dark, Day clinical light), and is catalogued on a component library page (`library.html`) with copyable markup. The repo doubles as the demo site.
 
 **Live:** questline.neorgon.com · **Library:** questline.neorgon.com/library.html
 

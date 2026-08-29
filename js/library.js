@@ -35,15 +35,15 @@ const TOKEN_GROUPS = [
     vars: ['--bg', '--text-primary', '--text-secondary', '--text-muted', '--accent', '--accent-bright', '--gold', '--success', '--violet', '--danger'],
   },
   {
-    name: 'Surfaces & borders', note: 'Glass washes and rules — alpha ramps over the page bg.',
+    name: 'Surfaces & borders', note: 'Glass washes and rules: alpha ramps over the page bg.',
     vars: ['--surface-1', '--surface-2', '--surface-3', '--border-subtle', '--border', '--border-strong', '--plate-edge'],
   },
   {
-    name: 'Media plates', note: 'Banners, modals and event surfaces stay dark navy in BOTH themes. Interiors must consume these — never the themed text/accent vars.',
+    name: 'Media plates', note: 'Banners, modals and event surfaces stay dark navy in BOTH themes. Interiors must consume these, never the themed text/accent vars.',
     vars: ['--banner-fill', '--banner-fill-deep', '--banner-text', '--banner-text-dim', '--banner-text-faint', '--banner-azure', '--banner-gold', '--banner-violet', '--banner-border', '--banner-surface'],
   },
   {
-    name: 'Categorical hues', note: 'Class and atlas categories — not interactive accents.',
+    name: 'Categorical hues', note: 'Class and atlas categories: not interactive accents.',
     vars: ['--hue-azure', '--hue-teal', '--hue-violet', '--hue-amber', '--hue-rose'],
   },
 ];
@@ -94,7 +94,7 @@ const SECTIONS = [
     specimens: [
       {
         name: 'Card', classes: '.card',
-        note: 'Base glass card — static content.',
+        note: 'Base glass card: static content.',
         stage: 'column',
         html: `<div class="card" style="margin-bottom:0">
   <h3 style="margin-top:0">Static card</h3>
@@ -103,7 +103,7 @@ const SECTIONS = [
       },
       {
         name: 'Interactive card', classes: '.card .card--interactive',
-        note: 'Adds enter animation and hover raise — for clickable cards.',
+        note: 'Adds enter animation and hover raise: for clickable cards.',
         stage: 'column',
         html: `<div class="card card--interactive" style="margin-bottom:0">
   <h3 style="margin-top:0">Interactive card</h3>
@@ -116,7 +116,7 @@ const SECTIONS = [
         stage: 'column',
         html: `<div class="cpanel">
   <h3 class="cpanel__h">Panel heading</h3>
-  <p style="margin:0;color:var(--text-muted)">Beveled plate — clip-path corner cuts, lit top edge, deep base.</p>
+  <p style="margin:0;color:var(--text-muted)">Beveled plate, clip-path corner cuts, lit top edge, deep base.</p>
 </div>`,
       },
       {
@@ -134,7 +134,7 @@ const SECTIONS = [
       },
       {
         name: 'Class crest', classes: '.cclass__crest',
-        note: 'Faceted crest plate — size and accent set via custom properties.',
+        note: 'Faceted crest plate: size and accent set via custom properties.',
         html: `<span class="cclass__crest" style="--crest-color:#2aa8ff;--crest-size:56px" aria-hidden="true">
   <span class="cclass__crest-symbol">I</span>
 </span>
@@ -185,7 +185,7 @@ const SECTIONS = [
   },
   {
     id: 'badges', no: '05', title: 'Badges & status',
-    lede: 'Pills, timers, and status glyphs. Timers and banner chips live on media plates — shown on a dark stage.',
+    lede: 'Pills, timers, and status glyphs. Timers and banner chips live on media plates, shown on a dark stage.',
     specimens: [
       {
         name: 'Skill tags', classes: '.skill__tag',
@@ -204,7 +204,7 @@ const SECTIONS = [
       },
       {
         name: 'Dispatch timers', classes: '.daily__timer --open --soon',
-        note: 'Filled chips inside daily cards — azure fill, gold fill when closing.',
+        note: 'Filled chips inside daily cards: azure fill, gold fill when closing.',
         stage: 'dark',
         html: `<span class="daily__timer daily__timer--open">${icon('clock', 12)} 6D 2H LEFT</span>
 <span class="daily__timer daily__timer--soon">${icon('clock', 12)} 14H LEFT</span>`,
@@ -234,7 +234,7 @@ const SECTIONS = [
   },
   {
     id: 'banners', no: '06', title: 'Banners & event plates',
-    lede: 'Full-width media plates. Always dark navy — the accent triad (azure / gold / violet) comes from the --banner-* token family.',
+    lede: 'Full-width media plates. Always dark navy. The accent triad (azure / gold / violet) comes from the --banner-* token family.',
     specimens: [
       {
         name: 'Event banner · azure', classes: '.banner .banner--azure',
@@ -259,7 +259,7 @@ const SECTIONS = [
       },
       {
         name: 'Event banner · gold', classes: '.banner .banner--gold',
-        note: 'Closing-soon urgency — gold rim, pulsing timer.',
+        note: 'Closing-soon urgency: gold rim, pulsing timer.',
         stage: 'column',
         html: `<button type="button" class="banner banner--gold is-active">
   <span class="banner__bg" aria-hidden="true">${icon('flask', 132)}</span>
@@ -300,7 +300,7 @@ const SECTIONS = [
       },
       {
         name: 'Focus card', classes: '.focus__card',
-        note: 'Today\'s single suggested action — kicker, title, blurb, dismiss.',
+        note: 'Today\'s single suggested action: kicker, title, blurb, dismiss.',
         stage: 'column',
         html: `<div class="focus__card">
   <span class="focus__glyph" aria-hidden="true">${icon('compass', 26)}</span>
@@ -360,7 +360,7 @@ const SECTIONS = [
   },
   {
     id: 'overlays', no: '08', title: 'Overlays',
-    lede: 'Modals, palette, toast, and the rank-up plate — rendered inline here; in the app they float over a scrim. All are media plates.',
+    lede: 'Modals, palette, toast, and the rank-up plate, rendered inline here; in the app they float over a scrim. All are media plates.',
     specimens: [
       {
         name: 'Toast', classes: '.toast .visible / .toast--action',
@@ -374,7 +374,7 @@ const SECTIONS = [
       },
       {
         name: 'Command palette', classes: '.cpalette .fbevel',
-        note: 'Global search on "/" — input, cursor row, footer hints.',
+        note: 'Global search on "/": input, cursor row, footer hints.',
         stage: 'column',
         html: `<div class="cpalette fbevel" role="dialog" aria-label="Search the console">
   <div class="cpalette__inputwrap">
@@ -409,7 +409,7 @@ const SECTIONS = [
       },
       {
         name: 'Chapter reader', classes: '.creader .reader .reader--azure',
-        note: 'Section-reader modal — kicker, progress, search, article, jump list.',
+        note: 'Section-reader modal: kicker, progress, search, article, jump list.',
         stage: 'column',
         html: `<div class="creader reader reader--azure fbevel" role="dialog" aria-label="Chapter reader">
   <header class="creader__head">
@@ -442,7 +442,7 @@ const SECTIONS = [
       },
       {
         name: 'Rank-up plate', classes: '.rankup__plate',
-        note: 'Game-unlock moment — bright gold on the dark plate, in both themes.',
+        note: 'Game-unlock moment: bright gold on the dark plate, in both themes.',
         stage: 'column dark',
         html: `<div class="rankup__plate">
   <span class="rankup__kicker">Rank up</span>
@@ -453,7 +453,7 @@ const SECTIONS = [
       },
       {
         name: 'Quick-menu wedge', classes: '.qm__wedge --up/--right/--down/--left',
-        note: 'Hold-Esc radial menu — point, release to jump.',
+        note: 'Hold-Esc radial menu: point, release to jump.',
         stage: 'dark',
         html: `<button type="button" class="qm__wedge qm__wedge--up">
   <span class="qm__glyph">${icon('book', 16)}</span>

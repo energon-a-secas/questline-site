@@ -485,14 +485,14 @@ function openLadderRules(classId) {
   const rungs = cls.rungs.map(r => {
     const groups = [...new Set(r.certs.map(c => c.group).filter(Boolean))].join(', ');
     return {
-      heading: `${r.tier} — ${r.required || r.certs.length} of ${r.certs.length}`,
+      heading: `${r.tier}: ${r.required || r.certs.length} of ${r.certs.length}`,
       body: `${r.blurb} Groups in this tier: ${groups}.`,
     };
   });
   openReader({
     title: `${cls.title} ladder rules`,
     kicker: 'Certification progression',
-    sub: 'Earn the required number of certs in each tier. Mix groups freely — for example, any cloud cert plus a Kubernetes cert can satisfy Intermediate.',
+    sub: 'Earn the required number of certs in each tier. Mix groups freely, for example, any cloud cert plus a Kubernetes cert can satisfy Intermediate.',
     accent: 'azure',
     sections: [
       { heading: 'How completion works', body: 'A tier turns complete once you have earned the required number of certs, regardless of which groups they come from. For Entry, Intermediate, and Advanced you need two certs each; for Referent, one is enough.' },

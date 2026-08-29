@@ -36,7 +36,7 @@ export function maybeShowCoach(onComplete) {
       <ul class="coach__keys">
         <li><kbd>↑</kbd><kbd>↓</kbd><span>Move the cursor; <kbd>↵</kbd> opens</span></li>
         <li><kbd>Q</kbd><kbd>E</kbd><span>Cycle the tabs</span></li>
-        <li><kbd>/</kbd><span>Search everything — sections, terms, classes</span></li>
+        <li><kbd>/</kbd><span>Search everything: sections, terms, classes</span></li>
         <li><kbd>Hold Esc</kbd><span>Quick menu: point, release to jump</span></li>
       </ul>
       <p class="coach__note">Mouse works everywhere too. This shows once.</p>
